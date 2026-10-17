@@ -39,6 +39,8 @@ const summary = (id: string, updatedAt: number): SessionSummary => ({
 const sessionState = (items: readonly SessionSummary[]): SessionListState => ({
   ids: items.map(item => item.id),
   byId: Object.fromEntries(items.map(item => [item.id, item])),
+  agentSessions: [],
+  agentSessionFailures: [],
   phase: 'ready',
   projectionsBySession: {},
 })
@@ -78,6 +80,8 @@ async function bench() {
   const rename = vi.fn(async () => ({}))
   const selectPanel = vi.fn()
   ctx.provide('layout', { selectPanel, beginNavigation: () => new AbortController().signal })
+  const agentMeshNavigation = { openSession: vi.fn() }
+  ctx.provide('agentMeshNavigation', agentMeshNavigation)
   const search = vi.fn(async () => ({
     ok: true as const,
     value: { items: [{ sessionId: 'session' as never, snippet: 'match' }], hasMore: false },
@@ -163,6 +167,7 @@ async function bench() {
   ctx.provide('locale', locale)
   return {
     ctx, slots: ctx.get('slots') as SlotRegistry, locale, create, rename, commands, accessSource,
+    agentMeshNavigation,
     retain, using, selectPanel, search, renameSession, binding, fork, pickDirectory, pinSession, unpinSession,
     workspacesSubscribe, initializeDefault, history, scope, sessionOf,
     setWorkspaces: (snapshot: WorkspaceSnapshot): void => { workspaceSnapshot = snapshot },
@@ -220,6 +225,7 @@ describe('ui-workspace apply', () => {
   it('declares the services it drives', () => {
     expect(inject).toEqual([
       'slots', 'sessions', 'workspaces', 'locale', 'remote', 'remote.directoryPicker', 'layout', 'shortcuts', 'remoteAccess',
+      'agentMeshNavigation',
     ])
   })
 
@@ -815,6 +821,9 @@ describe('ui-workspace apply', () => {
     expect(startSession).toHaveBeenLastCalledWith(undefined, { clearPreviousDraft: false })
     browser.open('session' as never)
     expect(b.retain).toHaveBeenCalledWith('session', { source: 'mainView' })
+    const agentSession = { agentId: 'codex' as never, nativeId: 'native-1' }
+    browser.openAgentSession(agentSession)
+    expect(b.agentMeshNavigation.openSession).toHaveBeenCalledExactlyOnceWith(agentSession)
     const signal = new AbortController().signal
     await expect(browser.searchSessions('match', signal)).resolves.toEqual({
       items: [{ sessionId: 'session', snippet: 'match' }],

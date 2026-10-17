@@ -78,6 +78,24 @@ flowchart LR
   cfg --> plugin_dsh_base_storage_json
   plugin_dsh_base_storage_domain["storage-domain<br/>@deepseek-ai/dsh-storage-domain"]
   cfg --> plugin_dsh_base_storage_domain
+  plugin_dsh_base_agent_mesh["agent-mesh<br/>@deepseek-ai/dsh-agent-mesh"]
+  cfg --> plugin_dsh_base_agent_mesh
+  plugin_dsh_base_agent_mesh_tools["agent-mesh-tools<br/>@deepseek-ai/dsh-agent-mesh-tools"]
+  cfg --> plugin_dsh_base_agent_mesh_tools
+  plugin_dsh_base_agent_mesh_controller["agent-mesh-controller<br/>@deepseek-ai/dsh-agent-mesh-controller"]
+  cfg --> plugin_dsh_base_agent_mesh_controller
+  plugin_dsh_base_agent_mesh_commands["agent-mesh-commands<br/>@deepseek-ai/dsh-agent-mesh-commands"]
+  cfg --> plugin_dsh_base_agent_mesh_commands
+  plugin_dsh_base_agent_codex["agent-codex<br/>@deepseek-ai/dsh-agent-codex"]
+  cfg --> plugin_dsh_base_agent_codex
+  plugin_dsh_base_agent_grok["agent-grok<br/>@deepseek-ai/dsh-agent-grok"]
+  cfg --> plugin_dsh_base_agent_grok
+  plugin_dsh_base_agent_pi["agent-pi<br/>@deepseek-ai/dsh-agent-pi"]
+  cfg --> plugin_dsh_base_agent_pi
+  plugin_dsh_base_agent_omp["agent-omp<br/>@deepseek-ai/dsh-agent-omp"]
+  cfg --> plugin_dsh_base_agent_omp
+  plugin_dsh_base_agent_mesh_collaboration["agent-mesh-collaboration<br/>@deepseek-ai/dsh-agent-mesh-collaboration"]
+  cfg --> plugin_dsh_base_agent_mesh_collaboration
   plugin_dsh_base_session_projection_cache["session-projection-cache<br/>@deepseek-ai/dsh-session-projection-cache"]
   cfg --> plugin_dsh_base_session_projection_cache
   plugin_dsh_base_otel["otel<br/>@deepseek-ai/dsh-otel"]
@@ -237,6 +255,15 @@ flowchart LR
 | `storage` | `@deepseek-ai/dsh-storage` |
 | `storage-json` | `@deepseek-ai/dsh-storage-json` |
 | `storage-domain` | `@deepseek-ai/dsh-storage-domain` |
+| `agent-mesh` | `@deepseek-ai/dsh-agent-mesh` |
+| `agent-mesh-tools` | `@deepseek-ai/dsh-agent-mesh-tools` |
+| `agent-mesh-controller` | `@deepseek-ai/dsh-agent-mesh-controller` |
+| `agent-mesh-commands` | `@deepseek-ai/dsh-agent-mesh-commands` |
+| `agent-codex` | `@deepseek-ai/dsh-agent-codex` |
+| `agent-grok` | `@deepseek-ai/dsh-agent-grok` |
+| `agent-pi` | `@deepseek-ai/dsh-agent-pi` |
+| `agent-omp` | `@deepseek-ai/dsh-agent-omp` |
+| `agent-mesh-collaboration` | `@deepseek-ai/dsh-agent-mesh-collaboration` |
 | `session-projection-cache` | `@deepseek-ai/dsh-session-projection-cache` |
 | `otel` | `@deepseek-ai/dsh-otel` |
 | `session-telemetry-otel` | `@deepseek-ai/dsh-session-telemetry-otel` |

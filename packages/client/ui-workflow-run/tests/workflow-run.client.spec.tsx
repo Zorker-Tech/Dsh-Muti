@@ -329,7 +329,7 @@ const listState = (overrides: Partial<SessionListState> = {}): SessionListState 
     },
   },
   phase: 'ready',
-  projectionsBySession: { [CHILD_ID]: { state: 'ready', error: null, values: {
+  agentSessions: [], agentSessionFailures: [], projectionsBySession: { [CHILD_ID]: { state: 'ready', error: null, values: {
     subagent: { mode: 'one-shot', seq: SessionSeq(0) },
   } } },
   ...overrides,

@@ -34,6 +34,7 @@ async function bench(runtime: 'web' | 'desktop' = 'desktop', platform: ShortcutP
   }, catalog: registry.catalog })
   const list = createSnapshotStore<SessionListState>({
     ids: [sid('a'), sid('b')], byId: { [sid('a')]: row('a', true), [sid('b')]: row('b') },
+    agentSessions: [], agentSessionFailures: [],
     phase: 'ready', projectionsBySession: {},
   })
   const history = createSnapshotStore({ openState: 'open', hasMore: false, loadingOlder: false } as SessionSnapshot)

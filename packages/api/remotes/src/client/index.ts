@@ -3,6 +3,8 @@
 import type { Context } from '@deepseek-ai/cordis'
 import productAnalyticsRemote from '@deepseek-ai/dsh-client-product-analytics/remote'
 export type {} from '@deepseek-ai/dsh-client-product-analytics/remote'
+import agentMeshRemote from '@deepseek-ai/dsh-agent-mesh-controller/remote'
+import meshCollaborationRemote from '@deepseek-ai/dsh-agent-mesh-collaboration/remote'
 import agentPresetsRemote from '@deepseek-ai/dsh-agent-preset-registry/remote'
 import userQuestionsRemote from '@deepseek-ai/dsh-user-questions/remote'
 import commandsRemote from '@deepseek-ai/dsh-commands/remote'
@@ -46,6 +48,9 @@ export type {
   MarketQuery, MarketSearchResult, MarketSort,
 } from '@deepseek-ai/dsh-plugin-market/types'
 export type { PluginInventorySnapshot } from '@deepseek-ai/dsh-host-plugin-inventory/types'
+export type {} from '@deepseek-ai/dsh-agent-mesh-controller/remote'
+export type {} from '@deepseek-ai/dsh-agent-mesh-collaboration/remote'
+export type * from '@deepseek-ai/dsh-agent-mesh-controller/types'
 export type {} from '@deepseek-ai/dsh-agent-preset-registry/remote'
 export type {} from '@deepseek-ai/dsh-user-questions/remote'
 export type {} from '@deepseek-ai/dsh-commands/remote'
@@ -186,7 +191,8 @@ export async function apply(ctx: Context): Promise<() => Promise<void>> {
   const disposers: Array<() => Promise<void>> = []
   try {
     for (const contribution of [
-      productAnalyticsRemote, agentPresetsRemote, commandsRemote, settingsControllerRemote, accountRemote,
+      productAnalyticsRemote, agentPresetsRemote, agentMeshRemote, meshCollaborationRemote,
+      commandsRemote, settingsControllerRemote, accountRemote,
       goalsRemote, llmRemote, dynamicRemote, scheduleRemote,
       pluginInventoryRemote, pluginManagerRemote, pluginMarketRemote, pluginRegistryProbeRemote,
       messageFeedbackRemote, sessionFeedbackRemote,

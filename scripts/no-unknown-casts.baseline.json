@@ -702,9 +702,6 @@
   },
   "packages/client/ui-subagent/tests/sidebar-chat.client.spec.tsx": {
     "024f8748e8908a495117a23a7673046a871f0d8187f8fe561aceba1269aefa31": 1,
-    "6f46259a9f4093d68b3fc7859c263f21b6318197b74aba368e8904321ab5c4f9": 1,
-    "7eb46f4e5e11cef80bd04f36bf7e9b81b3b3e0811e6a50c8dc0e59b13409ab47": 1,
-    "93043ae394699d6c87db0291ac271884e16d5f5e5f80b8dffd6ec2ccbe0cb774": 1,
     "9fe5203965e5ff62ab3b914bbcbb5229a5146bf9b12839d99684742579b0f30f": 1,
     "c3f6bb95ba0791435add9be26269aec3bd5cf7bb8a1ffd88913ff8b08b142ed3": 1,
     "e9abfbf3920ecd6502b74e5eb04d3a1a40b2519f849f5daa193ab7819184ee8b": 1,
@@ -718,7 +715,6 @@
   },
   "packages/client/ui-tool/tests/image-card.client.spec.tsx": {
     "1a5ae4c2528dae3d43a3decbe30410647b6e60104341e070fd4de2c6a668a607": 1,
-    "7266b2c682605ac318dad266d9371b6061a73746beac20f2fd94e9391eca5d4a": 1,
     "a4968fcd795d3444b0896dcd7e9688e84335d4fcc72e138c46f951d157a421c7": 1
   },
   "packages/client/ui-tool/tests/read-card.client.spec.tsx": {

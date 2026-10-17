@@ -71,7 +71,7 @@ function fakeSessions(ctx: Context): { sessions: ISessions; binding: SessionBind
     ids: [],
     byId: {},
     phase: 'ready',
-    projectionsBySession: {},
+    agentSessions: [], agentSessionFailures: [], projectionsBySession: {},
   })
   const reference = {
     sessionId: SESSION_ID,

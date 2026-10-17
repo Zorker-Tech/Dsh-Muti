@@ -77,7 +77,7 @@ const sessions: SessionListState = {
   byId: Object.fromEntries([at, every, daily].map(record => [record.sessionId, {
     id: record.sessionId, displayTitle: record.sessionId, running: false, blank: false, updatedAt: 0, retainedBy: {},
   }] as const)),
-  phase: 'ready', projectionsBySession: {},
+  phase: 'ready', agentSessions: [], agentSessionFailures: [], projectionsBySession: {},
 }
 
 const workspaces: WorkspaceSnapshot = { items: [], archivedSessionIds: [], pinnedSessionIds: [], state: 'idle', phase: 'ready', error: null }

@@ -8,6 +8,7 @@ import { SessionId } from '@deepseek-ai/dsh-session/types'
 import { RemoteError } from '@deepseek-ai/dsh-typert-protocol'
 import { ok, type RemoteMock } from '@deepseek-ai/dsh-remote-mock'
 import { createClientTest, webApp, type TestClient } from '@deepseek-ai/dsh-client-test-runtime/src/assembly/index.ts'
+import { sessionListSuccess } from '@deepseek-ai/dsh-client-test-runtime'
 import { ClientSessions } from '../src/client/sessions/service.ts'
 import { FOLLOW, followScript, type HistoryAnswer } from './remote/session.client.ts'
 
@@ -35,7 +36,7 @@ async function bench(mock: RemoteMock, start: () => Promise<TestClient>, listed 
   })
   mock.stream(FOLLOW, followScript(EMPTY_HISTORY))
   const feed = async (include: boolean): Promise<void> => {
-    mock.remote.session.list.mockResolvedValue(ok({ items: include
+    mock.remote.session.list.mockResolvedValue(sessionListSuccess({ items: include
       ? [{ sessionId: ID, updatedAt: 1, running: false, blank: true, agentAvailable: true }]
       : [] }))
     await svc.refresh()

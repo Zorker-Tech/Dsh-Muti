@@ -1,0 +1,58 @@
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write packages/agent-mesh/tools/README.md
+/:
+  en: d0acf7d510499282
+  zh: 786c5d26ea367113
+/deepseek-ai-dsh-agent-mesh-tools:
+  en: 3343b17f0316737a
+  zh: 2880c2f093991a2c
+/deepseek-ai-dsh-agent-mesh-tools/summary:
+  en: ad23a84bac27b0f7
+  zh: 17c0e5f70a959255
+/deepseek-ai-dsh-agent-mesh-tools/table-of-contents:
+  en: 4d5ec89f7a524c33
+  zh: 09388d293f9be9cb
+/deepseek-ai-dsh-agent-mesh-tools/use-this-package:
+  en: 31e060e50f2c222c
+  zh: 73a8230169474edc
+/deepseek-ai-dsh-agent-mesh-tools/understand-the-implementation:
+  en: 3263091c535b4323
+  zh: fb91bb48cbf68d24
+/deepseek-ai-dsh-agent-mesh-tools/further-exploration:
+  en: 67f3e9465a5a8947
+  zh: c687b0ed8c4fa7f7
+/deepseek-ai-dsh-agent-mesh-tools/model-experience:
+  en: 215e7ba838619b7b
+  zh: a311da3843709f90
+/deepseek-ai-dsh-agent-mesh-tools/model-experience/the-read-tools:
+  en: 79aac8765b20f849
+  zh: 030f488282af95d9
+/deepseek-ai-dsh-agent-mesh-tools/model-experience/the-read-tools/what-the-model-sees:
+  en: 36d0816d8b5279e1
+  zh: 27e1532dd9dad296
+/deepseek-ai-dsh-agent-mesh-tools/model-experience/the-read-tools/token-effect:
+  en: eaf385491bc55ad6
+  zh: 18a96c95da7618a0
+/deepseek-ai-dsh-agent-mesh-tools/model-experience/the-read-tools/kv-cache-effect:
+  en: 3cbbc45a39e773ad
+  zh: 9be49c73abd1c46e
+/deepseek-ai-dsh-agent-mesh-tools/model-experience/the-run-tools:
+  en: 34f5cb94c66319cf
+  zh: a18463778531d35a
+/deepseek-ai-dsh-agent-mesh-tools/model-experience/the-run-tools/what-the-model-sees:
+  en: 78d9e8620c332358
+  zh: e1bf0084894e3ffb
+/deepseek-ai-dsh-agent-mesh-tools/model-experience/the-run-tools/token-effect:
+  en: 9544b765c12ada5c
+  zh: f9adf230f8772da6
+/deepseek-ai-dsh-agent-mesh-tools/model-experience/the-run-tools/kv-cache-effect:
+  en: a0aaf653058b6eba
+  zh: be1f791dfed3f4c5
+/deepseek-ai-dsh-agent-mesh-tools/known-limitations-and-deferred-work:
+  en: b0faaa1804b8fd61
+  zh: 49a3d2fea7fb2b4c
+/deepseek-ai-dsh-agent-mesh-tools/known-limitations-and-deferred-work/dev-note:
+  en: 9866d6d27313a1a7
+  zh: f1e2b50b90f76a74

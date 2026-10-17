@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { lstat, mkdir, readdir, readFile, realpath, rename, rm, stat, symlink, writeFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 import { tmpdir } from 'node:os'
@@ -9,7 +9,13 @@ import * as SkillFileSystem from '../src/index.ts'
 
 /** Every temp dir created by this file, removed after each test. */
 const tempDirs: string[] = []
+beforeEach(() => {
+  for (const name of ['CODEX_HOME', 'GROK_HOME', 'PI_CODING_AGENT_DIR', 'PI_CONFIG_DIR', 'OMP_PROFILE', 'PI_PROFILE']) {
+    vi.stubEnv(name, '')
+  }
+})
 afterEach(async () => {
+  vi.unstubAllEnvs()
   for (const dir of tempDirs.splice(0)) await rm(dir, { recursive: true, force: true })
 })
 
@@ -157,6 +163,7 @@ async function setupLocal(home: string, config: Partial<SkillFileSystem.Config> 
   await ctx.plugin(SkillFileSystem, {
     dshHome: join(home, '.dsh'),
     agentsHome: join(home, '.agents'),
+    nativeAgentHome: home,
     watch: false,
     ...config,
   })
@@ -181,6 +188,79 @@ describe('dsh-skill-filesystem plugin exports', () => {
 })
 
 describe('FileSystemSkillProvider', () => {
+  it('discovers native project and user skills from agent homes and active profiles', async () => {
+    const home = await tempDir('skill-native-home')
+    const project = await tempDir('skill-native-project')
+    const cwd = join(project, 'packages/app')
+    await mkdir(join(project, '.git'), { recursive: true })
+    await mkdir(cwd, { recursive: true })
+    vi.stubEnv('CODEX_HOME', join(home, 'codex-home'))
+    vi.stubEnv('GROK_HOME', join(home, 'grok-home'))
+    vi.stubEnv('PI_CODING_AGENT_DIR', join(home, 'pi-agent'))
+    vi.stubEnv('PI_CONFIG_DIR', 'omp-config')
+    vi.stubEnv('OMP_PROFILE', 'work')
+    vi.stubEnv('PI_PROFILE', 'ignored')
+
+    const projectRoots = [
+      ['.codex/skills', 'native-codex-project'],
+      ['.grok/skills', 'native-grok-project'],
+      ['.pi/skills', 'native-pi-project'],
+      ['.omp/skills', 'native-omp-project'],
+      ['.github/skills', 'native-github-project'],
+      ['.claude/skills', 'native-claude-project'],
+      ['.cursor/skills', 'native-cursor-project'],
+    ] as const
+    for (const [root, name] of projectRoots) await writeSkill(join(project, root), name, name)
+    await writeSkill(join(project, '.codex/skills'), 'shared-skill', 'Project Codex copy')
+
+    const userRoots = [
+      [join(home, 'codex-home/skills'), 'native-codex-user'],
+      [join(home, 'grok-home/skills'), 'native-grok-user'],
+      [join(home, 'pi-agent/skills'), 'native-pi-user'],
+      [join(home, 'omp-config/profiles/work/agent/skills'), 'native-omp-profile-user'],
+      [join(home, 'omp-config/profiles/work/agent/managed-skills'), 'native-omp-managed-user'],
+      [join(home, '.claude/skills'), 'native-claude-user'],
+    ] as const
+    for (const [root, name] of userRoots) await writeSkill(root, name, name)
+    await writeSkill(join(home, 'codex-home/skills'), 'shared-skill', 'User Codex copy')
+
+    const ctx = await setupLocal(home)
+    const skills = await ctx.skills.list({ cwd })
+    const names = new Set(skills.map(skill => skill.name))
+    for (const [, name] of projectRoots) expect(names.has(name), name).toBe(true)
+    for (const [, name] of userRoots) expect(names.has(name), name).toBe(true)
+    expect(skills.find(skill => skill.name === 'shared-skill')?.path)
+      .toBe(join(project, '.codex/skills/shared-skill/SKILL.md'))
+  })
+
+  it('uses the default OMP agent root when an empty OMP_PROFILE overrides PI_PROFILE', async () => {
+    const home = await tempDir('skill-omp-profile-home')
+    vi.stubEnv('PI_CONFIG_DIR', '.omp')
+    vi.stubEnv('OMP_PROFILE', '')
+    vi.stubEnv('PI_PROFILE', 'named-profile')
+    await writeSkill(join(home, '.omp/agent/skills'), 'omp-default-skill', 'Default OMP skill')
+    await writeSkill(join(home, '.omp/profiles/named-profile/agent/skills'), 'omp-profile-skill', 'Profile OMP skill')
+
+    const ctx = await setupLocal(home)
+    expect((await ctx.skills.list()).map(skill => skill.name)).toEqual(['omp-default-skill'])
+  })
+
+  it('uses PI_PROFILE for the OMP root only when OMP_PROFILE is unset', async () => {
+    const home = await tempDir('skill-omp-fallback-profile-home')
+    vi.stubEnv('OMP_PROFILE', undefined)
+    vi.stubEnv('PI_PROFILE', 'named-profile')
+    await writeSkill(join(home, '.omp/profiles/named-profile/agent/skills'), 'omp-fallback-skill', 'Fallback OMP skill')
+
+    const ctx = await setupLocal(home)
+    expect((await ctx.skills.list()).map(skill => skill.name)).toEqual(['omp-fallback-skill'])
+  })
+
+  it.each(['../outside', 'Bad', 'con'])('rejects invalid OMP profile path components: %s', async (profile) => {
+    const home = await tempDir('skill-omp-invalid-profile')
+    vi.stubEnv('OMP_PROFILE', profile)
+    await expect(setupLocal(home)).rejects.toThrow('valid OMP profile name')
+  })
+
   it('discovers project, custom, user, and agents skill roots in priority order', async () => {
     const home = await tempDir('skill-home')
     const project = await tempDir('skill-project')
@@ -439,7 +519,7 @@ describe('FileSystemSkillProvider', () => {
         }
       })
     }
-    const fiber = ctx.plugin(SkillFileSystem, { dshHome: join(home, '.dsh'), agentsHome: join(home, '.agents'), watch: false })
+    const fiber = ctx.plugin(SkillFileSystem, { dshHome: join(home, '.dsh'), agentsHome: join(home, '.agents'), nativeAgentHome: home, watch: false })
     await fiber
 
     try {
@@ -493,7 +573,7 @@ describe('FileSystemSkillProvider', () => {
       size: 0,
     })
     await ctx.plugin(SkillRegistry)
-    await ctx.plugin(SkillFileSystem, { dshHome: join(home, '.dsh'), agentsHome: join(home, '.agents'), watch: false })
+    await ctx.plugin(SkillFileSystem, { dshHome: join(home, '.dsh'), agentsHome: join(home, '.agents'), nativeAgentHome: home, watch: false })
 
     expect((await ctx.skills.list({ cwd: nestedCwd })).map(skill => [skill.name, skill.source])).toEqual([
       ['backend-root', 'project-agents'],
@@ -512,6 +592,7 @@ describe('FileSystemSkillProvider', () => {
     await bundledCtx.plugin(SkillFileSystem, {
       dshHome: join(home, '.dsh'),
       agentsHome: join(home, '.agents'),
+      nativeAgentHome: home,
       bundledSkillDir: bundled,
     })
     expect((await bundledCtx.skills.get('bundled-host'))?.source).toBe('bundled')
@@ -528,6 +609,7 @@ describe('FileSystemSkillProvider', () => {
     await ctx.plugin(SkillFileSystem, {
       dshHome: join(home, '.dsh'),
       agentsHome: join(home, '.agents'),
+      nativeAgentHome: home,
       watch: false,
     })
 
@@ -564,6 +646,7 @@ describe('FileSystemSkillProvider', () => {
     await ctx.plugin(SkillFileSystem, {
       dshHome: join(home, '.dsh'),
       agentsHome: join(home, '.agents'),
+      nativeAgentHome: home,
       watch: false,
     })
     const invalidate = (): void => {
@@ -611,7 +694,7 @@ describe('FileSystemSkillProvider', () => {
     await ctx.plugin(TestFileSystem)
     const fs = ctx.fs as TestFileSystem
     await ctx.plugin(SkillRegistry)
-    await ctx.plugin(SkillFileSystem, { dshHome: join(home, '.dsh'), agentsHome: join(home, '.agents'), watch: false })
+    await ctx.plugin(SkillFileSystem, { dshHome: join(home, '.dsh'), agentsHome: join(home, '.agents'), nativeAgentHome: home, watch: false })
     expect((await ctx.skills.list()).map(skill => skill.name)).toEqual(['abortable-skill'])
 
     fs.statSignals = []
@@ -646,6 +729,7 @@ describe('FileSystemSkillProvider', () => {
     const fiber = await ctx.plugin(SkillFileSystem, {
       dshHome: join(home, '.dsh'),
       agentsHome: join(home, '.agents'),
+      nativeAgentHome: home,
       watch: true,
       watchStabilityThresholdMs: 20,
       watchPollIntervalMs: 10,
@@ -754,6 +838,7 @@ describe('FileSystemSkillProvider', () => {
     const fiber = await ctx.plugin(SkillFileSystem, {
       dshHome: join(home, '.dsh'),
       agentsHome: join(home, '.agents'),
+      nativeAgentHome: home,
       customSkillDirs: [join(first, '.agents/skills')],
       watch: true,
       watchMaxProjects: 1,
@@ -776,6 +861,7 @@ describe('FileSystemSkillProvider', () => {
     await noWatch.plugin(SkillFileSystem, {
       dshHome: join(home, '.dsh'),
       agentsHome: join(home, '.agents'),
+      nativeAgentHome: home,
       watch: false,
       watchMaxProjects: 1,
     })
@@ -795,6 +881,7 @@ describe('FileSystemSkillProvider', () => {
       provider = new SkillFileSystem.FileSystemSkillProvider(ctx, control, {
         dshHome: join(home, '.dsh'),
         agentsHome: join(home, '.agents'),
+        nativeAgentHome: home,
         customSkillDirs: [nonDirectoryRoot],
         watch: true,
         watchStabilityThresholdMs: 20,
@@ -828,6 +915,7 @@ describe('FileSystemSkillProvider', () => {
     const fiber = await ctx.plugin(SkillFileSystem, {
       dshHome: join(home, '.dsh'),
       agentsHome: join(home, '.agents'),
+      nativeAgentHome: home,
       watch: true,
       watchFollowSymlinks: true,
       watchStabilityThresholdMs: 20,
@@ -869,7 +957,7 @@ describe('FileSystemSkillProvider', () => {
       await writeSkill(bundled, 'env-bundled-skill', 'Env bundled skill')
       const ctx = new Context()
       await ctx.plugin(SkillRegistry)
-      await ctx.plugin(SkillFileSystem, { watch: false })
+      await ctx.plugin(SkillFileSystem, { watch: false, nativeAgentHome: envHome })
       expect((await ctx.skills.list()).map(skill => skill.name)).toEqual(['env-bundled-skill', 'env-skill'])
 
       // Isolated providers see only their explicit roots: the environment
@@ -893,14 +981,14 @@ describe('FileSystemSkillProvider', () => {
       process.env.DSH_AGENTS_HOME = join(envHome, 'empty-agents')
       const empty = new Context()
       await empty.plugin(SkillRegistry)
-      SkillFileSystem.apply(empty, { watch: false })
+      SkillFileSystem.apply(empty, { watch: false, nativeAgentHome: envHome })
       expect(await empty.skills.list()).toEqual([])
 
       delete process.env.DSH_AGENTS_HOME
       expect(new SkillFileSystem.FileSystemSkillProvider(empty, {
         signal: new AbortController().signal,
         invalidate() {},
-      }, { dshHome: join(envHome, 'empty-dsh') }).name).toBe('filesystem')
+      }, { dshHome: join(envHome, 'empty-dsh'), nativeAgentHome: envHome }).name).toBe('filesystem')
     } finally {
       if (previousDshHome === undefined) {
         delete process.env.DSH_HOME

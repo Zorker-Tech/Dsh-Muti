@@ -67,6 +67,8 @@ Set `interpolate: false` on a section or dynamic context to preserve its text li
 
 `refreshContext(assembly, context)` refreshes registered runtime facts after pre-step and route preparation. It preserves accepted sections, tools, variables, and contexts contributed only by the assembly waterfall, applies current optional-context suppression, and restores missing required entries. Put changing facts in context providers; registered context text is read again before admission.
 
+Repository-owned runtime-context positions are allocated by `getContextOrder(name)`. `AGENT_MESH_CONTEXT` follows the working-directory entry and precedes sandbox and approval policy so an adapter's native workspace instructions enter the durable runtime-context snapshot early.
+
 ### Contribute a prompt variable
 
 Variables are referenced from section or context text as `{{name}}` and resolved at each assembly; scoped variables shadow a same-named global for that agent. The loop supplies `provider` and `model`; plugins can register the facts they own. The working-directory service supplies directory text as literal user context.

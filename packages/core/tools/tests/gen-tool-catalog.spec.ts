@@ -31,7 +31,13 @@ describe('gen-tool-catalog collectToolCatalog', () => {
       'create_goal', 'create_worktree', 'edit', 'exit_plan_mode', 'get_goal', 'glob', 'grep',
       'interrupt_agent', 'interrupt_agent', 'job_kill', 'job_list', 'job_output',
       'list_agents', 'list_agents', 'list_mcp_resource_templates', 'list_mcp_resources',
-      'list_subagent_models', 'load_workspace_dependencies', 'lsp', 'plugin_manager', 'plugin_market', 'present', 'pwsh', 'pwsh', 'ralph',
+      'list_subagent_models', 'load_workspace_dependencies', 'lsp',
+      'mesh_agents', 'mesh_capabilities', 'mesh_capability_read', 'mesh_collaboration_start', 'mesh_collaborations', 'mesh_mcp_connect', 'mesh_mcp_disconnect',
+      'mesh_plan_advance', 'mesh_plan_set',
+      'mesh_run', 'mesh_run_cancel', 'mesh_runs', 'mesh_sessions', 'mesh_task_dispatch', 'mesh_tasks',
+      'mesh_todos_get', 'mesh_todos_observe', 'mesh_todos_set', 'mesh_transcript', 'mesh_worktree_conflicts',
+      'mesh_worktree_create', 'mesh_worktree_integrated', 'mesh_worktree_remove', 'mesh_worktrees',
+      'plugin_manager', 'plugin_market', 'present', 'pwsh', 'pwsh', 'ralph',
       'read', 'read_image', 'read_mcp_resource', 'run_code', 'schedule_create', 'schedule_delete',
       'schedule_list', 'schedule_update', 'send_message', 'send_message', 'session_event_read', 'session_event_search',
       'session_event_trace', 'session_search', 'session_trace', 'skill', 'spawn_teammate',
@@ -75,6 +81,12 @@ describe('gen-tool-catalog collectToolCatalog', () => {
       list_agents: 'packages/subagent/tool-subagent-control/src/list-agents.ts',
       send_message: 'packages/subagent/tool-subagent-control/src/index.ts',
     })
+    const meshTools = catalog.find(entry => entry.pkg === '@deepseek-ai/dsh-agent-mesh-tools')
+    expect(meshTools?.schemas).toHaveLength(11)
+    expect(meshTools?.sources.mesh_agents).toBe('packages/agent-mesh/tools/src/index.ts')
+    const collaboration = catalog.find(entry => entry.pkg === '@deepseek-ai/dsh-agent-mesh-collaboration')
+    expect(collaboration?.schemas).toHaveLength(13)
+    expect(collaboration?.sources.mesh_task_dispatch).toBe('packages/agent-mesh/collaboration/src/tools.ts')
   })
 
   it('harvests search tools without depending on the generator process PATH', async () => {
@@ -106,10 +118,11 @@ describe('gen-tool-catalog assertManifestComplete', () => {
   })
 
   it('throws, naming the omitted package, when a tool package is missing from the manifest', () => {
-    // An empty manifest scanned against the real tree: every `tool-*` package
-    // is unlisted, so the guard must fire and name them.
+    // An empty manifest scanned against the real tree: every conventional
+    // tool package and the nested agent-mesh providers are omitted.
     expect(() => { assertManifestComplete([]) }).toThrow(/not in the boot manifest/)
     expect(() => { assertManifestComplete([]) }).toThrow(/tool-bash/)
+    expect(() => { assertManifestComplete([]) }).toThrow(/agent-mesh\/collaboration/)
   })
 })
 

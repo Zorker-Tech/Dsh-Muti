@@ -1,0 +1,62 @@
+[
+  {
+    "kind": "chunks",
+    "chunks": [
+      { "type": "block-start", "index": 0, "blockType": "text" },
+      {
+        "type": "text-delta",
+        "index": 0,
+        "text": "I will follow the queued native command."
+      },
+      {
+        "type": "block-end",
+        "index": 0,
+        "block": {
+          "type": "text",
+          "text": "I will follow the queued native command."
+        }
+      },
+      { "type": "usage", "usage": { "inputTokens": 10, "outputTokens": 8 } },
+      { "type": "finish", "reason": { "kind": "stop" } }
+    ]
+  },
+  {
+    "kind": "chunks",
+    "chunks": [
+      { "type": "block-start", "index": 0, "blockType": "tool-call" },
+      {
+        "type": "tool-call-delta",
+        "index": 0,
+        "id": "call_agent_mesh_approval",
+        "name": "mesh_run",
+        "argumentsDelta": "{\"agentId\":\"snapshot-native-context\",\"prompt\":\"Inspect the staged changes and report one finding.\",\"cwd\":\"/tmp\",\"commandName\":\"review\"}"
+      },
+      {
+        "type": "block-end",
+        "index": 0,
+        "block": {
+          "type": "tool-call",
+          "id": "call_agent_mesh_approval",
+          "name": "mesh_run",
+          "arguments": "{\"agentId\":\"snapshot-native-context\",\"prompt\":\"Inspect the staged changes and report one finding.\",\"cwd\":\"/tmp\",\"commandName\":\"review\"}"
+        }
+      },
+      { "type": "usage", "usage": { "inputTokens": 10, "outputTokens": 5 } },
+      { "type": "finish", "reason": { "kind": "tool-calls" } }
+    ]
+  },
+  {
+    "kind": "chunks",
+    "chunks": [
+      { "type": "block-start", "index": 0, "blockType": "text" },
+      { "type": "text-delta", "index": 0, "text": "The run was rejected by DSH approval policy and was not dispatched." },
+      {
+        "type": "block-end",
+        "index": 0,
+        "block": { "type": "text", "text": "The run was rejected by DSH approval policy and was not dispatched." }
+      },
+      { "type": "usage", "usage": { "inputTokens": 10, "outputTokens": 11 } },
+      { "type": "finish", "reason": { "kind": "stop" } }
+    ]
+  }
+]

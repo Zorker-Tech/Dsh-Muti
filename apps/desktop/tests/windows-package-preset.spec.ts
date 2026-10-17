@@ -81,7 +81,9 @@ it('cache maintenance reaches cache path validation without a signing file', asy
     const result = spawnSync(process.execPath,
       [join(import.meta.dirname, '../scripts/manage-windows-signature-cache.mjs'), '--usage'], {
         env: { ...process.env, DSH_PACKAGING_CONFIG_DIR: root, DSH_PACKAGING_PRESET: 'test' },
-        encoding: 'utf8', timeout: 10_000, windowsHide: true,
+        encoding: 'utf8',
+        timeout: Math.max(10_000, Number(process.env.DSH_COVERAGE_TEST_TIMEOUT_MS ?? 0)),
+        windowsHide: true,
       })
     expect(result.error).toBeUndefined()
     expect(result.signal).toBeNull()

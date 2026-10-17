@@ -58,6 +58,18 @@ describe('RepositoryCleaner', () => {
     expect(existsSync(join(root, 'packages/removed/ghost'))).toBe(false)
   })
 
+  it('removes the complete output root for a face-specific declaration directory', async () => {
+    const root = fixture()
+    addProject(root, 'products/session', 'lib/client-types')
+    write(join(root, 'products/session/lib/client-types/index.d.ts'))
+    write(join(root, 'products/session/lib/index.js'))
+
+    await new RepositoryCleaner(root).clean()
+
+    expect(existsSync(join(root, 'products/session/lib'))).toBe(false)
+    expect(existsSync(join(root, 'products/session/src/index.ts'))).toBe(true)
+  })
+
   it('does not delete any target when a manifest-less package contains an unknown file', async () => {
     const root = fixture()
     addProject(root, 'products/shell')

@@ -259,10 +259,13 @@ async function writeSessionFixtures(
   for (const replacement of [...replacements]) {
     if (replacement.from === ctx.cwd) replacements.push({ from: ctx.cwd.split(sep).join('/'), to: replacement.to })
   }
-  const fresh = actualLogs.map((log, index) => {
+  const sourceLogs = mode === 'refresh'
+    ? redactSessionSnapshotIds(actualLogs.map(log => log.content))
+    : actualLogs.map(log => log.content)
+  const fresh = sourceLogs.map((sourceLog, index) => {
     const stable = tokenizeSessionFixtureCwd(mode === 'refresh'
-      ? stabilizeRefreshLog(log.content, prior[index] as string, replacements, ctx)
-      : log.content)
+      ? stabilizeRefreshLog(sourceLog, prior[index] as string, replacements, ctx)
+      : sourceLog)
     return scrubSessionSnapshot(prepareSessionSnapshotFixtureForComparison(stable))
   })
   const output = redactSessionSnapshotIds(stabilizeFixtureMessageIds(fresh, prior))
@@ -647,12 +650,12 @@ async function verifySessionQuerySpill(log: string, spillRoot: string, locatorRo
   const results = events.flatMap(event => event.type === 'tool/result' ? [event.data.message] : [])
   const readResult = results.find(result => result.toolCallId === 'call_session_query_spill')
   const verification = results.find(result => result.toolCallId === 'call_verify_session_query_spill')
+  const preview = readResult?.content.flatMap(block => block.type === 'text' ? [block.text] : []).join('')
   expect(readResult?.isError).toBe(false)
-  expect(verification).toMatchObject({
+  expect(verification, `session event read preview: ${preview?.slice(0, 1_000) ?? '<missing>'}`).toMatchObject({
     isError: false,
     content: [{ type: 'text', text: 'SPILL_CANONICAL_OK\n' }],
   })
-  const preview = readResult?.content.flatMap(block => block.type === 'text' ? [block.text] : []).join('')
   const locator = preview?.match(/Full formatted result stored at: (.+-session_event_read\.txt)\. Use read/)
   expect(locator).not.toBeNull()
   expect(locator?.[1]).toBeDefined()
@@ -750,6 +753,45 @@ function verifyNoMcpServers(log: string, ptc: boolean): void {
     expect(prompt).not.toMatch(/list_mcp_resources|list_mcp_resource_templates|read_mcp_resource/)
     if (ptc) expect(prompt).toContain('declare const tools:')
   }
+}
+
+/** Require DSH to reject an external-agent run before its tool callback can dispatch. */
+function verifyAgentMeshApproval(log: string): void {
+  const events = parseSessionLog(log)
+  const contextMessages = events.flatMap(event => {
+    if (event.type !== 'user/message' || event.data.source.kind !== 'runtime-context') return []
+    const sections = event.data.source.form === 'snapshot' ? event.data.source.sections : []
+    return sections.filter(section => section.name === 'agent-mesh:native-context').map(section => section.text)
+  })
+  expect(contextMessages).toHaveLength(1)
+  expect(contextMessages[0]).toContain('NATIVE_CONTEXT_SNAPSHOT_OK')
+  expect(contextMessages[0]).toContain('NATIVE_INSTRUCTIONS.md')
+  const commandRuns = events.flatMap(event => event.type === 'command/run'
+    && event.data.name === 'agent-snapshot-native-context-review' ? [event.data] : [])
+  expect(commandRuns).toHaveLength(1)
+  const modelTasks = events.flatMap(event => {
+    if (event.type !== 'user/message' || event.data.source.kind !== 'user') return []
+    return event.data.content.flatMap(block => block.type === 'text' ? [block.text] : [])
+  })
+  expect(modelTasks.some(text => text.includes('mesh_run and commandName "review"'))).toBe(true)
+  const runCalls = events.flatMap(event => event.type === 'tool/call' && event.data.name === 'mesh_run'
+    ? [event.data.arguments] : [])
+  expect(runCalls).toHaveLength(1)
+  expect(JSON.parse(runCalls[0] ?? '{}')).toMatchObject({
+    agentId: 'snapshot-native-context',
+    commandName: 'review',
+    prompt: 'Inspect the staged changes and report one finding.',
+  })
+  const asked = events.flatMap(event => event.type === 'approval/asked' ? [event.data] : [])
+  expect(asked.map(event => event.toolName)).toEqual(['mesh_run'])
+  const outcomes = events.flatMap(event => event.type === 'approval/decided' ? [event.data.outcome] : [])
+  expect(outcomes).toEqual(['rejected'])
+  const results = events.flatMap(event => event.type === 'tool/result' ? [event.data.message] : [])
+  expect(results).toHaveLength(1)
+  expect(results[0]).toMatchObject({
+    isError: true,
+    content: [{ type: 'text', text: 'Error: the user rejected tool "mesh_run"' }],
+  })
 }
 
 /** Require an admitted failed job and zero process allocations before updating its recorded oracle. */
@@ -1351,6 +1393,7 @@ describe('headless recorded-session snapshots', () => {
               expect(log).toContain('# Office task routing')
             }
             if (scenario.name === 'advanced-toolchain') verifyAdvancedToolchain(actualLogs)
+            if (scenario.name === 'agent-mesh-approval') verifyAgentMeshApproval(actualLogs[0]!.content)
             if (scenario.name === 'session-query-spill') {
               await verifySessionQuerySpill(actualLogs[0]!.content, spillRoot, locatorRoot)
             }

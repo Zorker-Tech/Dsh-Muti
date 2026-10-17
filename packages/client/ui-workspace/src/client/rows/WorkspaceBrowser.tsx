@@ -37,6 +37,9 @@ import {
   pinCurrentBlank, reconcileManualOrder, sessionMemberIds, UNGROUPED_KEY,
 } from '../tree.ts'
 import { ProjectRowItem, SearchResultItem, SessionNodeItem } from './Rows.tsx'
+import {
+  AgentSessionSection, agentSessionsForWorkspace, filterAgentSessions, visibleAgentSessions,
+} from './AgentSessionSection.tsx'
 import { AnimatedRows } from './AnimatedRows.tsx'
 import { FLAT_SESSION_ORDER_KEY, type SessionGroupBy } from '../stores.ts'
 import { WorkspacePickFlow } from '../WorkspacePicker.tsx'
@@ -252,7 +255,8 @@ function workspaceGroupHalf(e: { clientY: number; currentTarget: HTMLElement }):
 
 type SessionTreeProps = Pick<
   WorkspaceBrowserProps,
-  'useSessionStatus' | 'startSession' | 'open'
+  'useSessionStatus' | 'startSession' | 'open' | 'openAgentSession'
+  | 'setAgentSessionPinned' | 'setAgentSessionArchived'
   | 'insertWorkspaceBefore' | 't' | 'usePanelInfo'
 > & PropsRenderSlots<
   | 'sidebar.workspaces.session.menu.item'
@@ -315,7 +319,8 @@ function EmptySessions({ rowState, onLeaveArchivedOnly, t }: Pick<SessionTreePro
 
 /** The scrolling session tree; unmounting drops the sessions subscription and the session watermarks. */
 function SessionTree({
-  list, useSessionStatus, startSession, open, workspaces, ungroupedSessionIds,
+  list, useSessionStatus, startSession, open, openAgentSession, setAgentSessionPinned, setAgentSessionArchived,
+  workspaces, ungroupedSessionIds,
   rowState, onLeaveArchivedOnly,
   workspaceReady, animationResetKey, usePanelInfo,
   onRenameRequest, onDeleteRequest, onSessionRenameRequest,
@@ -379,6 +384,11 @@ function SessionTree({
     }),
     [list, workspaces, rowState, statuses, expandedGroups, ungroupedSessionIds],
   )
+  const agentSessions = useMemo(
+    () => visibleAgentSessions(list.agentSessions, rowState.archivedFilter),
+    [list.agentSessions, rowState.archivedFilter],
+  )
+  const registeredWorkspacePaths = useMemo(() => new Set(workspaces.map(workspace => workspace.path)), [workspaces])
   useEffect(() => {
     for (let key = revealGroup; key !== undefined; key = parents.get(key)) {
       if (groupExpansion[key] === false || (key === revealGroup && groupExpansion[key] !== true)) {
@@ -471,7 +481,8 @@ function SessionTree({
     && workspaceDrag?.over?.id === rootGroups[0].workspaceId
     && workspaceDrag.over.half === 'before'
 
-  const rowKeys: string[] = groups.length === 0 ? ['empty'] : []
+  const hasAgentRows = agentSessions.length > 0 || list.agentSessionFailures.length > 0
+  const rowKeys: string[] = groups.length === 0 && !hasAgentRows ? ['empty'] : []
   const renderGroup = (group: GroupNode, depth: number): ReactNode => {
     const workspaceId = group.workspaceId
     const children = childrenByParent.get(group.key) ?? []
@@ -480,10 +491,17 @@ function SessionTree({
     const collapsed = watermarkRows(group.sessions, baselines.get(group.key) ?? SESSION_WATERMARK_BASE)
     const visible = watermarkRows(group.sessions, watermark)
     const sessionsExpanded = visible.hiddenCount === 0
+    const workspace = group.workspaceId === undefined
+      ? undefined
+      : workspaces.find(item => item.workspaceId === group.workspaceId)
+    const groupAgentSessions = group.workspaceId === undefined || workspace === undefined
+      ? []
+      : agentSessionsForWorkspace(agentSessions, workspace.path, registeredWorkspacePaths)
     rowKeys.push(`workspace:${group.key}`)
     const childRows = group.expanded ? children.map(child => renderGroup(child, depth + 1)) : []
     const sessions = visible.rows
     for (const node of sessions) rowKeys.push(`session:${node.id}`)
+    for (const session of groupAgentSessions) rowKeys.push(`agent-session:${session.key}`)
     if (collapsed.hiddenCount > 0) rowKeys.push(`overflow:${group.key}`)
     const workspaceMarker = workspaceId !== undefined && workspaceDrag?.over?.id === workspaceId
       ? workspaceDrag.over.half
@@ -660,11 +678,28 @@ function SessionTree({
               : t('sessions.expand', { n: visible.hiddenCount })}
           </button>
         )}
+        {groupAgentSessions.length > 0 && (
+          <AgentSessionSection
+            sessions={groupAgentSessions}
+            failures={[]}
+            onOpen={openAgentSession}
+            onSetPinned={setAgentSessionPinned}
+            onSetArchived={setAgentSessionArchived}
+            t={t}
+            tree
+            {...(workspace === undefined ? {} : { workspaceTitle: workspace.title })}
+          />
+        )}
       </div>
     )
   }
 
+  for (const session of list.agentSessions) rowKeys.push(`agent-session:${session.key}`)
+
   const groupRows = rootGroups.map(group => renderGroup(group, 0))
+  const ungroupedAgentSessions = agentSessionsForWorkspace(agentSessions, undefined, registeredWorkspacePaths)
+  for (const session of ungroupedAgentSessions) rowKeys.push(`agent-session:${session.key}`)
+  for (const failure of list.agentSessionFailures) rowKeys.push(`agent-session-failure:${failure.agentId}`)
   return (
     <HoverCardGroup className={clsx(css.treeBody, css.wide)}>
       {workspaceDropAtListStart && <span className={css.listTopDropIndicator} aria-hidden="true" />}
@@ -675,10 +710,19 @@ function SessionTree({
         ready={list.phase === 'ready' && workspaceReady && !nativeDragActive}
         resetKey={JSON.stringify([animationResetKey, watermarkMotionKey])}
       >
-        {groups.length === 0 && (
+        {groups.length === 0 && !hasAgentRows && (
           <EmptySessions rowState={rowState} onLeaveArchivedOnly={onLeaveArchivedOnly} t={t} />
         )}
         {groupRows}
+        <AgentSessionSection
+          sessions={ungroupedAgentSessions}
+          failures={list.agentSessionFailures}
+          onOpen={openAgentSession}
+          onSetPinned={setAgentSessionPinned}
+          onSetArchived={setAgentSessionArchived}
+          t={t}
+          tree
+        />
       </AnimatedRows>
       <span className={css.fade} />
     </HoverCardGroup>
@@ -687,13 +731,17 @@ function SessionTree({
 
 /** The flat "In one list" body: every session is one draggable top-level row. */
 function FlatList({
-  list, sessionIds, rowState, onLeaveArchivedOnly, useSessionStatus, open, onSessionRenameRequest,
+  list, sessionIds, rowState, onLeaveArchivedOnly, useSessionStatus, open, openAgentSession,
+  setAgentSessionPinned, setAgentSessionArchived, onSessionRenameRequest,
   usePanelInfo, setSessionOrder, workspaceReady, animationResetKey,
   revealSessionId, onSessionRevealed, renderSlot, t,
 }: Pick<
   SessionTreeProps,
   | 'useSessionStatus'
   | 'open'
+  | 'openAgentSession'
+  | 'setAgentSessionPinned'
+  | 'setAgentSessionArchived'
   | 'onSessionRenameRequest'
   | 'renderSlot'
   | 'usePanelInfo'
@@ -729,16 +777,23 @@ function FlatList({
     if (nextOrder !== undefined) setSessionOrder(FLAT_SESSION_ORDER_KEY, nextOrder)
   }
   const now = Date.now()
+  const agentSessions = visibleAgentSessions(list.agentSessions, rowState.archivedFilter)
+  const hasAgentRows = agentSessions.length > 0 || list.agentSessionFailures.length > 0
+  const rowKeys = [
+    ...(rows.length === 0 && !hasAgentRows ? ['empty'] : rows.map(row => `session:${row.id}`)),
+    ...agentSessions.map(session => `agent-session:${session.key}`),
+    ...list.agentSessionFailures.map(failure => `agent-session-failure:${failure.agentId}`),
+  ]
   return (
     <HoverCardGroup className={clsx(css.treeBody, css.wide)}>
       <AnimatedRows
         className={clsx(css.list, css.flatList)}
         label={t('section.sessions')}
-        rowKeys={rows.length === 0 ? ['empty'] : rows.map(row => `session:${row.id}`)}
+        rowKeys={rowKeys}
         ready={list.phase === 'ready' && workspaceReady && drag === null}
         resetKey={animationResetKey}
       >
-        {rows.length === 0 && (
+        {rows.length === 0 && !hasAgentRows && (
           <EmptySessions rowState={rowState} onLeaveArchivedOnly={onLeaveArchivedOnly} t={t} />
         )}
         {rows.map((node) => {
@@ -782,6 +837,15 @@ function FlatList({
             />
           )
         })}
+        <AgentSessionSection
+          sessions={agentSessions}
+          failures={list.agentSessionFailures}
+          onOpen={openAgentSession}
+          onSetPinned={setAgentSessionPinned}
+          onSetArchived={setAgentSessionArchived}
+          t={t}
+          tree
+        />
       </AnimatedRows>
       <span className={css.fade} />
     </HoverCardGroup>
@@ -800,6 +864,9 @@ function SearchResults({
   useSessions,
   useSessionStatus,
   open,
+  openAgentSession,
+  setAgentSessionPinned,
+  setAgentSessionArchived,
   onUnarchive,
   workspaces,
   archivedSessionIds,
@@ -809,17 +876,18 @@ function SearchResults({
   resultLimit,
   usePanelInfo,
   t,
-}: Pick<WorkspaceBrowserProps, 'useSessions' | 'useSessionStatus' | 'open' | 't' | 'usePanelInfo'> & {
-  workspaces: readonly WorkspaceView[]
-  archivedSessionIds: readonly SessionNode['id'][]
-  /** Search matches follow the archived filter selected for the list. */
-  archivedFilter: ArchivedFilter
-  /** Unarchive an archived result row in place. */
-  onUnarchive: (id: SessionNode['id']) => void
-  query: string
-  remote: RemoteSearchState
-  resultLimit: number
-}) {
+}: Pick<WorkspaceBrowserProps, 'useSessions' | 'useSessionStatus' | 'open' | 'openAgentSession'
+  | 'setAgentSessionPinned' | 'setAgentSessionArchived' | 't' | 'usePanelInfo'> & {
+    workspaces: readonly WorkspaceView[]
+    archivedSessionIds: readonly SessionNode['id'][]
+    /** Search matches follow the archived filter selected for the list. */
+    archivedFilter: ArchivedFilter
+    /** Unarchive an archived result row in place. */
+    onUnarchive: (id: SessionNode['id']) => void
+    query: string
+    remote: RemoteSearchState
+    resultLimit: number
+  }) {
   const panelActive = usePanelInfo(info => info.activePanelId !== null)
   const list = useSessions(s => s)
   const statuses = useSessionStatus(s => s)
@@ -840,6 +908,10 @@ function SearchResults({
     [list, workspaces, query, archivedSessionIds, archivedFilter, statuses, currentRemote, resultLimit],
   )
   const pending = currentRemote.status === 'loading'
+  const agentSessions = useMemo(
+    () => filterAgentSessions(visibleAgentSessions(list.agentSessions, archivedFilter), query),
+    [list.agentSessions, query, archivedFilter],
+  )
   const currentId = panelActive
     ? undefined
     : Object.values(list.byId).find(session => (session.retainedBy.mainView ?? 0) > 0)?.id
@@ -863,7 +935,7 @@ function SearchResults({
           /* Two skeleton rows on an empty list, one when local matches already
              show and only the content hits are outstanding. */
           <div role="status" aria-label={t('search.pending')}>
-            {(results.items.length === 0 ? [0, 1] : [0]).map(i => (
+            {(results.items.length + agentSessions.length === 0 ? [0, 1] : [0]).map(i => (
               <div key={i} className={css.skeletonRow} aria-hidden="true">
                 <span className={css.skeletonDot} />
                 <span className={css.skeletonBars}>
@@ -874,7 +946,17 @@ function SearchResults({
             ))}
           </div>
         )}
-        {!pending && results.items.length === 0 && (
+        <AgentSessionSection
+          sessions={agentSessions}
+          failures={list.agentSessionFailures}
+          onOpen={openAgentSession}
+          onSetPinned={setAgentSessionPinned}
+          onSetArchived={setAgentSessionArchived}
+          t={t}
+          searching
+        />
+        {!pending && results.items.length === 0 && agentSessions.length === 0
+          && list.agentSessionFailures.length === 0 && (
           <div className={css.empty}>{t('search.noMatches')}</div>
         )}
         {results.hasMore && (
@@ -904,6 +986,9 @@ export function WorkspaceBrowser({
   actions,
   startSession,
   open,
+  openAgentSession,
+  setAgentSessionPinned,
+  setAgentSessionArchived,
   requestSessionRename,
   notifyArchivedNotOpenable,
   renameWorkspace,
@@ -1407,6 +1492,9 @@ export function WorkspaceBrowser({
               useSessions={useSessions}
               useSessionStatus={useSessionStatus}
               open={openSearchResult}
+              openAgentSession={openAgentSession}
+              setAgentSessionPinned={setAgentSessionPinned}
+              setAgentSessionArchived={setAgentSessionArchived}
               onUnarchive={onSessionUnarchive}
               workspaces={workspaces}
               archivedSessionIds={archivedSessionIds}
@@ -1429,6 +1517,9 @@ export function WorkspaceBrowser({
                 animationResetKey={`${groupBy}/${orderBy}/${archivedFilter}`}
                 useSessionStatus={useSessionStatus}
                 open={guardedOpen}
+                openAgentSession={openAgentSession}
+                setAgentSessionPinned={setAgentSessionPinned}
+                setAgentSessionArchived={setAgentSessionArchived}
                 onSessionRenameRequest={requestSessionRename}
                 renderSlot={renderSlot}
                 setSessionOrder={saveSessionOrder}
@@ -1457,6 +1548,9 @@ export function WorkspaceBrowser({
                 onLeaveArchivedOnly={leaveArchivedOnly}
                 startSession={startSession}
                 open={guardedOpen}
+                openAgentSession={openAgentSession}
+                setAgentSessionPinned={setAgentSessionPinned}
+                setAgentSessionArchived={setAgentSessionArchived}
                 insertWorkspaceBefore={insertWorkspaceBefore}
                 revealSessionId={revealSessionId}
                 onSessionRevealed={acknowledgeSessionReveal}

@@ -1,0 +1,52 @@
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write packages/agent-mesh/commands/README.md
+/:
+  en: 46ba6ba83324cac8
+  zh: ee230c27975b273a
+/deepseek-ai-dsh-agent-mesh-commands:
+  en: fafc6cd9db0a97b8
+  zh: b4e273f49801acb9
+/deepseek-ai-dsh-agent-mesh-commands/summary:
+  en: c249406b4bb4a608
+  zh: 8de97f79005dbefd
+/deepseek-ai-dsh-agent-mesh-commands/table-of-contents:
+  en: d152484eb41ac6b4
+  zh: e63f89151550aa5a
+/deepseek-ai-dsh-agent-mesh-commands/use-this-package:
+  en: 05fce1b2371d0fa8
+  zh: 78cc1328935cf419
+/deepseek-ai-dsh-agent-mesh-commands/use-this-package/command-reference:
+  en: fb59ceee26477baf
+  zh: 60a906987e67a1ab
+/deepseek-ai-dsh-agent-mesh-commands/use-this-package/mount-the-commands:
+  en: cfda41a743d1a2bb
+  zh: 60e257be13c5d179
+/deepseek-ai-dsh-agent-mesh-commands/understand-the-implementation:
+  en: 9fd245b339aa86af
+  zh: bf7f7da03a18a510
+/deepseek-ai-dsh-agent-mesh-commands/further-exploration:
+  en: 9d2df6165442f04c
+  zh: 29abbea50f023619
+/deepseek-ai-dsh-agent-mesh-commands/model-experience:
+  en: 215e7ba838619b7b
+  zh: a311da3843709f90
+/deepseek-ai-dsh-agent-mesh-commands/model-experience/human-command-output:
+  en: 4cf0021604af27a4
+  zh: 6550080e50d59d07
+/deepseek-ai-dsh-agent-mesh-commands/model-experience/human-command-output/what-the-model-sees:
+  en: c2464a3380083a28
+  zh: c201d7dcc0e66234
+/deepseek-ai-dsh-agent-mesh-commands/model-experience/human-command-output/token-effect:
+  en: 7678df69b84573b8
+  zh: b48c1a299e437496
+/deepseek-ai-dsh-agent-mesh-commands/model-experience/human-command-output/kv-cache-effect:
+  en: 876838948fc7b53a
+  zh: 160c8a4f740d63cd
+/deepseek-ai-dsh-agent-mesh-commands/known-limitations-and-deferred-work:
+  en: 2ca904cc8eb1112b
+  zh: ab079f368e1bbad6
+/deepseek-ai-dsh-agent-mesh-commands/known-limitations-and-deferred-work/dev-note:
+  en: e67f633dc6fe7773
+  zh: 3bb0c20c93f16f98

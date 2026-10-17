@@ -49,11 +49,13 @@ Default roots are scanned in this provider's rank order:
 |---|---|---|
 | 100 | `project-dsh` | `<projectRoot>/.dsh/skills` |
 | 200 | `project-agents` | `<projectRoot>/.agents/skills` |
+| 200 | `project-agents` | Native agent roots under cwd ancestors: `.codex/skills`, `.grok/skills`, `.pi/skills`, `.omp/skills`, `.github/skills`, `.claude/skills`, `.cursor/skills` |
 | 300 | `custom` | `Config.customSkillDirs` |
 | 400 | `user-dsh` | `<dshHome>/skills` |
 | 500 | `user-agents` | `<agentsHome>/skills` |
+| 500 | `user-agents` | `CODEX_HOME/skills`, `GROK_HOME/skills`, `PI_CODING_AGENT_DIR/skills`, the active OMP agent `skills` and `managed-skills` roots, and `~/.claude/skills` |
 
-The project root is the nearest ancestor containing `.git`; without one, the current cwd is used. The user DSH root skips its `.system` child. `includeDefaultRoots: false` omits the project and user rows plus the `$DSH_BUNDLED_SKILL_DIR` default so an isolated provider sees only its own configured roots; `bundledSkillDir` adds a bundled root at rank 600.
+Native agent roots follow each CLI's environment and profile selection, and project roots are checked from cwd toward the nearest ancestor containing `.git`. Without a `.git` ancestor, the current cwd is used. `nativeAgentHome` selects the home used when an agent has no home environment override. OMP uses `OMP_PROFILE` when set, including an empty or `default` value; it consults `PI_PROFILE` only when `OMP_PROFILE` is unset, and an invalid profile name fails provider mounting. The user DSH root skips its `.system` child. `includeDefaultRoots: false` omits the project and user rows plus the `$DSH_BUNDLED_SKILL_DIR` default so an isolated provider sees only its own configured roots; `bundledSkillDir` adds a bundled root at rank 600.
 
 ### Mount and configure
 
@@ -70,6 +72,7 @@ Load the plugin alongside the skill registry; it requires `ctx.skills`.
 | `includeDefaultRoots` | `true` | Include project and user roots around `customSkillDirs` |
 | `dshHome` | `$DSH_HOME` or `~/.dsh` | Harness config root; its `skills` subdirectory is scanned |
 | `agentsHome` | `$DSH_AGENTS_HOME` or `~/.agents` | Shared agent config root scanned for compatible skills |
+| `nativeAgentHome` | host home directory | Home used to resolve native Codex, Grok, Pi, OMP, and Claude skill roots without an agent-specific environment override |
 | `customSkillDirs` | `[]` | Additional local skill roots, after project roots and before user roots |
 | `watch` | `true` | Watch local roots and invalidate the provider when the catalog may have changed |
 | `bundledSkillDir` | — | Bundled skill root scanned at rank 600 when configured |

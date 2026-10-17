@@ -49,11 +49,13 @@ skill 可以是被扫描根目录顶层的目录 bundle `<name>/SKILL.md`，也�
 |---|---|---|
 | 100 | `project-dsh` | `<projectRoot>/.dsh/skills` |
 | 200 | `project-agents` | `<projectRoot>/.agents/skills` |
+| 200 | `project-agents` | cwd 祖先目录中的原生 agent 根：`.codex/skills`、`.grok/skills`、`.pi/skills`、`.omp/skills`、`.github/skills`、`.claude/skills`、`.cursor/skills` |
 | 300 | `custom` | `Config.customSkillDirs` |
 | 400 | `user-dsh` | `<dshHome>/skills` |
 | 500 | `user-agents` | `<agentsHome>/skills` |
+| 500 | `user-agents` | `CODEX_HOME/skills`、`GROK_HOME/skills`、`PI_CODING_AGENT_DIR/skills`、当前 OMP agent 的 `skills` 与 `managed-skills` 根目录，以及 `~/.claude/skills` |
 
-项目根目录是包含 `.git` 的最近祖先目录；如果不存在，则使用当前 cwd。用户 DSH 根目录会跳过其 `.system` 子目录。`includeDefaultRoots: false` 会省略项目根、用户根以及 `$DSH_BUNDLED_SKILL_DIR` 默认值，使隔离提供方只看到自身配置的根；`bundledSkillDir` 会按 rank 600 添加一个随包提供的根目录。
+原生 agent 根目录遵循各 CLI 的环境变量与 profile 选择；项目根从 cwd 向最近一个包含 `.git` 的祖先目录逐级检查。如果没有 `.git` 祖先，则使用当前 cwd。`nativeAgentHome` 指定 agent 未设置自身 home 环境变量时使用的 home。OMP 设置了 `OMP_PROFILE` 时始终以它为准，包括空值或 `default`；只有未设置时才读取 `PI_PROFILE`。无效的 OMP profile 名称会在提供方挂载阶段报错。用户 DSH 根目录会跳过其 `.system` 子目录。`includeDefaultRoots: false` 会省略项目根、用户根以及 `$DSH_BUNDLED_SKILL_DIR` 默认值，使隔离提供方只看到自身配置的根；`bundledSkillDir` 会按 rank 600 添加一个随包提供的根目录。
 
 ### 挂载与配置
 
@@ -70,6 +72,7 @@ skill 可以是被扫描根目录顶层的目录 bundle `<name>/SKILL.md`，也�
 | `includeDefaultRoots` | `true` | 在 `customSkillDirs` 周围包含项目根与用户根 |
 | `dshHome` | `$DSH_HOME` 或 `~/.dsh` | Harness 配置根目录；扫描其 `skills` 子目录 |
 | `agentsHome` | `$DSH_AGENTS_HOME` 或 `~/.agents` | 为兼容 skill 扫描的共享 agent 配置根目录 |
+| `nativeAgentHome` | 宿主 home 目录 | 未设置 agent 专属环境变量时，用于解析 Codex、Grok、Pi、OMP 与 Claude 原生 skill 根目录的 home |
 | `customSkillDirs` | `[]` | 其他本地 skill 根目录，位于项目根之后、用户根之前 |
 | `watch` | `true` | 监视本地根，并在目录可能变化时使提供方失效 |
 | `bundledSkillDir` | — | 配置后按 rank 600 扫描的随包提供的 skill 根目录 |

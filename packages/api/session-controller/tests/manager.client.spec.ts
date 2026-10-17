@@ -9,7 +9,8 @@ import type { SessionId } from '@deepseek-ai/dsh-api-remotes/client'
 import type { SubagentAddress } from '@deepseek-ai/dsh-subagent/client'
 import { SessionSeq } from '@deepseek-ai/dsh-session/types'
 import { RemoteError } from '@deepseek-ai/dsh-typert-protocol'
-import { ok, type RemoteMock } from '@deepseek-ai/dsh-remote-mock'
+import { ok, ok as remoteOk, type RemoteMock } from '@deepseek-ai/dsh-remote-mock'
+import type { RemoteResult } from '@deepseek-ai/dsh-typert-protocol'
 import {
   createClientTest, type ClientTestFixtures, webApp,
 } from '@deepseek-ai/dsh-client-test-runtime/src/assembly/index.ts'
@@ -17,6 +18,7 @@ import type {} from '@deepseek-ai/dsh-session-title/client'
 import { SessionManager } from '../src/client/sessions/manager.ts'
 import { ClientSessions } from '../src/client/sessions/service.ts'
 import type { SessionRemotes } from '../src/client/sessions/remotes.ts'
+import type { SessionListValue } from '../src/types.ts'
 import { entries, plainTurn } from './event-script.client.ts'
 import { FOLLOW, err, followScript, sessionWorld } from './remote/session.client.ts'
 
@@ -40,6 +42,15 @@ function summary(sessionId: SessionId, over: SummaryOver = {}) {
   return { agentAvailable: true, sessionId, updatedAt: 100, running: false, blank: false, ...over }
 }
 
+/** Host-list response default for tests that do not exercise the native-agent rows. */
+function sessionListResult(value: Pick<SessionListValue, 'items'> & Partial<Pick<SessionListValue, 'agentSessions' | 'agentSessionFailures'>>): RemoteResult<SessionListValue> {
+  return remoteOk({
+    ...value,
+    agentSessions: value.agentSessions ?? [],
+    agentSessionFailures: value.agentSessionFailures ?? [],
+  })
+}
+
 function makeManager(
   mock: RemoteMock,
   remote: ClientTestFixtures['remote'],
@@ -55,7 +66,7 @@ describe('SessionManager instances', () => {
     async (source, { mock, remote }) => {
       const manager = makeManager(mock, remote)
       onTestFinished(() => manager.dispose())
-      remote.session.list.mockResolvedValueOnce(ok({ items: [summary(S1, { blank: true })] }))
+      remote.session.list.mockResolvedValueOnce(sessionListResult({ items: [summary(S1, { blank: true })] }))
       await manager.refreshList()
       manager.handleSessionStatus(S1, true)
       manager.handleSessionStatus(S1, false)
@@ -63,7 +74,7 @@ describe('SessionManager instances', () => {
 
       if (source === 'event') manager.handleSessionRemoved(S1)
       else {
-        remote.session.list.mockResolvedValueOnce(ok({ items: [] }))
+        remote.session.list.mockResolvedValueOnce(sessionListResult({ items: [] }))
         await manager.refreshList()
       }
       expect(manager.getListSnapshot().items).toEqual([])
@@ -79,7 +90,7 @@ describe('SessionManager instances', () => {
     manager.handleSessionAdded(summary(S1, { blank: true }))
     const session = manager.get(S1)
     await session.prompt([{ type: 'text', text: 'first' }], 'queue')
-    remote.session.list.mockResolvedValue(ok({ items: [] }))
+    remote.session.list.mockResolvedValue(sessionListResult({ items: [] }))
 
     await manager.refreshList()
     expect(manager.getListSnapshot().items).toEqual([])
@@ -101,7 +112,7 @@ describe('SessionManager instances', () => {
     manager.handleSessionAdded(summary(S2, { blank: true }))
     manager.handleSessionStatus(S2, true)
     manager.handleSessionStatus(S2, false)
-    remote.session.list.mockResolvedValueOnce(ok({ items: [] }))
+    remote.session.list.mockResolvedValueOnce(sessionListResult({ items: [] }))
 
     await manager.refreshList()
     expect(manager.getListSnapshot().items).toEqual([])
@@ -120,7 +131,7 @@ describe('SessionManager instances', () => {
     remote.session.list.mockReturnValueOnce(response.promise)
     const refreshing = manager.refreshList()
     manager.handleSessionAdded(summary(S1, { blank: true }))
-    response.resolve(ok({ items: [] }))
+    response.resolve(sessionListResult({ items: [] }))
 
     await refreshing
 
@@ -152,7 +163,7 @@ describe('SessionManager instances', () => {
     manager.handleSessionAdded(summary(S1, { blank: false }))
     const session = manager.get(S1)
     expect(session.getSnapshot().blank).toBe(false)
-    remote.session.list.mockResolvedValueOnce(ok({ items: [summary(S1, { blank: true })] }))
+    remote.session.list.mockResolvedValueOnce(sessionListResult({ items: [summary(S1, { blank: true })] }))
 
     await manager.refreshList()
 
@@ -169,7 +180,7 @@ describe('SessionManager instances', () => {
     const session = manager.get(S1)
     await session.prompt([{ type: 'text', text: 'first' }], 'queue')
     expect(manager.getListSnapshot().items).toEqual([])
-    response.resolve(ok({ items: [summary(S1, { blank: true })] }))
+    response.resolve(sessionListResult({ items: [summary(S1, { blank: true })] }))
 
     await refreshing
 
@@ -184,7 +195,7 @@ describe('SessionManager instances', () => {
     remote.session.prompt.mockResolvedValueOnce(err(new RemoteError('session/agent-busy', 'busy', { reason: 'x' })))
     const session = manager.get(S1)
     expect((await session.prompt([{ type: 'text', text: 'first' }], 'queue')).ok).toBe(false)
-    remote.session.list.mockResolvedValueOnce(ok({ items: [summary(S1, { blank: true })] }))
+    remote.session.list.mockResolvedValueOnce(sessionListResult({ items: [summary(S1, { blank: true })] }))
     await manager.refreshList()
     await manager.drop(S1, session)
 
@@ -203,7 +214,7 @@ describe('SessionManager instances', () => {
       manager.handleSessionRemoved(S1)
       if (readdBeforeResponse) manager.handleSessionAdded(summary(S1, { blank: true }))
 
-      response.resolve(ok({ items: [summary(S1, { blank: true, running: true })] }))
+      response.resolve(sessionListResult({ items: [summary(S1, { blank: true, running: true })] }))
       await refreshing
       if (!readdBeforeResponse) {
         expect(manager.getListSnapshot().items).toEqual([])
@@ -226,7 +237,7 @@ describe('SessionManager instances', () => {
     manager.handleSessionStatus(S1, true)
     manager.handleSessionStatus(S1, false)
 
-    response.resolve(ok({ items: [summary(S1, { blank: true })] }))
+    response.resolve(sessionListResult({ items: [summary(S1, { blank: true })] }))
     await refreshing
 
     expect(manager.getListSnapshot().items[0]).toMatchObject({ blank: false, running: false })
@@ -319,7 +330,7 @@ describe('SessionManager instances', () => {
 
       if (source === 'addition') manager.handleSessionAdded(summary(S1, { blank: true }))
       else {
-        remote.session.list.mockResolvedValueOnce(ok({ items: [summary(S1, { blank: true })] }))
+        remote.session.list.mockResolvedValueOnce(sessionListResult({ items: [summary(S1, { blank: true })] }))
         await manager.refreshList()
       }
 
@@ -353,7 +364,7 @@ describe('SessionManager instances', () => {
   it('keeps accepted presentation across a later list refresh without a turn', async ({ mock, remote }) => {
     const manager = makeManager(mock, remote)
     onTestFinished(() => manager.dispose())
-    remote.session.list.mockResolvedValue(ok({ items: [summary(S1, { blank: true })] as never[] }))
+    remote.session.list.mockResolvedValue(sessionListResult({ items: [summary(S1, { blank: true })] as never[] }))
     await manager.refreshList()
     await manager.get(S1).prompt([{ type: 'text', text: 'first' }], 'queue')
     expect(manager.getListSnapshot().items[0]?.blank).toBe(false)
@@ -363,7 +374,7 @@ describe('SessionManager instances', () => {
   })
 
   it('lazily builds one resident instance per id and syncs the running bit from the list', async ({ mock, remote }) => {
-    remote.session.list.mockResolvedValue(ok({ items: [summary(S1, { running: true })] as never[] }))
+    remote.session.list.mockResolvedValue(sessionListResult({ items: [summary(S1, { running: true })] as never[] }))
     const manager = makeManager(mock, remote)
     await manager.refreshList()
     const session = manager.get(S1)
@@ -448,7 +459,7 @@ describe('list lifecycle', () => {
         key: 'sessionListMetadata', value: { blank: false, lastPromptAt: 1200 }, seq: 8 })
       manager.handleControlFrame({ type: 'projection', sessionId: S2,
         key: 'sessionListMetadata', value: { blank: true, lastPromptAt: null }, seq: 2 })
-      remote.session.list.mockResolvedValue(ok({ items: [
+      remote.session.list.mockResolvedValue(sessionListResult({ items: [
         summary(S1, { blank: true }), summary(S2),
       ] as never[] }))
       await manager.refreshList()
@@ -465,7 +476,7 @@ describe('list lifecycle', () => {
 
   it('fills missing durable links without overwriting established rows and projects first-send engagement', async ({ mock, remote }) => {
     const manager = makeManager(mock, remote)
-    remote.session.list.mockResolvedValueOnce(ok({ items: [
+    remote.session.list.mockResolvedValueOnce(sessionListResult({ items: [
       summary(S1, { blank: true }), summary(S2, { cwd: '/existing', blank: true }),
     ] }))
     try {
@@ -491,7 +502,7 @@ describe('list lifecycle', () => {
         sessionListMetadata: { blank: true, lastPromptAt: null },
       } },
     }
-    remote.session.list.mockResolvedValue(ok({ items: [stale] as never[] }))
+    remote.session.list.mockResolvedValue(sessionListResult({ items: [stale] as never[] }))
     const manager = makeManager(mock, remote)
     try {
       await manager.refreshList()
@@ -542,7 +553,7 @@ describe('list lifecycle', () => {
     const first = manager.refreshList()
     const second = manager.refreshList()
     expect(manager.getListSnapshot().state).toBe('loading')
-    gate.resolve(ok({ items: [summary(S2, { updatedAt: 200 }), summary(S1)] as never[] }))
+    gate.resolve(sessionListResult({ items: [summary(S2, { updatedAt: 200 }), summary(S1)] as never[] }))
     await Promise.all([first, second])
     expect(remote.session.list).toHaveBeenCalledOnce()
     const snapshot = manager.getListSnapshot()
@@ -556,11 +567,11 @@ describe('list lifecycle', () => {
     const manager = makeManager(mock, remote)
     const hydration = manager.refreshList()
     manager.handleSessionAdded(summary(S2, { blank: true }))
-    first.resolve(ok({ items: [summary(S1)] as never[] }))
+    first.resolve(sessionListResult({ items: [summary(S1)] as never[] }))
     await hydration
     expect(manager.getListSnapshot().items.map(item => item.sessionId)).toEqual([S2, S1])
 
-    remote.session.list.mockResolvedValue(ok({
+    remote.session.list.mockResolvedValue(sessionListResult({
       items: [summary(S1, { updatedAt: 900 }), summary(S2, { updatedAt: 800 })] as never[],
     }))
     await manager.refreshList()
@@ -568,7 +579,7 @@ describe('list lifecycle', () => {
   })
 
   it('advances list activity from the filtered Host notification', async ({ mock, remote }) => {
-    remote.session.list.mockResolvedValue(ok({ items: [summary(S1)] as never[] }))
+    remote.session.list.mockResolvedValue(sessionListResult({ items: [summary(S1)] as never[] }))
     const manager = makeManager(mock, remote)
     await manager.refreshList()
 
@@ -596,7 +607,7 @@ describe('list lifecycle', () => {
     await manager.refreshList()
     expect(manager.getListSnapshot()).toMatchObject({ state: 'error', phase: 'ready' })
     // And across an empty re-pull (empty-with-ready = truly no sessions).
-    remote.session.list.mockResolvedValue(ok({ items: [] as never[] }))
+    remote.session.list.mockResolvedValue(sessionListResult({ items: [] as never[] }))
     await manager.refreshList()
     expect(manager.getListSnapshot()).toMatchObject({ state: 'idle', phase: 'ready' })
     expect(manager.getListSnapshot().items).toEqual([])
@@ -618,7 +629,7 @@ describe('list lifecycle', () => {
     titleFrame('Newest', 4)
     titleFrame('Stale', 3)
     titleFrame('Equal', 4)
-    remote.session.list.mockResolvedValue(ok({
+    remote.session.list.mockResolvedValue(sessionListResult({
       items: [summary(S1), summary(S2, { updatedAt: 200 })] as never[],
     }))
     await manager.refreshList()
@@ -639,7 +650,7 @@ describe('list lifecycle', () => {
     manager.handleControlFrame({
       type: 'projection', sessionId: S2, key: 'title', value: 'Pushed', seq: 9,
     })
-    remote.session.list.mockResolvedValue(ok({
+    remote.session.list.mockResolvedValue(sessionListResult({
       items: [
         { ...summary(S1), projections: { kind: 'cached', asOfSeq: 4, values: { title: 'Cold cached' } } },
         { ...summary(S2, { updatedAt: 200 }), projections: { kind: 'cached', asOfSeq: 50, values: { title: 'List stale' } } },
@@ -655,7 +666,7 @@ describe('list lifecycle', () => {
   })
 
   it('discards the previous generation title before accepting its lower-seq replay', async ({ mock, remote }) => {
-    remote.session.list.mockResolvedValue(ok({ items: [summary(S1)] as never[] }))
+    remote.session.list.mockResolvedValue(sessionListResult({ items: [summary(S1)] as never[] }))
     const manager = makeManager(mock, remote)
     try {
       await manager.refreshList()
@@ -679,7 +690,7 @@ describe('list lifecycle', () => {
 
 describe('search', () => {
   it('returns bounded Host results and forwards the caller signal', async ({ mock, remote }) => {
-    remote.session.search.mockResolvedValue(ok({
+    remote.session.search.mockResolvedValue(remoteOk({
       items: [{ sessionId: S1, snippet: 'matching excerpt' }],
       hasMore: true,
     }))
@@ -787,7 +798,7 @@ describe('subagent catalogs', () => {
     }
     const ancestorAddress: SubagentAddress = { parentSessionId: S1, childSessionId: S2, mode: 'unknown' }
     mock.load(sessionWorld)
-    remote.session.list.mockResolvedValueOnce(ok({ items: [
+    remote.session.list.mockResolvedValueOnce(sessionListResult({ items: [
       summary(S1),
       summary(S2, { parentSessionId: S1, origin: 'subagent' }),
       summary(grandchild, { parentSessionId: S2, origin: 'subagent' }),
@@ -816,7 +827,7 @@ describe('subagent catalogs', () => {
   })
 
   it('keeps a catalog-discovered child address across identity resolution and status frames', async ({ mock, remote, start }) => {
-    remote.session.list.mockImplementation(() => Promise.resolve(ok({ items: [
+    remote.session.list.mockImplementation(() => Promise.resolve(sessionListResult({ items: [
       summary(S1),
       summary(S2, { parentSessionId: S1, origin: 'subagent' }),
     ] as never[] })))
@@ -1174,7 +1185,7 @@ describe('remaining branches', () => {
   it('refreshList pushes running bits down to already-instantiated sessions', async ({ mock, remote }) => {
     const manager = makeManager(mock, remote)
     const session = manager.get(S1)
-    remote.session.list.mockResolvedValue(ok({ items: [summary(S1, { running: true })] as never[] }))
+    remote.session.list.mockResolvedValue(sessionListResult({ items: [summary(S1, { running: true })] as never[] }))
     await manager.refreshList()
     expect(session.getSnapshot().running).toBe(true)
   })
@@ -1318,7 +1329,7 @@ describe('remaining branches', () => {
   })
 
   it('keeps list-entry identity for unchanged rows across an unrelated list change', async ({ mock, remote }) => {
-    remote.session.list.mockResolvedValue(ok({ items: [summary(S1), summary(S2, { updatedAt: 200 })] as never[] }))
+    remote.session.list.mockResolvedValue(sessionListResult({ items: [summary(S1), summary(S2, { updatedAt: 200 })] as never[] }))
     const manager = makeManager(mock, remote)
     await manager.refreshList()
     const before = manager.getListSnapshot()
@@ -1335,29 +1346,29 @@ describe('remaining branches', () => {
 
   it('reuses refreshed rows and evicts missing rows independently of Client instances', async ({ mock, remote }) => {
     const manager = makeManager(mock, remote)
-    remote.session.list.mockResolvedValue(ok({ items: [summary(S1), summary(S2)] as never[] }))
+    remote.session.list.mockResolvedValue(sessionListResult({ items: [summary(S1), summary(S2)] as never[] }))
     await manager.refreshList()
     const first = manager.getListSnapshot()
 
-    remote.session.list.mockResolvedValue(ok({ items: [summary(S1), summary(S2)] as never[] }))
+    remote.session.list.mockResolvedValue(sessionListResult({ items: [summary(S1), summary(S2)] as never[] }))
     await manager.refreshList()
     expect(manager.getListSnapshot().items).toBe(first.items)
 
-    remote.session.list.mockResolvedValue(ok({ items: [summary(S1)] as never[] }))
+    remote.session.list.mockResolvedValue(sessionListResult({ items: [summary(S1)] as never[] }))
     await manager.refreshList()
     expect(manager.getListSnapshot().items).toEqual([first.items[0]])
     expect(manager.getListSnapshot().items[0]).toBe(first.items[0])
 
-    remote.session.list.mockResolvedValue(ok({ items: [summary(S1), summary(S2)] as never[] }))
+    remote.session.list.mockResolvedValue(sessionListResult({ items: [summary(S1), summary(S2)] as never[] }))
     await manager.refreshList()
     expect(manager.getListSnapshot().items[0]).toBe(first.items[0])
     expect(manager.getListSnapshot().items[1]).not.toBe(first.items[1])
 
-    remote.session.list.mockResolvedValue(ok({ items: [] as never[] }))
+    remote.session.list.mockResolvedValue(sessionListResult({ items: [] as never[] }))
     await manager.refreshList()
     expect(manager.getListSnapshot().items).toEqual([])
 
-    remote.session.list.mockResolvedValue(ok({ items: [summary(S1)] as never[] }))
+    remote.session.list.mockResolvedValue(sessionListResult({ items: [summary(S1)] as never[] }))
     await manager.refreshList()
     expect(manager.getListSnapshot().items[0]).not.toBe(first.items[0])
   })
@@ -1366,7 +1377,7 @@ describe('remaining branches', () => {
     const count = 1_000
     const summaries = Array.from({ length: count }, (_, i) => summary(`list-${i}` as SessionId))
     const manager = makeManager(mock, remote)
-    remote.session.list.mockResolvedValue(ok({ items: summaries as never[] }))
+    remote.session.list.mockResolvedValue(sessionListResult({ items: summaries }))
     await manager.refreshList()
     const first = manager.getListSnapshot()
     let reads = 0
@@ -1377,7 +1388,7 @@ describe('remaining branches', () => {
     }
     for (let refresh = 0; refresh < 2; refresh++) {
       reads = 0
-      remote.session.list.mockResolvedValue(ok({ items: summaries.map(item => ({ ...item })) as never[] }))
+      remote.session.list.mockResolvedValue(sessionListResult({ items: summaries.map(item => ({ ...item })) }))
       await manager.refreshList()
       const snapshot = manager.getListSnapshot()
       expect(snapshot.items).toBe(first.items)
@@ -1411,16 +1422,16 @@ describe('connected generation', () => {
     manager.handleConnected()
     const newPull = manager.refreshList()
     try {
-      oldList.resolve(ok({ items: [] }))
+      oldList.resolve(sessionListResult({ items: [] }))
       await oldPull
       expect(manager.getListSnapshot().state).toBe('loading')
-      newList.resolve(ok({ items: [summary(S1, { blank: true })] }))
+      newList.resolve(sessionListResult({ items: [summary(S1, { blank: true })] }))
       await newPull
 
       expect(manager.getListSnapshot().items[0]?.blank).toBe(false)
     } finally {
-      oldList.resolve(ok({ items: [] }))
-      newList.resolve(ok({ items: [] }))
+      oldList.resolve(sessionListResult({ items: [] }))
+      newList.resolve(sessionListResult({ items: [] }))
       await Promise.all([oldPull, newPull])
     }
   })
@@ -1433,10 +1444,10 @@ describe('connected generation', () => {
       let calls = 0
       remote.session.list.mockImplementation(() => calls++ === 0 ? oldList.promise : newList.promise)
       const manager = makeManager(mock, remote)
-      const oldResult = ok({ items: [{ ...summary(S1), projections: {
+      const oldResult = sessionListResult({ items: [{ ...summary(S1), projections: {
         kind: 'cached', asOfSeq: 20, values: { title: 'Unpersisted title' },
       } }] as never[] })
-      const newResult = ok({ items: [{ ...summary(S1), projections: {
+      const newResult = sessionListResult({ items: [{ ...summary(S1), projections: {
         kind: 'cached', asOfSeq: 1, values: { title: 'Durable title' },
       } }] as never[] })
       const oldPull = manager.refreshList()
@@ -1482,12 +1493,12 @@ describe('connected generation', () => {
       await oldPull
       expect(manager.getListSnapshot()).toMatchObject({ state: 'loading', error: null })
       expect(manager.refreshList()).toBe(newPull)
-      newList.resolve(ok({ items: [summary(S1)] as never[] }))
+      newList.resolve(sessionListResult({ items: [summary(S1)] as never[] }))
       await newPull
       expect(manager.getListSnapshot()).toMatchObject({ state: 'idle', error: null })
     } finally {
-      oldList.resolve(ok({ items: [] }))
-      newList.resolve(ok({ items: [] }))
+      oldList.resolve(sessionListResult({ items: [] }))
+      newList.resolve(sessionListResult({ items: [] }))
       await Promise.all([oldPull, newPull])
       await manager.dispose()
     }
@@ -1495,7 +1506,7 @@ describe('connected generation', () => {
 
   it.for([false, true])('refreshes an unselected cached catalog after offline activity changes: %s', async (running, { mock, remote }) => {
     let hostRunning = !running
-    remote.session.list.mockImplementation(() => Promise.resolve(ok({ items: [
+    remote.session.list.mockImplementation(() => Promise.resolve(sessionListResult({ items: [
       summary(S1),
       summary(S2, { parentSessionId: S1, origin: 'subagent', running: hostRunning }),
     ] as never[] })))
@@ -1568,7 +1579,7 @@ describe('connected generation', () => {
       childSessionId: S2,
       mode: 'continuable' as const,
     }
-    remote.session.list.mockImplementation(() => Promise.resolve(ok({ items: [summary(S1)] as never[] })))
+    remote.session.list.mockImplementation(() => Promise.resolve(sessionListResult({ items: [summary(S1)] as never[] })))
     const parent = Promise.withResolvers<Awaited<ReturnType<typeof remote.session.projections>>>()
     remote.session.projections.mockImplementation(() => parent.promise)
     const manager = makeManager(mock, remote)
@@ -1605,7 +1616,7 @@ describe('running facts without UI reminders', () => {
     const refreshing = manager.refreshList()
     manager.handleSessionStatus(S1, true)
     manager.handleSessionStatus(S1, false)
-    response.resolve(ok({ items: [summary(S1)] }))
+    response.resolve(sessionListResult({ items: [summary(S1)] }))
     await refreshing
     const entry = manager.getListSnapshot().items.find(item => item.sessionId === S1)
     expect(entry).toMatchObject({ running: false })

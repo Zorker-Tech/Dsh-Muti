@@ -420,6 +420,12 @@
     - id: ui-agent-preset
       name: '@deepseek-ai/dsh-client-ui-agent-preset'
 
+    # The Agent mesh page: the registered external coding agents over the Host
+    # mesh, one agent's own sessions and transcripts, the Session-to-agent
+    # binding, dispatched runs, and credential state.
+    - id: ui-agent-mesh
+      name: '@deepseek-ai/dsh-client-ui-agent-mesh'
+
     - id: ui-settings-session-log
       name: '@deepseek-ai/dsh-client-ui-settings-session-log'
 

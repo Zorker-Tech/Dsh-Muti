@@ -1,0 +1,37 @@
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write packages/agent-mesh/controller/README.md
+/:
+  en: 61d0d12ea97c9a89
+  zh: a17c54a2adfd0aa4
+/deepseek-ai-dsh-agent-mesh-controller:
+  en: eb06236690722a4f
+  zh: c22a7623948efb08
+/deepseek-ai-dsh-agent-mesh-controller/summary:
+  en: 0d6e7af4126f926f
+  zh: 4e32029dad4d61e3
+/deepseek-ai-dsh-agent-mesh-controller/table-of-contents:
+  en: 4d5ec89f7a524c33
+  zh: 09388d293f9be9cb
+/deepseek-ai-dsh-agent-mesh-controller/use-this-package:
+  en: 49f54ed8419dc888
+  zh: 2dc30e193826f560
+/deepseek-ai-dsh-agent-mesh-controller/understand-the-implementation:
+  en: e12915895806d50f
+  zh: 6739f27404c44038
+/deepseek-ai-dsh-agent-mesh-controller/further-exploration:
+  en: 7e4ad1220ccbae1e
+  zh: 671ec26901c19a8f
+/deepseek-ai-dsh-agent-mesh-controller/model-experience:
+  en: 950cdda51e6afb6d
+  zh: 74369e42922176ea
+/deepseek-ai-dsh-agent-mesh-controller/model-experience/kv-cache-effect:
+  en: 78ea7ba66977810f
+  zh: 924d3255595b31f4
+/deepseek-ai-dsh-agent-mesh-controller/known-limitations-and-deferred-work:
+  en: 511b23a1af156ef3
+  zh: e8bae16d4045f676
+/deepseek-ai-dsh-agent-mesh-controller/known-limitations-and-deferred-work/dev-note:
+  en: 9c81dbb5cae6f111
+  zh: 908d186fed486513

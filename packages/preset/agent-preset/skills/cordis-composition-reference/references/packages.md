@@ -10,6 +10,20 @@ Every package below exports a Cordis plugin that a bundle patch can name in a Lo
 |---|---|---|
 | `@deepseek-ai/dsh-acp` | yes | Automation-only Agent Client Protocol server for driving DeepSeek Harness agents over JSON-RPC stdio |
 
+## agent-mesh
+
+| Package | Config | Description |
+|---|---|---|
+| `@deepseek-ai/dsh-agent-codex` | yes | The native OpenAI Codex integration for the DeepSeek Harness agent mesh: reads Codex's rollout store and credentials, exposes configured Responses routes, and dispatches codex exec runs |
+| `@deepseek-ai/dsh-agent-grok` | yes | The native Grok Build integration for the DeepSeek Harness agent mesh: reads Grok's session store and credentials, exposes configured model routes, and dispatches headless `grok -p` runs |
+| `@deepseek-ai/dsh-agent-mesh` | no | The external coding-agent registry and session-to-agent binding for the DeepSeek Harness |
+| `@deepseek-ai/dsh-agent-mesh-collaboration` | yes | Worktree-isolated collaborative multi-agent work: one authoritative plan, one todo board, cross-agent progress sampling, and predicted same-file, same-hunk, feature-area, and base-commit conflicts |
+| `@deepseek-ai/dsh-agent-mesh-commands` | no | Human-facing commands for inspecting the native external-agent mesh |
+| `@deepseek-ai/dsh-agent-mesh-controller` | no | The agent mesh's Remote API: agents, their sessions and transcripts, credentials, and session bindings for the Web Client |
+| `@deepseek-ai/dsh-agent-mesh-tools` | yes | Model-facing tools over the external coding-agent mesh |
+| `@deepseek-ai/dsh-agent-omp` | yes | The native oh-my-pi (omp) integration for the DeepSeek Harness agent mesh: reads omp's session store and credentials, exposes configured model routes, and dispatches omp --mode rpc-ui runs |
+| `@deepseek-ai/dsh-agent-pi` | yes | The native Pi (@earendil-works/pi-coding-agent) integration for the DeepSeek Harness agent mesh: reads Pi's session store and credentials, exposes configured model routes, and dispatches `pi --mode json` runs |
+
 ## api
 
 | Package | Config | Description |
@@ -67,6 +81,7 @@ Every package below exports a Cordis plugin that a bundle patch can name in a Lo
 | `@deepseek-ai/dsh-client-product-analytics` | yes | Desktop product event collection and authenticated Host reporting |
 | `@deepseek-ai/dsh-client-resources` | no | Unified client resource model: protocol-registered providers turn URL addresses into live values, consumed through the useResource global standard hook |
 | `@deepseek-ai/dsh-client-shortcuts` | yes | Application keyboard command registry and physical-key routing |
+| `@deepseek-ai/dsh-client-ui-agent-mesh` | no | Agent mesh pages for external agents and shared collaboration plans, todos, worktrees, and advisory conflicts |
 | `@deepseek-ai/dsh-client-ui-agent-preset` | no | Agent-preset surfaces: the default for later sessions, this session's seat, and the composition editor |
 | `@deepseek-ai/dsh-client-ui-approval` | no | Approval composer takeover over the scoped Remote Event waterfall |
 | `@deepseek-ai/dsh-client-ui-attachment` | no | Dynamic attachment presentation plugin for conversation input, message-image, and trajectory image slots |

@@ -7,9 +7,9 @@
 
 已发布插件向 `ctx.tools` 提供的所有面向模型的工具：模型通过系统提示词组装获得的 `name`、`description` 和 JSON Schema `parameters`。本目录是[子系统页面](subsystems/core.zh.md)（类型及每页生成的 `cordis-surface` 接线区域）的补充；本页列出的是向 agent（智能体）提供的*工具*。
 
-英文源文件由系统**生成**，并通过 `pnpm run verify-tool-catalog`（`doc-sync`（文档同步门禁）的一部分）验证新鲜度；本中文文件作为经评审对侧通过双语配对维护。与 Cordis 目录（纯源码 AST 处理）不同，英文生成器会在真实上下文中**启动**每个工具插件并读取 `ctx.tools.schemas()`，因为工具 schema 无法通过静态分析完全确定，例如运行时展开的枚举、拼接的描述、由配置决定的名称以及使用原始 JSON Schema 的 MCP 工具。完整性守卫会 glob 匹配 `packages/*/tool-*`；如果生成器的启动 manifest（元数据清单）遗漏任何包，检查就会失败，因此新工具不会在无人察觉的情况下缺少文档。
+英文源文件由系统**生成**，并通过 `pnpm run verify-tool-catalog`（`doc-sync`（文档同步门禁）的一部分）验证新鲜度；本中文文件作为经评审对侧通过双语配对维护。与 Cordis 目录（纯源码 AST 处理）不同，英文生成器会在真实上下文中**启动**每个工具插件并读取 `ctx.tools.schemas()`，因为工具 schema 无法通过静态分析完全确定，例如运行时展开的枚举、拼接的描述、由配置决定的名称以及使用原始 JSON Schema 的 MCP 工具。完整性守卫会扫描常规 `tool-*` 包和 agent-mesh 工具提供包；如果启动清单遗漏任何包，检查就会失败，因此新工具不会在无人察觉的情况下缺少文档。
 
-范围：`packages/*/tool-*` 下已发布的产品工具，每个工具均使用其**默认**配置启动；但如果某个 Config 字段是**必填项**且没有默认值，生成器就必须作出选择，对应包的说明会记录本页展示的是哪个分支。注册的工具**名称**可以是加载时配置，例如 `tool-subagent` 的 `toolName`，因此部署可能以不同名称或额外名称提供某个包；如果存在随产品发布的别名，对应包的说明会予以记录。`examples/` 中的演示工具（例如 `echo`）不在范围内，这与 Cordis 目录仅涵盖包的范围一致。
+范围：常规 `packages/*/tool-*` 包以及 agent-mesh 工具和协作提供包中的已发布产品工具。每个工具均使用其**默认**配置启动；但如果某个 Config 字段是**必填项**且没有默认值，生成器就必须作出选择，对应包的说明会记录本页展示的是哪个分支。注册的工具**名称**可以是加载时配置，例如 `tool-subagent` 的 `toolName`，因此部署可能以不同名称或额外名称提供某个包；如果存在随产品发布的别名，对应包的说明会予以记录。`examples/` 中的演示工具（例如 `echo`）不在范围内，这与 Cordis 目录仅涵盖包的范围一致。
 
 <a id="tool-package-map"></a>
 
@@ -46,6 +46,8 @@
 | `@deepseek-ai/dsh-tool-subagent-control` | `interrupt_agent`、`list_agents`、`send_message` | `ctx.tools`、`ctx.subagents`、`ctx.agents and ctx.sessionProjections (list_agents only)` | `tool/call`、`tool/result`、`child session events through ctx.subagents` | - | 这些是用于发现、中断托管 subagent 和向本地子代理发送消息的全局命名工具：绑定提供方的 `tool-subagent` 实例注册不同的委派工具；本包注册一次 `send_message` 和 `interrupt_agent`，另由 `list_agents` 通过单独加载的 `/list-agents` 插件提供，其目录行使用 sessionProjections 和实时 Agent 注册表。 |
 | `@deepseek-ai/dsh-tool-jobs` | `job_kill`、`job_list`、`job_output` | `ctx.tools`、`ctx.jobs`、`ctx.systemPrompt` | `tool/call`、`tool/result`、`user/message via agent.inject() for background completion notices` | - | 与任务种类无关的后台任务控制器：后台 bash 命令与 PTY 发送 都通过相同的 3 个工具读取、列出和终止。加载该插件会挂接控制器，从而启用生产方的 `ctx.jobs.start()`。 |
 | `@deepseek-ai/dsh-experimental-tool-agent-team` | `interrupt_agent`、`list_agents`、`send_message`、`spawn_teammate`、`team_task_create`、`team_task_get`、`team_task_list`、`team_task_update`、`wait_agent` | `ctx.tools`、`ctx.systemPrompt`、`ctx.agentTeams`、`an exact live Team member Agent` | `tool/call`、`team/member`、`team/task`、`agent/inbox/spliced`、`user/message on inbox claim`、`tool/result` | - | 这 9 个工具限定于隐式 Team Lead 与持久 teammate 作用域。随产品发布的 dsh-base bundle 默认禁用该包；文档中的 Agent Teams profile patch 会启用它，并禁用旧 continuable child 的同名控制工具。 |
+| `@deepseek-ai/dsh-agent-mesh-collaboration` | `mesh_collaboration_start`、`mesh_collaborations`、`mesh_plan_advance`、`mesh_plan_set`、`mesh_task_dispatch`、`mesh_todos_get`、`mesh_todos_observe`、`mesh_todos_set`、`mesh_worktree_conflicts`、`mesh_worktree_create`、`mesh_worktree_integrated`、`mesh_worktree_remove`、`mesh_worktrees` | `ctx.tools`、`ctx.meshCollaboration` | `tool/call`、agent-mesh 协作表、`tool/result` | - | 协作计划、任务看板和 worktree 记录存放在 mesh 协作存储域中，不是会话事件。 |
+| `@deepseek-ai/dsh-agent-mesh-tools` | `mesh_agents`、`mesh_capabilities`、`mesh_mcp_connect`、`mesh_mcp_disconnect`、`mesh_run`、`mesh_run_cancel`、`mesh_runs`、`mesh_sessions`、`mesh_tasks`、`mesh_transcript` | `ctx.tools`、`ctx.agentMesh` | `tool/call`、agent-mesh 运行记录、`tool/result` | - | mesh 工具通过 adapter 读取每个 agent。能力清单报告原生配置声明；MCP 连接会在首次使用经 DSH 审批后启动服务端，并将工具限定到调用方 Agent；运行派发和取消使用已注册传输，并报告其声明的能力。 |
 | `@deepseek-ai/dsh-tool-todo` | `todo_write` | `ctx.tools`、`owning Agent session` | `tool/call`、`todo/write`、`tool/result` | - | todo_write 是会话所有的状态；UI 将最新的 todo/write 事件渲染为检查清单。`allowParallelInProgress` 是没有默认值的必填项，因此本目录明确选择 `true`，对应描述允许同时存在多个 `in_progress` 项。选择 `false` 的部署会获得同一工具，但描述会要求只能有 1 个活动任务。 |
 | `@deepseek-ai/dsh-tool-working-directory` | `working_directory` | `ctx.tools`, `ctx.workingDirectory` | `tool/call`, `working-directory/change`, `user context for directory changes`, `tool/result` | - | 读取或改变调用方 Session 的目录。已有 shell 和进程保留自己的目录；原始元数据和权限根目录保持不变。 |
 | `@deepseek-ai/dsh-experimental-tool-worktree` | `create_worktree` | `ctx.tools`, `ctx.worktrees`, `a calling Agent` | `tool/call`, `Git branch and checkout`, `working-directory/change`, `tool/result` | - | 仅通过显式实验组合加载。在现有写权限下从固定的本地提交创建新分支与检出目录，再改变 Session 工作目录。离开时保留分支与检出目录。 |
@@ -2564,6 +2566,796 @@ lsp 工具将提供方选择和语言服务器子进程置于 ctx.lsp 之后，�
 
 这 10 个工具限定于隐式 Team Lead 与持久 teammate 作用域。随产品发布的 dsh-base bundle 默认禁用该包；文档中的 Agent Teams profile patch 会启用它，并禁用旧 continuable child 的同名控制工具。
 
+<a id="deepseek-aidsh-agent-mesh-collaboration"></a>
+
+## `@deepseek-ai/dsh-agent-mesh-collaboration`
+
+### `mesh_collaboration_start`
+
+创建一项协作，其中包含一个权威计划、一个共享 todo 看板，以及可选的 agent 初始任务。采用 worktree 隔离的任务会在派发时获得自己的 git worktree。
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "Short human title."
+    },
+    "objective": {
+      "type": "string",
+      "description": "What the collaboration as a whole must achieve."
+    },
+    "repoRoot": {
+      "type": "string",
+      "description": "Absolute path of the repository the tasks work in."
+    },
+    "tasks": {
+      "type": "array",
+      "description": "Initial tasks. A seed may name a sibling by position (\"task-1\") or by id in dependsOn.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "instruction": {
+            "type": "string"
+          },
+          "assignee": {
+            "type": "string"
+          },
+          "dependsOn": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "isolation": {
+            "type": "string",
+            "enum": [
+              "worktree",
+              "shared-cwd"
+            ]
+          }
+        },
+        "required": [
+          "title",
+          "instruction",
+          "assignee"
+        ]
+      }
+    }
+  },
+  "required": [
+    "title",
+    "objective",
+    "repoRoot"
+  ]
+}
+```
+
+来源： [`packages/agent-mesh/collaboration/src/tools.ts`](../packages/agent-mesh/collaboration/src/tools.ts)
+
+### `mesh_collaborations`
+
+列出协作及其计划、看板计数、任务和 worktree，或按 id 读取一项协作。
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "collaborationId": {
+      "type": "string",
+      "description": "Read one collaboration instead of listing every one."
+    }
+  }
+}
+```
+
+来源： [`packages/agent-mesh/collaboration/src/tools.ts`](../packages/agent-mesh/collaboration/src/tools.ts)
+
+### `mesh_plan_advance`
+
+将计划推进到指定阶段，并把之前的阶段标记为已完成。若更早阶段仍未完成，则拒绝操作。
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "collaborationId": {
+      "type": "string",
+      "description": "Collaboration to change."
+    },
+    "phaseId": {
+      "type": "string",
+      "description": "Phase to activate."
+    }
+  },
+  "required": [
+    "collaborationId",
+    "phaseId"
+  ]
+}
+```
+
+来源： [`packages/agent-mesh/collaboration/src/tools.ts`](../packages/agent-mesh/collaboration/src/tools.ts)
+
+### `mesh_plan_set`
+
+替换协作计划字段。每次派发的运行都会收到该计划作为权威输入。
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "collaborationId": {
+      "type": "string",
+      "description": "Collaboration to change."
+    },
+    "objective": {
+      "type": "string",
+      "description": "The objective; it replaces the current one."
+    },
+    "phases": {
+      "type": "array",
+      "description": "The complete new phase list, in order.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "todo",
+              "active",
+              "done"
+            ]
+          },
+          "exitCriteria": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "status"
+        ]
+      }
+    },
+    "activePhaseId": {
+      "type": "string",
+      "description": "Phase to mark active; it must exist in the resulting list."
+    },
+    "decisions": {
+      "type": "array",
+      "description": "The complete decisions log.",
+      "items": {
+        "type": "string"
+      }
+    },
+    "mode": {
+      "type": "string",
+      "description": "Whether the plan is injected into dispatched prompts or only observed.",
+      "enum": [
+        "inject",
+        "observe"
+      ]
+    }
+  },
+  "required": [
+    "collaborationId",
+    "objective"
+  ]
+}
+```
+
+来源： [`packages/agent-mesh/collaboration/src/tools.ts`](../packages/agent-mesh/collaboration/src/tools.ts)
+
+### `mesh_task_dispatch`
+
+派发一项协作任务：创建或复用其 worktree，将计划和看板上下文连同任务说明交给 agent，并把运行记录到该任务。任务已在运行或已成功，或依赖任务尚未完成时，会拒绝派发。
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "collaborationId": {
+      "type": "string",
+      "description": "Collaboration owning the task."
+    },
+    "taskId": {
+      "type": "string",
+      "description": "Task to dispatch, as reported by mesh_collaborations."
+    },
+    "baseRef": {
+      "type": "string",
+      "description": "Commit-ish a newly created worktree branches from."
+    },
+    "timeoutMs": {
+      "type": "integer",
+      "description": "Wall-clock budget handed to the agent."
+    }
+  },
+  "required": [
+    "collaborationId",
+    "taskId"
+  ]
+}
+```
+
+来源： [`packages/agent-mesh/collaboration/src/tools.ts`](../packages/agent-mesh/collaboration/src/tools.ts)
+
+### `mesh_todos_get`
+
+读取协作的共享 todo 看板及其版本号。
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "collaborationId": {
+      "type": "string",
+      "description": "Collaboration to read."
+    }
+  },
+  "required": [
+    "collaborationId"
+  ]
+}
+```
+
+来源： [`packages/agent-mesh/collaboration/src/tools.ts`](../packages/agent-mesh/collaboration/src/tools.ts)
+
+### `mesh_todos_observe`
+
+读取某个 agent 自己的会话 todo 列表并合并到共享看板。不会覆盖 agent 编写的条目，也不会重新打开看板已标记为完成的条目。
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "collaborationId": {
+      "type": "string",
+      "description": "Collaboration whose board is folded into."
+    },
+    "agentId": {
+      "type": "string",
+      "description": "Agent whose own store is read, as reported by mesh_agents."
+    },
+    "sessionId": {
+      "type": "string",
+      "description": "The agent's native session id; the newest session is read when omitted."
+    }
+  },
+  "required": [
+    "collaborationId",
+    "agentId"
+  ]
+}
+```
+
+来源： [`packages/agent-mesh/collaboration/src/tools.ts`](../packages/agent-mesh/collaboration/src/tools.ts)
+
+### `mesh_todos_set`
+
+替换协作的共享 todo 看板。传入之前读取的 expectedRevision；若其他写入方已修改看板，操作会被拒绝而不会覆盖其更改。
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "collaborationId": {
+      "type": "string",
+      "description": "Collaboration whose board is replaced."
+    },
+    "todos": {
+      "type": "array",
+      "description": "The complete new board.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "in_progress",
+              "completed",
+              "blocked",
+              "cancelled"
+            ]
+          },
+          "owner": {
+            "type": "string"
+          },
+          "blockedBy": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "content",
+          "status"
+        ]
+      }
+    },
+    "expectedRevision": {
+      "type": "integer",
+      "description": "Revision the caller read; the write is refused when the board moved on."
+    }
+  },
+  "required": [
+    "collaborationId",
+    "todos"
+  ]
+}
+```
+
+来源： [`packages/agent-mesh/collaboration/src/tools.ts`](../packages/agent-mesh/collaboration/src/tools.ts)
+
+### `mesh_worktree_conflicts`
+
+比较同一仓库当前的 worktree，报告同文件及同代码块改动、同一已配置功能区内的改动，以及不同基提交。结果属于启发式提示，不会阻止独立派发。
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "repoRoot": {
+      "type": "string",
+      "description": "Repository to analyse."
+    }
+  },
+  "required": [
+    "repoRoot"
+  ]
+}
+```
+
+来源： [`packages/agent-mesh/collaboration/src/tools.ts`](../packages/agent-mesh/collaboration/src/tools.ts)
+
+### `mesh_worktree_create`
+
+在仓库的 mesh 管理目录中创建新分支和 git worktree，或复用已为该 agent 预留且干净、空闲的 worktree。
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "agentId": {
+      "type": "string",
+      "description": "Agent the worktree is reserved for."
+    },
+    "repoRoot": {
+      "type": "string",
+      "description": "Absolute path inside the repository."
+    },
+    "baseRef": {
+      "type": "string",
+      "description": "Commit-ish to branch from; the repository HEAD when omitted."
+    },
+    "label": {
+      "type": "string",
+      "description": "Label used in the branch name and the worktree directory."
+    },
+    "collaborationId": {
+      "type": "string",
+      "description": "Collaboration the worktree serves."
+    },
+    "reuse": {
+      "type": "boolean",
+      "description": "Reuse a clean idle worktree reserved for the same agent."
+    }
+  },
+  "required": [
+    "agentId",
+    "repoRoot"
+  ]
+}
+```
+
+来源： [`packages/agent-mesh/collaboration/src/tools.ts`](../packages/agent-mesh/collaboration/src/tools.ts)
+
+### `mesh_worktree_integrated`
+
+将 worktree 标记为已集成，使其不再显示为待处理工作；也可通过 merged=false 将其重新标记为待处理。
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "worktreeId": {
+      "type": "string",
+      "description": "Worktree to mark."
+    },
+    "merged": {
+      "type": "boolean",
+      "description": "false marks it outstanding again; defaults to true."
+    }
+  },
+  "required": [
+    "worktreeId"
+  ]
+}
+```
+
+来源： [`packages/agent-mesh/collaboration/src/tools.ts`](../packages/agent-mesh/collaboration/src/tools.ts)
+
+### `mesh_worktree_remove`
+
+移除由 mesh 管理的 git worktree。危险操作：存在未提交更改或未合并提交时，除非 force 为 true，否则会拒绝移除；强制移除会永久丢弃这些工作。
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "worktreeId": {
+      "type": "string",
+      "description": "Worktree to remove."
+    },
+    "force": {
+      "type": "boolean",
+      "description": "Discard uncommitted and unmerged work. Only pass this after a human approved the loss."
+    }
+  },
+  "required": [
+    "worktreeId"
+  ]
+}
+```
+
+来源： [`packages/agent-mesh/collaboration/src/tools.ts`](../packages/agent-mesh/collaboration/src/tools.ts)
+
+### `mesh_worktrees`
+
+列出由 mesh 管理的 git worktree，并附带实时进度采样：变更文件、HEAD 和工作区是否有未提交更改。
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "repoRoot": {
+      "type": "string",
+      "description": "Restrict to worktrees of one repository."
+    }
+  }
+}
+```
+
+来源： [`packages/agent-mesh/collaboration/src/tools.ts`](../packages/agent-mesh/collaboration/src/tools.ts)
+
+协作计划、任务看板和 worktree 记录存放在 mesh 协作存储域中，不是会话事件。
+
+<a id="deepseek-aidsh-agent-mesh-tools"></a>
+
+## `@deepseek-ai/dsh-agent-mesh-tools`
+
+### `mesh_agents`
+
+列出 mesh 可读取的外部 coding agent（Codex、Grok Build、Pi、OMP）、检测状态及其声明的能力。
+
+```json
+{
+  "type": "object",
+  "properties": {}
+}
+```
+
+来源： [`packages/agent-mesh/tools/src/index.ts`](../packages/agent-mesh/tools/src/index.ts)
+
+### `mesh_capabilities`
+
+读取一个外部 agent 在其配置中声明的工具、skill、MCP server、命令和上下文文件。
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "agentId": {
+      "type": "string",
+      "description": "Agent id, as reported by mesh_agents."
+    },
+    "cwd": {
+      "type": "string",
+      "description": "Working directory whose project-level configuration applies."
+    }
+  },
+  "required": [
+    "agentId"
+  ]
+}
+```
+
+来源： [`packages/agent-mesh/tools/src/index.ts`](../packages/agent-mesh/tools/src/index.ts)
+
+### `mesh_capability_read`
+
+通过 DSH 文件系统策略，读取一个外部 agent 当前声明的 skill、命令模板或上下文文件。
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "agentId": {
+      "type": "string",
+      "description": "Agent id, as reported by mesh_agents."
+    },
+    "path": {
+      "type": "string",
+      "description": "Exact skill, context-file, or command-template path reported by mesh_capabilities."
+    },
+    "cwd": {
+      "type": "string",
+      "description": "Working directory whose project-level declarations apply."
+    }
+  },
+  "required": [
+    "agentId",
+    "path"
+  ]
+}
+```
+
+来源： [`packages/agent-mesh/tools/src/index.ts`](../packages/agent-mesh/tools/src/index.ts)
+
+### `mesh_mcp_connect`
+
+经 DSH 审批后，启动一个由外部 agent 声明的原生 MCP server，并仅向调用方 DSH Agent 暴露其工具。
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "agentId": {
+      "type": "string",
+      "description": "Agent id whose native MCP configuration declares the server."
+    },
+    "serverName": {
+      "type": "string",
+      "description": "Exact server name from mesh_capabilities."
+    },
+    "cwd": {
+      "type": "string",
+      "description": "Absolute project working directory used to resolve native project configuration."
+    }
+  },
+  "required": [
+    "agentId",
+    "serverName",
+    "cwd"
+  ]
+}
+```
+
+来源： [`packages/agent-mesh/tools/src/index.ts`](../packages/agent-mesh/tools/src/index.ts)
+
+### `mesh_mcp_disconnect`
+
+断开一个先前获准供调用方 DSH Agent 使用的 MCP server，并从该 Agent 移除其工具。
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "agentId": {
+      "type": "string",
+      "description": "External agent id used when connecting the server."
+    },
+    "serverName": {
+      "type": "string",
+      "description": "Exact server name used when connecting."
+    }
+  },
+  "required": [
+    "agentId",
+    "serverName"
+  ]
+}
+```
+
+来源： [`packages/agent-mesh/tools/src/index.ts`](../packages/agent-mesh/tools/src/index.ts)
+
+### `mesh_run`
+
+在指定工作目录中通过外部 coding agent 自己的 CLI 派发任务，并返回终态结果。可选地指定当前能力清单中的精确文件型命令名，将模板正文放在任务之前。支持原生审批请求的 adapter 会将其转交 DSH 审批。
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "agentId": {
+      "type": "string",
+      "description": "Agent id, as reported by mesh_agents."
+    },
+    "prompt": {
+      "type": "string",
+      "description": "The task to hand the agent."
+    },
+    "cwd": {
+      "type": "string",
+      "description": "Absolute working directory the agent runs in."
+    },
+    "commandName": {
+      "type": "string",
+      "description": "Optional exact file-backed command name from mesh_capabilities; its prompt body is prepended to this task."
+    },
+    "model": {
+      "type": "string",
+      "description": "Model in the agent's own naming."
+    },
+    "approval": {
+      "type": "string",
+      "description": "Approval mode in the agent's own vocabulary."
+    },
+    "resumeNativeId": {
+      "type": "string",
+      "description": "Native session id to continue."
+    },
+    "timeoutMs": {
+      "type": "integer",
+      "description": "Wall-clock budget in milliseconds."
+    }
+  },
+  "required": [
+    "agentId",
+    "prompt",
+    "cwd"
+  ]
+}
+```
+
+来源： [`packages/agent-mesh/tools/src/index.ts`](../packages/agent-mesh/tools/src/index.ts)
+
+### `mesh_run_cancel`
+
+取消已派发的运行。取消会终止 agent 进程组，不会将其暂停以便恢复。
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "runId": {
+      "type": "string",
+      "description": "Run to cancel."
+    },
+    "reason": {
+      "type": "string",
+      "description": "Reason recorded with the cancellation."
+    }
+  },
+  "required": [
+    "runId"
+  ]
+}
+```
+
+来源： [`packages/agent-mesh/tools/src/index.ts`](../packages/agent-mesh/tools/src/index.ts)
+
+### `mesh_runs`
+
+读取已派发运行的状态、最终答复、分类后的失败信息和近期事件。
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "runId": {
+      "type": "string",
+      "description": "One run to read; omit for every tracked run."
+    },
+    "wait": {
+      "type": "boolean",
+      "description": "With runId, wait for that run to reach a terminal status before answering."
+    }
+  }
+}
+```
+
+来源： [`packages/agent-mesh/tools/src/index.ts`](../packages/agent-mesh/tools/src/index.ts)
+
+### `mesh_sessions`
+
+按最近更新时间倒序列出某个外部 agent 自己的会话，即其 CLI 保存的记录。
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "agentId": {
+      "type": "string",
+      "description": "Agent id, as reported by mesh_agents."
+    },
+    "cwd": {
+      "type": "string",
+      "description": "Only sessions whose recorded working directory resolves to this path."
+    },
+    "limit": {
+      "type": "integer",
+      "description": "Maximum number of sessions to return."
+    }
+  },
+  "required": [
+    "agentId"
+  ]
+}
+```
+
+来源： [`packages/agent-mesh/tools/src/index.ts`](../packages/agent-mesh/tools/src/index.ts)
+
+### `mesh_tasks`
+
+读取某个外部 agent 为会话记录的 todo 列表和计划（如果有）。
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "agentId": {
+      "type": "string",
+      "description": "Agent id, as reported by mesh_agents."
+    },
+    "sessionId": {
+      "type": "string",
+      "description": "Native session id, as reported by mesh_sessions."
+    }
+  },
+  "required": [
+    "agentId",
+    "sessionId"
+  ]
+}
+```
+
+来源： [`packages/agent-mesh/tools/src/index.ts`](../packages/agent-mesh/tools/src/index.ts)
+
+### `mesh_transcript`
+
+读取某个外部 agent 会话 transcript 的一个窗口，并将消息映射为通用格式。
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "agentId": {
+      "type": "string",
+      "description": "Agent id, as reported by mesh_agents."
+    },
+    "sessionId": {
+      "type": "string",
+      "description": "Native session id, as reported by mesh_sessions."
+    },
+    "maxMessages": {
+      "type": "integer",
+      "description": "Maximum number of trailing messages to return."
+    }
+  },
+  "required": [
+    "agentId",
+    "sessionId"
+  ]
+}
+```
+
+来源： [`packages/agent-mesh/tools/src/index.ts`](../packages/agent-mesh/tools/src/index.ts)
+
+mesh 工具通过 adapter 读取每个 agent。运行派发和取消使用已注册的传输，并报告其声明的能力。
 
 <a id="deepseek-aidsh-tool-todo"></a>
 

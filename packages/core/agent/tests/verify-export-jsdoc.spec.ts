@@ -73,6 +73,12 @@ export const halve = (n: number): number => n / 2
 `))).toEqual([])
   })
 
+  it('ignores temporary Oxlint project-discovery probes', () => {
+    expect(collectExportJsdocViolations(fixture({
+      'oxlint-contract-probe.ts': 'export function probePromise(): Promise<void> { return Promise.resolve() }\n',
+    }))).toEqual([])
+  })
+
   it('flags an exported function with no JSDoc at all', () => {
     expect(collectExportJsdocViolations(make(
       'export function bare(): void {}\n',

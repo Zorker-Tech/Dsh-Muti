@@ -1,0 +1,37 @@
+# Bilingual-pair consistency record for 2026-10-16-native-agent-mesh-in-dsh.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write .agents/notes/proposed/architecture/2026-10-16-native-agent-mesh-in-dsh.md
+/agent-note-native-multi-agent-integration-in-the-fork:
+  en: 676b1c93ecb14ee1
+  zh: f7f5bf89e4cb7ad0
+/agent-note-native-multi-agent-integration-in-the-fork/problem:
+  en: e2bbf6dd10b7a335
+  zh: 4cf26810c8a7b1f3
+/agent-note-native-multi-agent-integration-in-the-fork/proposal:
+  en: 0730d4fdf5e9844c
+  zh: 60feda5158a09bea
+/agent-note-native-multi-agent-integration-in-the-fork/proposal/constraints:
+  en: 7e8387a193a52036
+  zh: 4307ff2c1558a5bb
+/agent-note-native-multi-agent-integration-in-the-fork/proposal/capability-to-seam:
+  en: aeb0cf3cb010c622
+  zh: b9a85f562091b49f
+/agent-note-native-multi-agent-integration-in-the-fork/proposal/package-topology:
+  en: bfa52dec68557b97
+  zh: 400eaeef47e292eb
+/agent-note-native-multi-agent-integration-in-the-fork/proposal/deliberately-dropped-from-the-plugin:
+  en: 6bbe6e3e093ab255
+  zh: 59c97dc0f1893856
+/agent-note-native-multi-agent-integration-in-the-fork/implementation-status:
+  en: 5bcdde3cde48631a
+  zh: ca17b4658ed2fa6e
+/agent-note-native-multi-agent-integration-in-the-fork/alternatives-considered:
+  en: 58b168054daf86b4
+  zh: e2aedb931b247c2e
+/agent-note-native-multi-agent-integration-in-the-fork/acceptance-criteria:
+  en: 00398b5c273a9ef6
+  zh: f8cc7120c5792aaa
+/agent-note-native-multi-agent-integration-in-the-fork/risks:
+  en: 052457fd1bf2cf7b
+  zh: 92b098e159b8a639

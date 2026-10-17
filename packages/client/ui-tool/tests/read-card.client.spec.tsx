@@ -215,7 +215,7 @@ describe('ReadRow keyed toolview', () => {
     ids: [SID],
     byId: { [SID]: { id: SID, displayTitle: 'r', running: false, retainedBy: {}, blank: false, updatedAt: 0, cwd: '/w/app' } },
     phase: 'ready',
-    projectionsBySession: {},
+    agentSessions: [], agentSessionFailures: [], projectionsBySession: {},
   })
 
   const rowProps = (block: StartedToolCall | ToolResultNode): Parameters<typeof ReadRow>[0] => ({

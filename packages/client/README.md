@@ -73,6 +73,7 @@ The kernel packages boot and serve the page; the UI feature packages present it.
 | [`ui-settings-plugins/`](ui-settings-plugins/README.md) | Owns the Built-in plugins settings section shell and its tab extension point | — |
 | [`ui-user-questions/`](ui-user-questions/README.md) | Presents interactive questions requested by the agent | — |
 | [`ui-agent-preset/`](ui-agent-preset/README.md) | Selects a session's agent preset and authors preset compositions | — |
+| [`ui-agent-mesh/`](ui-agent-mesh/README.md) | Presents external-agent sessions and shared collaboration state | — |
 | [`ui-settings/`](ui-settings/README.md) | Hosts the settings interface and its extension areas | — |
 | [`ui-settings-general/`](ui-settings-general/README.md) | Provides the general settings section | — |
 | [`ui-settings-models/`](ui-settings-models/README.md) | Provides model-provider configuration and DeepSeek onboarding | — |

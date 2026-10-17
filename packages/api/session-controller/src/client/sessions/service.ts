@@ -19,7 +19,9 @@ import type { SessionReferenceSource } from '../index.ts'
 import { createScope, scopeIdentityOf, scopeOf as scopeTagOf } from '../scope.ts'
 import { SessionManager } from './manager.ts'
 import type { SessionRemotes } from './remotes.ts'
-import type { SessionListPhase, SessionSearchResultItem, SessionProjectionSnapshot } from './manager.ts'
+import type {
+  SessionListPhase, SessionListSnapshot, SessionSearchResultItem, SessionProjectionSnapshot,
+} from './manager.ts'
 import type { Session } from './session.ts'
 import type { SessionListEntry } from './lineage.ts'
 
@@ -59,6 +61,10 @@ export interface SessionListState {
   ids: SessionId[]
   /** Host/catalog rows plus retained subagent fallbacks; only `ids` expresses Host-list membership. */
   byId: Record<SessionId, SessionSummary>
+  /** External agent sessions, not materialized as Client Sessions. */
+  agentSessions: SessionListSnapshot['agentSessions']
+  /** Per-agent failures from the external session catalog. */
+  agentSessionFailures: SessionListSnapshot['agentSessionFailures']
   /** Arrival lifecycle projected 1:1 from the manager snapshot (see SessionListPhase): empty-with-ready means "truly no sessions". */
   phase: SessionListPhase
   /** Shared projection values and explicit-read state, including unopened Sessions. */
@@ -259,7 +265,7 @@ export class ClientSessions implements ISessions {
   ) {
     this.manager = new SessionManager(remote)
     this.list = createSnapshotStore<SessionListState>({
-      ids: [], byId: {}, phase: 'pending', projectionsBySession: {},
+      ids: [], byId: {}, agentSessions: [], agentSessionFailures: [], phase: 'pending', projectionsBySession: {},
     })
     const disposeManagerProjection = this.manager.subscribe(() => { this.projectList() })
     rootCtx.effect(() => async () => {
@@ -619,7 +625,7 @@ export class ClientSessions implements ISessions {
   private projectList(): void {
     const previousById = this.list.getSnapshot().byId
     const {
-      items, phase, projectionsBySession,
+      items, agentSessions, agentSessionFailures, phase, projectionsBySession,
     } = this.manager.getListSnapshot()
     const ids: SessionId[] = []
     const byId: Record<SessionId, SessionSummary> = {}
@@ -688,7 +694,7 @@ export class ClientSessions implements ISessions {
         ...(title === undefined ? {} : { title, displayTitle: title }),
       }
     }
-    this.list.set({ ids, byId, phase, projectionsBySession })
+    this.list.set({ ids, byId, agentSessions, agentSessionFailures, phase, projectionsBySession })
   }
 
   private startScopeDrop(

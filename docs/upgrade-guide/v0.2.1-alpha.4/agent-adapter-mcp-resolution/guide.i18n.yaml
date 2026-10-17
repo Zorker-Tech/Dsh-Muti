@@ -1,0 +1,16 @@
+# Bilingual-pair consistency record for guide.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write docs/upgrade-guide/v0.2.1-alpha.4/agent-adapter-mcp-resolution/guide.md
+/:
+  en: 3263191282ad9cc1
+  zh: 9120f235fae37172
+/agent-adapters-resolve-native-mcp-servers:
+  en: 2f741a10b70e377e
+  zh: 174c72da1489ce03
+/agent-adapters-resolve-native-mcp-servers/change:
+  en: d492170cccf24a6b
+  zh: d9c95760f1292b19
+/agent-adapters-resolve-native-mcp-servers/migration:
+  en: de28e8c2d8c5e396
+  zh: cb4d7d46fd39112c

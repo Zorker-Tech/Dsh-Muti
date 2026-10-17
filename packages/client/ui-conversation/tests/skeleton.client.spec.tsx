@@ -165,7 +165,7 @@ function mount(
       ...listed && options.nestedSubagent === true && { [parent]: parentRow },
       ...listed && { [SID]: childRow },
     },
-    phase: 'ready', projectionsBySession: {},
+    phase: 'ready', agentSessions: [], agentSessionFailures: [], projectionsBySession: {},
   })
   const workspaces = createSnapshotStore<WorkspaceSnapshot>(workspaceState(workspaceRows))
   const session = createSnapshotStore<SessionSnapshot>(snapshot)

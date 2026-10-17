@@ -1,0 +1,11 @@
+version: 1
+scenario: agent-mesh-approval
+profile: headless
+composition: default
+recording: authored
+header:
+  class: native-agent-tool-proxy
+  pin: true
+  systemPromptSource: text-turn
+replay:
+  override: true

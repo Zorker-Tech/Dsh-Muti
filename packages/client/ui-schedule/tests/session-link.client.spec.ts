@@ -15,7 +15,7 @@ function sessions(ids: SessionId[], rows: SessionId[]): SessionListState {
     byId: Object.fromEntries(rows.map(row => [row, {
       id: row, displayTitle: row, running: false, blank: false, updatedAt: 0, retainedBy: {},
     }] as const)),
-    phase: 'ready', projectionsBySession: {},
+    phase: 'ready', agentSessions: [], agentSessionFailures: [], projectionsBySession: {},
   }
 }
 

@@ -68,6 +68,8 @@ import * as StagehandBrowserTools from '@deepseek-ai/dsh-experimental-browser-us
 import type TeamService from '@deepseek-ai/dsh-experimental-agent-team'
 import * as ToolTeam from '@deepseek-ai/dsh-experimental-tool-agent-team'
 import * as ToolTodo from '@deepseek-ai/dsh-tool-todo'
+import * as AgentMeshTools from '@deepseek-ai/dsh-agent-mesh-tools'
+import { registerCollaborationTools } from '../packages/agent-mesh/collaboration/src/tools.ts'
 import type PluginManager from '@deepseek-ai/dsh-plugin-manager'
 import * as PluginManagerTools from '@deepseek-ai/dsh-plugin-manager/tools'
 import type PluginMarket from '@deepseek-ai/dsh-plugin-market'
@@ -147,7 +149,7 @@ const catalogChildScopes = new WeakMap<Context, Agent>()
 export interface ToolPackage {
   /** The npm package name, used as the catalog section heading. */
   pkg: string
-  /** The `packages/<group>/<dir>` leaf name — matched by the completeness guard. */
+  /** A `tool-*` leaf name or packages-relative directory used by the completeness guard. */
   dir: string
   /**
    * Repo-relative implementation source linked per harvested tool. Packages
@@ -184,9 +186,9 @@ export interface ToolPackage {
 }
 
 /**
- * The boot manifest: every shipped tool package (a `tool-*` leaf under
- * `packages/`). Ordered by package name (the render order); the completeness
- * guard proves it is exhaustive against the on-disk glob.
+ * The boot manifest: every shipped package that registers model-facing tools.
+ * Ordered by package name (the render order); the completeness guard covers
+ * conventional `tool-*` packages and the explicitly named agent-mesh providers.
  */
 const TOOL_PACKAGES: ToolPackage[] = [
   {
@@ -611,6 +613,30 @@ const TOOL_PACKAGES: ToolPackage[] = [
       'All nine tools are scoped to implicit Team Leads and durable teammates. The shipped dsh-base bundle keeps the package disabled; the documented Agent Teams profile patch enables it while disabling the legacy continuable-child control names.',
   },
   {
+    pkg: '@deepseek-ai/dsh-agent-mesh-collaboration',
+    dir: 'agent-mesh/collaboration',
+    source: 'packages/agent-mesh/collaboration/src/tools.ts',
+    requires: ['ctx.tools', 'ctx.meshCollaboration'],
+    writes: ['tool/call', 'agent-mesh collaboration tables', 'tool/result'],
+    mount(ctx) {
+      registerCollaborationTools(ctx)
+      return Promise.resolve()
+    },
+    note: 'Collaboration plans, task boards, and worktree records belong to the mesh collaboration storage domain; they are not session events.',
+  },
+  {
+    pkg: '@deepseek-ai/dsh-agent-mesh-tools',
+    dir: 'agent-mesh/tools',
+    source: 'packages/agent-mesh/tools/src/index.ts',
+    requires: ['ctx.tools', 'ctx.agentMesh', 'ctx.fs'],
+    writes: ['tool/call', 'agent-mesh run records', 'tool/result'],
+    mount(ctx) {
+      AgentMeshTools.apply(ctx)
+      return Promise.resolve()
+    },
+    note: 'Capability files are read only from paths declared by the adapter and through ctx.fs. Run dispatch and cancellation use the registered transport and report its declared capabilities.',
+  },
+  {
     pkg: '@deepseek-ai/dsh-tool-todo',
     dir: 'tool-todo',
     source: 'packages/todo/tool-todo/src/index.ts',
@@ -706,8 +732,8 @@ interface CatalogPackage {
 export type ToolCatalog = CatalogPackage[]
 
 /**
- * Assert the boot manifest covers every shipped tool package on disk (a
- * `tool-*` leaf under `packages/`).
+ * Assert the boot manifest covers every shipped tool package on disk: every
+ * `tool-*` leaf under `packages/`, plus the agent-mesh tool providers.
  * Booting has no source declaration to enumerate, so this glob restores the
  * "a new tool cannot be silently undocumented" guarantee: an unlisted package
  * fails the generator (and the freshness gate) until it is added to
@@ -716,7 +742,11 @@ export type ToolCatalog = CatalogPackage[]
  * `scanRoot` defaults to the repo root; a test may point it at a fixture tree.
  */
 export function assertManifestComplete(packages: ToolPackage[] = TOOL_PACKAGES, scanRoot: string = root): void {
-  const onDisk = globSync('packages/*/tool-*', { cwd: scanRoot }).map(p => basename(p)).sort()
+  const onDisk = [
+    ...globSync('packages/*/tool-*', { cwd: scanRoot }).map(p => basename(p)),
+    ...globSync('packages/agent-mesh/collaboration', { cwd: scanRoot }).map(p => p.slice('packages/'.length)),
+    ...globSync('packages/agent-mesh/tools', { cwd: scanRoot }).map(p => p.slice('packages/'.length)),
+  ].sort()
   const listed = new Set(packages.map(p => p.dir))
   const missing = onDisk.filter(dir => !listed.has(dir))
   if (missing.length > 0) {
@@ -831,9 +861,9 @@ export function render(catalog: ToolCatalog): string {
     '',
     'Every model-facing tool a shipped plugin contributes to `ctx.tools`: the `name`, `description`, and JSON-Schema `parameters` the model receives via the system-prompt assembly. It complements the [subsystem pages](subsystems/core.md) (the types plus each page\'s generated Cordis API region) — this page is the *tools* the agent is offered.',
     '',
-    'This file is GENERATED and verified fresh by `pnpm run verify-tool-catalog` (part of `doc-sync`) — do not edit it by hand. Unlike the cordis catalog (a pure source-AST pass), this generator BOOTS each tool plugin on a real context and reads `ctx.tools.schemas()`, because a tool schema is not statically knowable (runtime-spread enums, concatenated descriptions, config-driven names, raw-JSON-Schema MCP tools). A completeness guard globs `packages/*/tool-*` and fails if any package is missing from the generator\'s boot manifest, so a new tool cannot be silently undocumented.',
+    'This file is GENERATED and verified fresh by `pnpm run verify-tool-catalog` (part of `doc-sync`) — do not edit it by hand. Unlike the cordis catalog (a pure source-AST pass), this generator BOOTS each tool plugin on a real context and reads `ctx.tools.schemas()`, because a tool schema is not statically knowable (runtime-spread enums, concatenated descriptions, config-driven names, raw-JSON-Schema MCP tools). A completeness guard covers conventional `tool-*` packages and the agent-mesh tool providers, so an omitted package cannot be silently undocumented.',
     '',
-    'Scope: shipped product tools under `packages/*/tool-*`, each booted with its DEFAULT config, except where a Config field is REQUIRED with no default — there the generator must choose, and the per-package note records which branch this page shows. The registered tool NAME can be a load-time config (e.g. `tool-subagent`\'s `toolName`), so a deployment may expose a package under a different or additional name — a per-package note records those shipped aliases where they exist. The `examples/` demo tools (e.g. `echo`) are excluded, matching the cordis catalog\'s packages-only scope.',
+    'Scope: shipped product tools in conventional `packages/*/tool-*` packages and the agent-mesh tools and collaboration providers. Each is booted with its DEFAULT config, except where a Config field is REQUIRED with no default — there the generator must choose, and the per-package note records which branch this page shows. The registered tool NAME can be a load-time config (e.g. `tool-subagent`\'s `toolName`), so a deployment may expose a package under a different or additional name — a per-package note records those shipped aliases where they exist. The `examples/` demo tools (e.g. `echo`) are excluded, matching the cordis catalog\'s packages-only scope.',
     '',
     '## Tool Package Map',
     '',

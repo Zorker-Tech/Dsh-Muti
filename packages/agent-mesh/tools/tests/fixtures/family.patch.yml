@@ -1,0 +1,8 @@
+# Boot the shipped headless profile far enough to mount the agent-mesh family
+# and report what activated, without running a task (no provider key needed).
+- id: session-telemetry-otel
+  disabled: true
+- id: headless-startup
+  disabled: true
+- id: headless-runner
+  disabled: true

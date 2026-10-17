@@ -3,6 +3,8 @@ scenario: compaction-summary-headroom
 profile: headless
 composition: compaction-summary-headroom
 recording: authored
+replay:
+  override: true
 platform: posix
 header:
   class: compaction-summary-headroom

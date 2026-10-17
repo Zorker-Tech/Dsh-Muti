@@ -7,7 +7,7 @@ import type {
   ISessions, SessionListState, SessionReference, SessionSnapshot,
 } from '@deepseek-ai/dsh-api-session-controller/client'
 import type { ResourceProvider } from '@deepseek-ai/dsh-client-resources/client'
-import { sessionSnapshot } from '@deepseek-ai/dsh-client-test-runtime'
+import { conversationSnapshot, sessionSnapshot } from '@deepseek-ai/dsh-client-test-runtime'
 import type { ConversationViewsProps } from '@deepseek-ai/dsh-client-ui-conversation/client'
 import type { SidebarRightTabDefinition } from '@deepseek-ai/dsh-client-ui-sidebar-right/client'
 import type { SessionId } from '@deepseek-ai/dsh-session/types'
@@ -72,14 +72,21 @@ describe('Sidebar chat registration', () => {
         ids: [],
         byId: {
           [CHILD]: {
+            id: CHILD,
             displayTitle: 'Projected title',
+            cwd: '/w/app',
+            running: false,
+            retainedBy: {},
+            blank: false,
+            updatedAt: 0,
             projectionValues: { subagent: { mode: 'continuable', label: 'Worker', seq: 1 } },
           },
         },
         phase: 'ready',
+        agentSessions: [],
+        agentSessionFailures: [],
         projectionsBySession: {},
-        jobsBySession: {},
-      } as unknown as SessionListState),
+      }),
       subscribe: () => () => {},
     }
     let provider: ResourceProvider<'subagentchat'> | undefined
@@ -203,16 +210,32 @@ describe('Sidebar chat components', () => {
     },
   ])('derives the $name embedded phase and fixes the local view to Chat', ({ session: patch, summaryBlank, expected }) => {
     const snapshot = { ...sessionSnapshot(CHILD), ...patch } as SessionSnapshot
-    const renderFactorySlot = vi.fn(() => null)
-    render(<ConversationSlotPanel {...({
+    const sessionSummary: SessionListState['byId'][SessionId] = {
+      id: CHILD,
+      displayTitle: 'Projected title',
+      cwd: '/w/app',
+      running: false,
+      retainedBy: {},
+      blank: summaryBlank,
+      updatedAt: 0,
+    }
+    const listSnapshot: SessionListState = {
+      ids: [],
+      byId: { [CHILD]: sessionSummary },
+      phase: 'ready',
+      agentSessions: [],
+      agentSessionFailures: [],
+      projectionsBySession: {},
+    }
+    const renderFactorySlot = vi.fn<Parameters<typeof ConversationSlotPanel>[0]['renderFactorySlot']>(() => null)
+    const props: Parameters<typeof ConversationSlotPanel>[0] = {
       sessionId: CHILD,
-      useSession: (select: (value: SessionSnapshot) => unknown) => select(snapshot),
-      useConversation: (select: (value: { activeTargets: ReadonlySet<string> }) => unknown) => select({ activeTargets: new Set() }),
-      useSessions: (select: (value: SessionListState) => unknown) => select({
-        ids: [], byId: { [CHILD]: { blank: summaryBlank } }, phase: 'ready', projectionsBySession: {}, jobsBySession: {},
-      } as unknown as SessionListState),
+      useSession: select => select(snapshot),
+      useConversation: select => select(conversationSnapshot()),
+      useSessions: select => select(listSnapshot),
       renderFactorySlot,
-    } as unknown as Parameters<typeof ConversationSlotPanel>[0])} />)
+    }
+    render(<ConversationSlotPanel {...props} />)
     expect(renderFactorySlot).toHaveBeenCalledWith(
       'conversation.content',
       { variant: 'embedded', ...expected },

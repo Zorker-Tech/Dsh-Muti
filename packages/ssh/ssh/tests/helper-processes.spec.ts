@@ -2,6 +2,7 @@
 import { once } from 'node:events'
 import { chmod, mkdir, mkdtemp, readdir, rm } from 'node:fs/promises'
 import { createConnection, type Socket } from 'node:net'
+import * as tls from 'node:tls'
 import { PassThrough } from 'node:stream'
 import { Context } from '@deepseek-ai/cordis'
 import type { SubprocessHandle, SubprocessOutcome, SubprocessTerminalHandle } from '@deepseek-ai/dsh-subprocess'
@@ -15,6 +16,11 @@ import { outputSnapshotSchema } from '../src/schemas.ts'
 vi.mock('node:fs/promises', async (original) => {
   const actual = await original<typeof import('node:fs/promises')>()
   return { ...actual, chmod: vi.fn(actual.chmod), rm: vi.fn(actual.rm) }
+})
+
+vi.mock('node:tls', async (original) => {
+  const actual = await original<typeof import('node:tls')>()
+  return { ...actual, createServer: vi.fn(actual.createServer) }
 })
 
 const outcome = { exitCode: 0, signal: null }
@@ -206,6 +212,26 @@ describe.skipIf(process.platform === 'win32')('SSH helper process settlement', (
     try {
       await expect(owner.prepare(ordinaryRequest)).rejects.toThrow()
     } finally { await owner.close(); await rm(root, { recursive: true, force: true }) }
+  })
+
+  it('rejects a pending stream connection when its TLS listener reports an error', async () => {
+    const test = await harness()
+    const failure = new Error('simulated TLS listener failure')
+    const createServer = vi.mocked(tls.createServer)
+    const originalCreateServer = createServer.getMockImplementation()
+    if (originalCreateServer === undefined) throw new Error('TLS server mock has no native implementation')
+    createServer.mockImplementation((...args) => {
+      const server = originalCreateServer(...args)
+      server.once('listening', () => { queueMicrotask(() => { server.emit('error', failure) }) })
+      return server
+    })
+    try {
+      const run = await test.owner.prepare(ordinaryRequest)
+      await expect(test.owner.start(run.id)).rejects.toThrow(failure.message)
+    } finally {
+      createServer.mockImplementation(originalCreateServer)
+      await test.close()
+    }
   })
 
   it('continues collecting while a live snapshot waits for acknowledgement', async () => {

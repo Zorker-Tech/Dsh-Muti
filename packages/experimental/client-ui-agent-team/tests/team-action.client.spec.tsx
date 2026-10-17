@@ -63,7 +63,7 @@ function bench(options: {
   for (const [id, running] of Object.entries(options.running ?? {}) as [SessionId, boolean][]) byId[id] = summary(id, running)
   const sessions = createSnapshotStore<SessionListState>({
     ids: Object.keys(byId) as SessionId[], byId, phase: 'ready',
-    projectionsBySession: options.projections ?? { [SESSION]: { state: 'ready', error: null, values: { agentTeam: team } } },
+    agentSessions: [], agentSessionFailures: [], projectionsBySession: options.projections ?? { [SESSION]: { state: 'ready', error: null, values: { agentTeam: team } } },
   })
   const statuses = createSnapshotStore<SessionStatusSnapshot>(options.statuses ?? new Map())
   const session = createSnapshotStore<SessionSnapshot>({
@@ -210,7 +210,7 @@ describe('TeamAction', () => {
     expect(screen.getByRole('status').textContent).toBe(zh.loading)
     act(() => { b.sessions.set({
       ...b.sessions.getSnapshot(), phase: 'ready',
-      projectionsBySession: { [SESSION]: { state: 'idle', error: null, values: { agentTeam: team } } },
+      agentSessions: [], agentSessionFailures: [], projectionsBySession: { [SESSION]: { state: 'idle', error: null, values: { agentTeam: team } } },
     }) })
     expect(screen.getByText('Implement runtime')).toBeTruthy()
     expect(screen.queryByRole('status')).toBeNull()

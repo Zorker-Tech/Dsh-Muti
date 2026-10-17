@@ -8,6 +8,8 @@ header:
   pin: true
   systemPromptSource: session/read-image
   toolSchemasSource: escalation-approved
+replay:
+  override: true
 permission: danger-full-access
 input:
   attachments:

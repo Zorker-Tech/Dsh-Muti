@@ -1,6 +1,8 @@
 import { Context } from '@deepseek-ai/cordis'
 import AgentRegistry from '@deepseek-ai/dsh-agent'
 import type { Agent } from '@deepseek-ai/dsh-agent'
+import { brandString } from '@deepseek-ai/dsh-brand'
+import type { AgentId, AgentSession, AgentSessionKey } from '@deepseek-ai/dsh-agent-mesh/types'
 import { createUserMessage } from '@deepseek-ai/dsh-llm'
 import SessionStore, { SESSION_FORMAT_VERSION, SessionId, SessionLogOffset } from '@deepseek-ai/dsh-session'
 import type { SessionEvent, SessionHeader } from '@deepseek-ai/dsh-session'
@@ -137,6 +139,67 @@ describe('SessionController facade', () => {
     })
     abort.abort()
     await expect(iterator.next()).resolves.toEqual({ done: true, value: undefined })
+  })
+
+  it('lists external agent sessions with their source identity and per-agent read failures', async () => {
+    const ctx = new Context()
+    await ctx.plugin(SessionStore)
+    await ctx.plugin(AgentRegistry)
+    const full: AgentSession = {
+      key: brandString<AgentSessionKey>('codex:native-1'),
+      agentId: brandString<AgentId>('codex'),
+      nativeId: 'native-1',
+      title: 'Native title',
+      cwd: '/repo',
+      model: 'o3',
+      createdAt: '2026-10-15T00:00:00.000Z',
+      updatedAt: '2026-10-16T00:00:00.000Z',
+      status: 'idle',
+      messageCount: 3,
+      parentNativeId: 'native-parent',
+      notes: ['loss recorded'],
+    }
+    const minimal: AgentSession = {
+      key: brandString<AgentSessionKey>('pi:native-2'),
+      agentId: brandString<AgentId>('pi'),
+      nativeId: 'native-2',
+      createdAt: '2026-10-14T00:00:00.000Z',
+      updatedAt: '2026-10-14T00:01:00.000Z',
+      status: 'unreadable',
+      notes: [],
+    }
+    ctx.provide('agentMesh', {
+      listSessions: async () => ({
+        items: [full, minimal],
+        failures: [{ agentId: brandString<AgentId>('grok'), message: 'session store could not be read' }],
+      }),
+      sessionMarks: () => [
+        {
+          key: brandString<AgentSessionKey>('codex:native-1'),
+          agentId: brandString<AgentId>('codex'),
+          nativeId: 'native-1',
+          disposition: 'pinned',
+          updatedAt: '2026-10-16T00:00:00.000Z',
+        },
+        {
+          key: brandString<AgentSessionKey>('pi:native-2'),
+          agentId: brandString<AgentId>('pi'),
+          nativeId: 'native-2',
+          disposition: 'archived',
+          updatedAt: '2026-10-16T00:00:00.000Z',
+        },
+      ],
+    } as never)
+    const controller = createSessionTestController(ctx, defaults)
+
+    await expect(controller.list({}, new AbortController().signal)).resolves.toMatchObject({
+      items: [],
+      agentSessions: [
+        { source: 'agent-mesh', agentId: 'codex', key: 'codex:native-1', nativeId: 'native-1', title: 'Native title', cwd: '/repo', model: 'o3', status: 'idle', pinned: true, archived: false, messageCount: 3, parentNativeId: 'native-parent' },
+        { source: 'agent-mesh', agentId: 'pi', key: 'pi:native-2', nativeId: 'native-2', status: 'unreadable', pinned: false, archived: true },
+      ],
+      agentSessionFailures: [{ agentId: 'grok', message: 'session store could not be read' }],
+    })
   })
 
   it.each(['success', 'domain-error', 'throw'] as const)(

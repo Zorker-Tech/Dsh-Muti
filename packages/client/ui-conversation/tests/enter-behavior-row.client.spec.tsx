@@ -22,7 +22,7 @@ afterEach(() => {
 
 function emptySessions() {
   return bindSnapshotSelector(createSnapshotStore<SessionListState>({
-    ids: [], byId: {}, phase: 'ready', projectionsBySession: {},
+    ids: [], byId: {}, phase: 'ready', agentSessions: [], agentSessionFailures: [], projectionsBySession: {},
   }))
 }
 

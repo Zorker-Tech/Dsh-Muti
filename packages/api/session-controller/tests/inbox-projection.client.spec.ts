@@ -8,6 +8,7 @@ import type { SessionId } from '@deepseek-ai/dsh-session/types'
 import { SessionManager } from '../src/client/sessions/manager.ts'
 import { ok } from '@deepseek-ai/dsh-remote-mock'
 import { createClientTest, type ClientTestFixtures, webApp } from '@deepseek-ai/dsh-client-test-runtime/src/assembly/index.ts'
+import { sessionListSuccess } from '@deepseek-ai/dsh-client-test-runtime'
 import type { SessionRemotes } from '../src/client/sessions/remotes.ts'
 
 const it = createClientTest({ roster: webApp.closure(['@deepseek-ai/dsh-api-gateway']) })
@@ -62,7 +63,7 @@ describe('Inbox projection intake', () => {
       const manager = makeManager(remote)
       const empty = { 'next-turn': [], 'next-step': [] }
       const stale = { ...empty, 'next-turn': [message('removed', 'already removed')] }
-      const result = ok({ items: [{
+      const result = sessionListSuccess({ items: [{
         sessionId: SID, updatedAt: 1, running: false, blank: false, agentAvailable: false,
         // The Session is attached: the Host's live registry served the block.
         projections: { kind: 'sequenced' as const, asOfSeq: 21, values: { inbox: empty } },
@@ -108,7 +109,7 @@ describe('Inbox projection intake', () => {
       manager.handleControlFrame({ ...inboxFrame(empty), sessionId: hiddenSessionId, seq: 20 })
       const face = manager.get(SID).projections.faceOf('inbox')
       const baseline = { type: 'baseline', value: { projections: {} } } as const
-      const result = ok({ items: [
+      const result = sessionListSuccess({ items: [
         { sessionId: SID, updatedAt: 1, running: false, blank: false, agentAvailable: false,
           projections: { kind: 'cached' as const, asOfSeq: 1, values: { inbox: empty } } },
         { sessionId: hiddenSessionId, updatedAt: 1, running: false, blank: false, agentAvailable: false,

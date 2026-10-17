@@ -76,10 +76,11 @@ function props(
       },
     },
     phase: 'ready',
-    projectionsBySession: Object.fromEntries(Object.entries(catalogs).map(([id, catalog]) => [id, {
-      state: catalog.state, error: catalog.error,
-      values: { subagentCatalog: catalog.entries.map(({ activity: _activity, ...entry }) => ({ ...entry, createdAt: 1 })) },
-    }])) ,
+    agentSessions: [], agentSessionFailures: [], projectionsBySession: Object.fromEntries(
+      Object.entries(catalogs).map(([id, catalog]) => [id, {
+        state: catalog.state, error: catalog.error,
+        values: { subagentCatalog: catalog.entries.map(({ activity: _activity, ...entry }) => ({ ...entry, createdAt: 1 })) },
+      }])) ,
   } satisfies SessionListState
   function useSessions<T>(select: (snapshot: SessionListState) => T): T {
     return select(state)

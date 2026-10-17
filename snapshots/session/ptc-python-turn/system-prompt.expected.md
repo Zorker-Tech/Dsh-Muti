@@ -287,6 +287,593 @@ class ListAgentsOutput2(TypedDict):
     parent: NotRequired[str]
     depth: NotRequired[float]
 
+class MeshAgentsOutputAgents(TypedDict):
+    id: str
+    displayName: str
+    installed: bool
+    version: str
+    binaryPath: str
+    sessionRoot: str
+    credentialPath: str
+    warning: str
+
+class MeshAgentsOutput(TypedDict):
+    agents: list[MeshAgentsOutputAgents]
+
+class MeshCapabilitiesArgs(TypedDict):
+    # Agent id, as reported by mesh_agents.
+    agentId: str
+    # Working directory whose project-level configuration applies.
+    cwd: NotRequired[str]
+    # Additional keys beyond those declared are allowed.
+
+class MeshCapabilitiesOutputTools(TypedDict):
+    name: str
+    description: NotRequired[str]
+    source: str
+    approval: NotRequired[str]
+    discoverable: NotRequired[bool]
+    path: NotRequired[str]
+
+class MeshCapabilitiesOutputSkills(TypedDict):
+    name: str
+    description: NotRequired[str]
+    source: str
+    path: NotRequired[str]
+    userInvocable: NotRequired[bool]
+
+class MeshCapabilitiesOutputMcpServers(TypedDict):
+    name: str
+    transport: str
+    command: NotRequired[str]
+    url: NotRequired[str]
+    enabled: bool
+    source: str
+
+class MeshCapabilitiesOutputCommands(TypedDict):
+    name: str
+    description: NotRequired[str]
+    source: str
+    path: NotRequired[str]
+
+class MeshCapabilitiesOutputSources(TypedDict):
+    path: str
+    present: bool
+    note: NotRequired[str]
+
+class MeshCapabilitiesOutputNotes(TypedDict):
+    field: str
+    reason: str
+
+class MeshCapabilitiesOutput(TypedDict):
+    agentId: str
+    tools: list[MeshCapabilitiesOutputTools]
+    skills: list[MeshCapabilitiesOutputSkills]
+    mcpServers: list[MeshCapabilitiesOutputMcpServers]
+    commands: list[MeshCapabilitiesOutputCommands]
+    contextFiles: list[str]
+    sources: list[MeshCapabilitiesOutputSources]
+    notes: list[MeshCapabilitiesOutputNotes]
+    observedAt: str
+
+class MeshCapabilityReadArgs(TypedDict):
+    # Agent id, as reported by mesh_agents.
+    agentId: str
+    # Exact skill, context-file, or command-template path reported by mesh_capabilities.
+    path: str
+    # Working directory whose project-level declarations apply.
+    cwd: NotRequired[str]
+    # Additional keys beyond those declared are allowed.
+
+class MeshCapabilityReadOutput(TypedDict):
+    agentId: str
+    path: str
+    kind: Literal["context", "command", "skill"]
+    content: str
+
+class MeshCollaborationStartArgsTasks(TypedDict):
+    title: str
+    instruction: str
+    assignee: str
+    dependsOn: NotRequired[list[str]]
+    isolation: NotRequired[Literal["worktree", "shared-cwd"]]
+
+class MeshCollaborationStartArgs(TypedDict):
+    # Short human title.
+    title: str
+    # What the collaboration as a whole must achieve.
+    objective: str
+    # Absolute path of the repository the tasks work in.
+    repoRoot: str
+    # Initial tasks. A seed may name a sibling by position ("task-1") or by id in dependsOn.
+    tasks: NotRequired[list[MeshCollaborationStartArgsTasks]]
+    # Additional keys beyond those declared are allowed.
+
+class MeshCollaborationStartOutputPhases(TypedDict):
+    id: str
+    title: str
+    status: str
+
+class MeshCollaborationStartOutputTasks(TypedDict):
+    id: str
+    title: str
+    assignee: str
+    status: str
+    isolation: str
+    dependsOn: list[str]
+
+class MeshCollaborationStartOutput(TypedDict):
+    collaborationId: str
+    title: str
+    repoRoot: str
+    phases: list[MeshCollaborationStartOutputPhases]
+    tasks: list[MeshCollaborationStartOutputTasks]
+
+class MeshCollaborationsArgs(TypedDict):
+    # Read one collaboration instead of listing every one.
+    collaborationId: NotRequired[str]
+    # Additional keys beyond those declared are allowed.
+
+class MeshCollaborationsOutputCollaborationsPhases(TypedDict):
+    id: str
+    title: str
+    status: str
+    exitCriteria: str
+
+class MeshCollaborationsOutputCollaborationsTasks(TypedDict):
+    id: str
+    title: str
+    assignee: str
+    status: str
+    isolation: str
+    dependsOn: list[str]
+    runId: str
+    worktreeId: str
+    note: str
+
+class MeshCollaborationsOutputCollaborationsWorktrees(TypedDict):
+    id: str
+    path: str
+    branch: str
+    state: str
+    runId: str
+    taskId: str
+
+class MeshCollaborationsOutputCollaborations(TypedDict):
+    id: str
+    title: str
+    repoRoot: str
+    updatedAt: str
+    objective: str
+    mode: str
+    activePhaseId: str
+    phases: list[MeshCollaborationsOutputCollaborationsPhases]
+    decisions: list[str]
+    todoRevision: int
+    todoCount: int
+    tasks: list[MeshCollaborationsOutputCollaborationsTasks]
+    worktrees: list[MeshCollaborationsOutputCollaborationsWorktrees]
+
+class MeshCollaborationsOutput(TypedDict):
+    collaborations: list[MeshCollaborationsOutputCollaborations]
+
+class MeshMcpConnectArgs(TypedDict):
+    # Agent id whose native MCP configuration declares the server.
+    agentId: str
+    # Exact server name from mesh_capabilities.
+    serverName: str
+    # Absolute project working directory used to resolve native project configuration.
+    cwd: str
+    # Additional keys beyond those declared are allowed.
+
+class MeshMcpConnectOutput(TypedDict):
+    agentId: str
+    serverName: str
+    toolNamespace: str
+    status: str
+    tools: list[str]
+
+class MeshMcpDisconnectArgs(TypedDict):
+    # External agent id used when connecting the server.
+    agentId: str
+    # Exact server name used when connecting.
+    serverName: str
+    # Additional keys beyond those declared are allowed.
+
+class MeshMcpDisconnectOutput(TypedDict):
+    agentId: str
+    serverName: str
+    disconnected: bool
+
+class MeshPlanAdvanceArgs(TypedDict):
+    # Collaboration to change.
+    collaborationId: str
+    # Phase to activate.
+    phaseId: str
+    # Additional keys beyond those declared are allowed.
+
+class MeshPlanAdvanceOutputPhases(TypedDict):
+    id: str
+    title: str
+    status: str
+
+class MeshPlanAdvanceOutput(TypedDict):
+    collaborationId: str
+    activePhaseId: str
+    phases: list[MeshPlanAdvanceOutputPhases]
+
+class MeshPlanSetArgsPhases(TypedDict):
+    id: str
+    title: str
+    status: Literal["todo", "active", "done"]
+    exitCriteria: NotRequired[str]
+
+class MeshPlanSetArgs(TypedDict):
+    # Collaboration to change.
+    collaborationId: str
+    # The objective; it replaces the current one.
+    objective: str
+    # The complete new phase list, in order.
+    phases: NotRequired[list[MeshPlanSetArgsPhases]]
+    # Phase to mark active; it must exist in the resulting list.
+    activePhaseId: NotRequired[str]
+    # The complete decisions log.
+    decisions: NotRequired[list[str]]
+    # Whether the plan is injected into dispatched prompts or only observed.
+    mode: NotRequired[Literal["inject", "observe"]]
+    # Additional keys beyond those declared are allowed.
+
+class MeshPlanSetOutputPhases(TypedDict):
+    id: str
+    title: str
+    status: str
+    exitCriteria: str
+
+class MeshPlanSetOutput(TypedDict):
+    collaborationId: str
+    objective: str
+    mode: str
+    activePhaseId: str
+    phases: list[MeshPlanSetOutputPhases]
+    decisions: list[str]
+
+class MeshRunArgs(TypedDict):
+    # Agent id, as reported by mesh_agents.
+    agentId: str
+    # The task to hand the agent.
+    prompt: str
+    # Absolute working directory the agent runs in.
+    cwd: str
+    # Optional exact file-backed command name from mesh_capabilities; its prompt body is prepended to this task.
+    commandName: NotRequired[str]
+    # Model in the agent's own naming.
+    model: NotRequired[str]
+    # Approval mode in the agent's own vocabulary.
+    approval: NotRequired[str]
+    # Native session id to continue.
+    resumeNativeId: NotRequired[str]
+    # Wall-clock budget in milliseconds.
+    timeoutMs: NotRequired[int]
+    # Additional keys beyond those declared are allowed.
+
+class MeshRunOutputError(TypedDict):
+    code: str
+    message: str
+    remediation: NotRequired[str]
+    output: NotRequired[str]
+
+class MeshRunOutput(TypedDict):
+    runId: str
+    agentId: str
+    status: str
+    finalText: NotRequired[str]
+    error: NotRequired[MeshRunOutputError]
+    notes: list[str]
+
+class MeshRunCancelArgs(TypedDict):
+    # Run to cancel.
+    runId: str
+    # Reason recorded with the cancellation.
+    reason: NotRequired[str]
+    # Additional keys beyond those declared are allowed.
+
+class MeshRunCancelOutput(TypedDict):
+    cancelled: bool
+
+class MeshRunsArgs(TypedDict):
+    # One run to read; omit for every tracked run.
+    runId: NotRequired[str]
+    # With runId, wait for that run to reach a terminal status before answering.
+    wait: NotRequired[bool]
+    # Additional keys beyond those declared are allowed.
+
+class MeshRunsOutputRuns(TypedDict):
+    runId: str
+    agentId: str
+    status: str
+    cwd: str
+    prompt: str
+    finalText: str
+    errorCode: str
+    errorMessage: str
+    eventCount: int
+    recentEvents: list[str]
+    notes: list[str]
+
+class MeshRunsOutput(TypedDict):
+    runs: list[MeshRunsOutputRuns]
+
+class MeshSessionsArgs(TypedDict):
+    # Agent id, as reported by mesh_agents.
+    agentId: str
+    # Only sessions whose recorded working directory resolves to this path.
+    cwd: NotRequired[str]
+    # Maximum number of sessions to return.
+    limit: NotRequired[int]
+    # Additional keys beyond those declared are allowed.
+
+class MeshSessionsOutputSessions(TypedDict):
+    key: str
+    agentId: str
+    nativeId: str
+    title: str
+    cwd: str
+    updatedAt: str
+    status: str
+    messageCount: int
+    notes: list[str]
+
+class MeshSessionsOutput(TypedDict):
+    sessions: list[MeshSessionsOutputSessions]
+
+class MeshTaskDispatchArgs(TypedDict):
+    # Collaboration owning the task.
+    collaborationId: str
+    # Task to dispatch, as reported by mesh_collaborations.
+    taskId: str
+    # Commit-ish a newly created worktree branches from.
+    baseRef: NotRequired[str]
+    # Wall-clock budget handed to the agent.
+    timeoutMs: NotRequired[int]
+    # Additional keys beyond those declared are allowed.
+
+class MeshTaskDispatchOutput(TypedDict):
+    taskId: str
+    runId: str
+    cwd: str
+    status: str
+    contextHash: str
+
+class MeshTasksArgs(TypedDict):
+    # Agent id, as reported by mesh_agents.
+    agentId: str
+    # Native session id, as reported by mesh_sessions.
+    sessionId: str
+    # Additional keys beyond those declared are allowed.
+
+class MeshTasksOutputTodos(TypedDict):
+    content: str
+    status: str
+    updatedAt: str
+
+class MeshTasksOutput(TypedDict):
+    available: bool
+    planActive: bool
+    todos: list[MeshTasksOutputTodos]
+    plan: list[str]
+    notes: list[str]
+
+class MeshTodosGetArgs(TypedDict):
+    # Collaboration to read.
+    collaborationId: str
+    # Additional keys beyond those declared are allowed.
+
+class MeshTodosGetOutputTodos(TypedDict):
+    id: str
+    content: str
+    status: str
+    owner: str
+    blockedBy: list[str]
+    updatedAt: str
+    nativeKey: str
+    observedIn: str
+
+class MeshTodosGetOutput(TypedDict):
+    collaborationId: str
+    revision: int
+    updatedAt: str
+    todos: list[MeshTodosGetOutputTodos]
+
+class MeshTodosObserveArgs(TypedDict):
+    # Collaboration whose board is folded into.
+    collaborationId: str
+    # Agent whose own store is read, as reported by mesh_agents.
+    agentId: str
+    # The agent's native session id; the newest session is read when omitted.
+    sessionId: NotRequired[str]
+    # Additional keys beyond those declared are allowed.
+
+class MeshTodosObserveOutputTodos(TypedDict):
+    id: str
+    content: str
+    status: str
+    owner: str
+    blockedBy: list[str]
+    updatedAt: str
+    nativeKey: str
+    observedIn: str
+
+class MeshTodosObserveOutput(TypedDict):
+    observed: int
+    collaborationId: str
+    revision: int
+    updatedAt: str
+    todos: list[MeshTodosObserveOutputTodos]
+    notes: list[str]
+
+class MeshTodosSetArgsTodos(TypedDict):
+    id: str
+    content: str
+    status: Literal["pending", "in_progress", "completed", "blocked", "cancelled"]
+    owner: NotRequired[str]
+    blockedBy: NotRequired[list[str]]
+
+class MeshTodosSetArgs(TypedDict):
+    # Collaboration whose board is replaced.
+    collaborationId: str
+    # The complete new board.
+    todos: list[MeshTodosSetArgsTodos]
+    # Revision the caller read; the write is refused when the board moved on.
+    expectedRevision: NotRequired[int]
+    # Additional keys beyond those declared are allowed.
+
+class MeshTodosSetOutputTodos(TypedDict):
+    id: str
+    content: str
+    status: str
+    owner: str
+    blockedBy: list[str]
+    updatedAt: str
+    nativeKey: str
+    observedIn: str
+
+class MeshTodosSetOutput(TypedDict):
+    collaborationId: str
+    revision: int
+    updatedAt: str
+    todos: list[MeshTodosSetOutputTodos]
+
+class MeshTranscriptArgs(TypedDict):
+    # Agent id, as reported by mesh_agents.
+    agentId: str
+    # Native session id, as reported by mesh_sessions.
+    sessionId: str
+    # Maximum number of trailing messages to return.
+    maxMessages: NotRequired[int]
+    # Additional keys beyond those declared are allowed.
+
+class MeshTranscriptOutputMessages(TypedDict):
+    index: int
+    role: str
+    kind: str
+    text: str
+    toolName: str
+    failed: bool
+    timestamp: str
+
+class MeshTranscriptOutput(TypedDict):
+    key: str
+    hasMore: bool
+    totalMessages: int
+    messages: list[MeshTranscriptOutputMessages]
+    notes: list[str]
+
+class MeshWorktreeConflictsArgs(TypedDict):
+    # Repository to analyse.
+    repoRoot: str
+    # Additional keys beyond those declared are allowed.
+
+class MeshWorktreeConflictsOutputFindings(TypedDict):
+    kind: str
+    severity: str
+    left: str
+    right: str
+    paths: list[str]
+    detail: str
+
+class MeshWorktreeConflictsOutput(TypedDict):
+    repoRoot: str
+    at: str
+    worktrees: list[str]
+    findings: list[MeshWorktreeConflictsOutputFindings]
+    suggestedOrder: list[str]
+    notes: list[str]
+
+class MeshWorktreeCreateArgs(TypedDict):
+    # Agent the worktree is reserved for.
+    agentId: str
+    # Absolute path inside the repository.
+    repoRoot: str
+    # Commit-ish to branch from; the repository HEAD when omitted.
+    baseRef: NotRequired[str]
+    # Label used in the branch name and the worktree directory.
+    label: NotRequired[str]
+    # Collaboration the worktree serves.
+    collaborationId: NotRequired[str]
+    # Reuse a clean idle worktree reserved for the same agent.
+    reuse: NotRequired[bool]
+    # Additional keys beyond those declared are allowed.
+
+class MeshWorktreeCreateOutputWorktree(TypedDict):
+    id: str
+    path: str
+    repoRoot: str
+    branch: str
+    baseCommit: str
+    baseRef: str
+    state: str
+    reusable: bool
+    agentId: str
+    collaborationId: str
+    taskId: str
+    runId: str
+    changedFiles: int
+    dirty: bool
+    ahead: int
+    progressNotes: list[str]
+
+class MeshWorktreeCreateOutput(TypedDict):
+    worktree: MeshWorktreeCreateOutputWorktree
+
+class MeshWorktreeIntegratedArgs(TypedDict):
+    # Worktree to mark.
+    worktreeId: str
+    # false marks it outstanding again; defaults to true.
+    merged: NotRequired[bool]
+    # Additional keys beyond those declared are allowed.
+
+class MeshWorktreeIntegratedOutput(TypedDict):
+    worktreeId: str
+    state: str
+
+class MeshWorktreeRemoveArgs(TypedDict):
+    # Worktree to remove.
+    worktreeId: str
+    # Discard uncommitted and unmerged work. Only pass this after a human approved the loss.
+    force: NotRequired[bool]
+    # Additional keys beyond those declared are allowed.
+
+class MeshWorktreeRemoveOutput(TypedDict):
+    worktreeId: str
+    state: str
+    forced: bool
+
+class MeshWorktreesArgs(TypedDict):
+    # Restrict to worktrees of one repository.
+    repoRoot: NotRequired[str]
+    # Additional keys beyond those declared are allowed.
+
+class MeshWorktreesOutputWorktrees(TypedDict):
+    id: str
+    path: str
+    repoRoot: str
+    branch: str
+    baseCommit: str
+    baseRef: str
+    state: str
+    reusable: bool
+    agentId: str
+    collaborationId: str
+    taskId: str
+    runId: str
+    changedFiles: int
+    dirty: bool
+    ahead: int
+    progressNotes: list[str]
+
+class MeshWorktreesOutput(TypedDict):
+    worktrees: list[MeshWorktreesOutputWorktrees]
+
 class ReadArgs(TypedDict):
     # Path to read, resolved by the filesystem backend.
     file_path: str
@@ -535,6 +1122,54 @@ class Tools(Protocol):
         """Read a background job: output since the previous read for stream jobs, or the result of a finished final-output job."""
     async def list_agents(self, args: ListAgentsArgs) -> list[ListAgentsOutput1 | ListAgentsOutput2]:
         """List subagents you started, with their ids, labels, and status. running means it is working; inactive means it is not currently working. You will be notified when a subagent finishes; there is no need to keep checking its status. Use send_message to continue the conversation."""
+    async def mesh_agents(self, args: dict[str, Any]) -> MeshAgentsOutput:
+        """List the external coding agents the mesh can read (Codex, Grok Build, Pi, OMP), with their detection state and declared capabilities."""
+    async def mesh_capabilities(self, args: MeshCapabilitiesArgs) -> MeshCapabilitiesOutput:
+        """Read one external agent's declared tools, skills, MCP servers, commands and context files from its own configuration."""
+    async def mesh_capability_read(self, args: MeshCapabilityReadArgs) -> MeshCapabilityReadOutput:
+        """Read one skill, command template, or context file currently declared by an external agent, through DSH's filesystem policy."""
+    async def mesh_collaboration_start(self, args: MeshCollaborationStartArgs) -> MeshCollaborationStartOutput:
+        """Create a collaboration: one authoritative plan, one shared todo board, and optional tasks assigned to agents. A worktree-isolated task gets its own git worktree when it is dispatched."""
+    async def mesh_collaborations(self, args: MeshCollaborationsArgs) -> MeshCollaborationsOutput:
+        """List collaborations with their plan, board counts, tasks and worktrees, or read one collaboration by id."""
+    async def mesh_mcp_connect(self, args: MeshMcpConnectArgs) -> MeshMcpConnectOutput:
+        """After DSH approval, start one native MCP server declared by an external agent and expose its tools only to the calling DSH Agent."""
+    async def mesh_mcp_disconnect(self, args: MeshMcpDisconnectArgs) -> MeshMcpDisconnectOutput:
+        """Disconnect one MCP server previously approved for the calling DSH Agent and remove its tools from that Agent."""
+    async def mesh_plan_advance(self, args: MeshPlanAdvanceArgs) -> MeshPlanAdvanceOutput:
+        """Move the plan to a phase, marking every earlier phase done. Refused while an earlier phase is still open."""
+    async def mesh_plan_set(self, args: MeshPlanSetArgs) -> MeshPlanSetOutput:
+        """Replace a collaboration's plan fields. The plan is the authoritative input every dispatched run receives."""
+    async def mesh_run(self, args: MeshRunArgs) -> MeshRunOutput:
+        """Dispatch a task to an external coding agent in a working directory and return its terminal result. Adapters that expose native approval requests route them through DSH approval."""
+    async def mesh_run_cancel(self, args: MeshRunCancelArgs) -> MeshRunCancelOutput:
+        """Cancel a dispatched run. Cancellation terminates the agent process group; it is not a resumable pause."""
+    async def mesh_runs(self, args: MeshRunsArgs) -> MeshRunsOutput:
+        """Read dispatched runs: their status, final answer, classified failure, and recent events."""
+    async def mesh_sessions(self, args: MeshSessionsArgs) -> MeshSessionsOutput:
+        """List one external agent's own sessions (as that agent's CLI stored them), newest first."""
+    async def mesh_task_dispatch(self, args: MeshTaskDispatchArgs) -> MeshTaskDispatchOutput:
+        """Dispatch one collaboration task: create or reuse its worktree, hand the agent the plan and board context plus the instruction, and record the run on the task. Refused when the task is already running or succeeded, or when a dependency is unfinished."""
+    async def mesh_tasks(self, args: MeshTasksArgs) -> MeshTasksOutput:
+        """Read one external agent's own todo list and plan for a session, when that agent records them."""
+    async def mesh_todos_get(self, args: MeshTodosGetArgs) -> MeshTodosGetOutput:
+        """Read a collaboration's shared todo board with its revision."""
+    async def mesh_todos_observe(self, args: MeshTodosObserveArgs) -> MeshTodosObserveOutput:
+        """Read one agent's own todo list for a session and fold it into the shared board. Authored items are never overwritten, and an item the board considers done is never reopened."""
+    async def mesh_todos_set(self, args: MeshTodosSetArgs) -> MeshTodosSetOutput:
+        """Replace a collaboration's shared todo board. Pass expectedRevision from a previous read to be refused instead of clobbering another writer's change."""
+    async def mesh_transcript(self, args: MeshTranscriptArgs) -> MeshTranscriptOutput:
+        """Read a window of one external agent's session transcript, projected onto a common message shape."""
+    async def mesh_worktree_conflicts(self, args: MeshWorktreeConflictsArgs) -> MeshWorktreeConflictsOutput:
+        """Compare the live worktrees of one repository and report the files two of them changed. Detection is advisory: it reports same-file overlap only, never a semantic conflict in different files."""
+    async def mesh_worktree_create(self, args: MeshWorktreeCreateArgs) -> MeshWorktreeCreateOutput:
+        """Create a git worktree on a new branch inside the mesh-owned directory of a repository, or reuse a clean idle one already reserved for that agent."""
+    async def mesh_worktree_integrated(self, args: MeshWorktreeIntegratedArgs) -> MeshWorktreeIntegratedOutput:
+        """Mark a worktree integrated so it stops appearing as outstanding work, or outstanding again with merged=false."""
+    async def mesh_worktree_remove(self, args: MeshWorktreeRemoveArgs) -> MeshWorktreeRemoveOutput:
+        """Remove a mesh-owned git worktree. DANGEROUS: a worktree with uncommitted changes or unmerged commits is refused unless force is true, and a forced removal discards that work permanently."""
+    async def mesh_worktrees(self, args: MeshWorktreesArgs) -> MeshWorktreesOutput:
+        """List mesh-owned git worktrees with a live progress sample: changed files, HEAD, and whether the tree is dirty."""
     async def read(self, args: ReadArgs) -> ReadOutput:
         """Read a UTF-8 text file and return line-numbered content."""
     async def read_image(self, args: ReadImageArgs) -> ReadImageOutput:

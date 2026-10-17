@@ -15,8 +15,13 @@ import type { Config } from '../src/index.ts'
 const PYABS = resolvePythonBin('python3') ?? 'python3'
 import type { PtcBindingFunction, PtcJsonValue, PtcRunResult } from '@deepseek-ai/dsh-ptc-runtime'
 
-const { failNextReadOf, tempDirs, tempFiles } = vi.hoisted(() => ({
+const { failNextReadOf, processStatRead, tempDirs, tempFiles } = vi.hoisted(() => ({
   failNextReadOf: { value: undefined as string | undefined },
+  processStatRead: {
+    path: undefined as string | undefined,
+    value: undefined as string | undefined,
+    error: undefined as Error | undefined,
+  },
   tempDirs: [] as string[],
   tempFiles: [] as string[],
 }))
@@ -25,6 +30,11 @@ vi.mock('node:fs', async (importOriginal) => {
   return {
     ...actual,
     readFileSync(...args: Parameters<typeof actual.readFileSync>) {
+      if (processStatRead.path === String(args[0])) {
+        processStatRead.path = undefined
+        if (processStatRead.error !== undefined) throw processStatRead.error
+        if (processStatRead.value !== undefined) return processStatRead.value
+      }
       if (failNextReadOf.value !== undefined && String(args[0]).endsWith(`/${failNextReadOf.value}`)) {
         failNextReadOf.value = undefined
         throw Object.assign(new Error('simulated missing packaged script'), { code: 'ENOENT' })
@@ -66,6 +76,10 @@ function makeTempDirSync(prefix: string): string {
 afterEach(() => {
   for (const dir of tempDirs.splice(0)) rmSync(dir, { recursive: true, force: true })
   for (const file of tempFiles.splice(0)) rmSync(file, { force: true })
+  failNextReadOf.value = undefined
+  processStatRead.path = undefined
+  processStatRead.value = undefined
+  processStatRead.error = undefined
 })
 
 describe('PythonPtcRuntime — seam descriptors and misuse', () => {
@@ -678,6 +692,34 @@ describe('PythonPtcRuntime — seam descriptors and misuse', () => {
 })
 
 describe('PythonPtcRuntime — process identity', () => {
+  it('parses the Linux process start time after the final command-name parenthesis', () => {
+    const pid = 42_424
+    const fields = Array.from({ length: 20 }, (_, index) => `field-${index}`)
+    fields[19] = 'fixture-start-time'
+    processStatRead.path = `/proc/${String(pid)}/stat`
+    processStatRead.value = `${String(pid)} (python (worker)) ${fields.join(' ')}`
+    const platform = Object.getOwnPropertyDescriptor(process, 'platform')
+    Object.defineProperty(process, 'platform', { configurable: true, value: 'linux' })
+    try {
+      expect(readProcessStart(pid)).toBe('fixture-start-time')
+    } finally {
+      if (platform !== undefined) Object.defineProperty(process, 'platform', platform)
+    }
+  })
+
+  it('returns undefined when Linux cannot read the process stat during teardown', () => {
+    const pid = 42_425
+    processStatRead.path = `/proc/${String(pid)}/stat`
+    processStatRead.error = new Error('process already exited')
+    const platform = Object.getOwnPropertyDescriptor(process, 'platform')
+    Object.defineProperty(process, 'platform', { configurable: true, value: 'linux' })
+    try {
+      expect(readProcessStart(pid)).toBeUndefined()
+    } finally {
+      if (platform !== undefined) Object.defineProperty(process, 'platform', platform)
+    }
+  })
+
   it('reads a live process start time and distinguishes it from an absent pid', () => {
     // The teardown guard signals `-child.pid` with a RAW `process.kill`, which
     // (unlike `child.kill()`) has no handle check, so it would reach a recycled

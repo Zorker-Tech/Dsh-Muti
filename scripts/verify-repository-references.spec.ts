@@ -140,6 +140,15 @@ describe('maintained repository reference policy', () => {
     expect(scanRepositoryReferences(fixture.root)).toEqual([])
   })
 
+  it('does not treat a bare decimal field as a commit identifier', () => {
+    const numericPrefix = ['6344', '383'].join('')
+    expect(findRepositoryReferences(
+      'uv.lock',
+      `size = ${numericPrefix},\n${numericPrefix}\n`,
+      new Set([numericPrefix]),
+    )).toEqual([{ file: 'uv.lock', line: 2, kind: 'commit-hash' }])
+  })
+
   it('accepts a prefix that two available commits share and rejects a longer unique prefix', (test) => {
     const fixture = repository(test)
     const [first, second] = collidingCommitBodies(fixture.tree, 7).map(body =>

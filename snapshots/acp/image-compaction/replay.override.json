@@ -1,0 +1,62 @@
+[
+  {
+    "kind": "chunks",
+    "chunks": [
+      { "type": "block-start", "index": 0, "blockType": "text" },
+      { "type": "text-delta", "index": 0, "text": "Received six dashboard frames; ready to discuss." },
+      {
+        "type": "block-end",
+        "index": 0,
+        "block": { "type": "text", "text": "Received six dashboard frames; ready to discuss." }
+      },
+      { "type": "usage", "usage": { "inputTokens": 3, "outputTokens": 3 } },
+      { "type": "finish", "reason": { "kind": "stop" } }
+    ]
+  },
+  {
+    "kind": "chunks",
+    "chunks": [
+      { "type": "block-start", "index": 0, "blockType": "text" },
+      {
+        "type": "text-delta",
+        "index": 0,
+        "text": "Six identical 1x1 dashboard reference screenshots were shared and acknowledged."
+      },
+      {
+        "type": "block-end",
+        "index": 0,
+        "block": { "type": "text", "text": "Six identical 1x1 dashboard reference screenshots were shared and acknowledged." }
+      },
+      { "type": "usage", "usage": { "inputTokens": 20, "outputTokens": 16 } },
+      { "type": "finish", "reason": { "kind": "stop" } }
+    ]
+  },
+  {
+    "kind": "chunks",
+    "chunks": [
+      { "type": "block-start", "index": 0, "blockType": "text" },
+      {
+        "type": "text-delta",
+        "index": 0,
+        "text": "The screenshots were acknowledged; the user now asks for exactly DONE."
+      },
+      {
+        "type": "block-end",
+        "index": 0,
+        "block": { "type": "text", "text": "The screenshots were acknowledged; the user now asks for exactly DONE." }
+      },
+      { "type": "usage", "usage": { "inputTokens": 20, "outputTokens": 16 } },
+      { "type": "finish", "reason": { "kind": "stop" } }
+    ]
+  },
+  {
+    "kind": "chunks",
+    "chunks": [
+      { "type": "block-start", "index": 0, "blockType": "text" },
+      { "type": "text-delta", "index": 0, "text": "DONE" },
+      { "type": "block-end", "index": 0, "block": { "type": "text", "text": "DONE" } },
+      { "type": "usage", "usage": { "inputTokens": 3, "outputTokens": 3 } },
+      { "type": "finish", "reason": { "kind": "stop" } }
+    ]
+  }
+]

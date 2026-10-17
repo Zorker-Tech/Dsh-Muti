@@ -189,6 +189,46 @@
       config:
         backend: json
 
+    # The external coding-agent mesh: the adapter registry and the durable
+    # session-to-agent binding, the model-facing tools over it, and the Remote
+    # surface the Web Client reads. The registry is inert until an adapter
+    # package registers, so this layer mounts the seam everywhere and each
+    # agent adapter is selected on its own row.
+    - id: agent-mesh
+      name: '@deepseek-ai/dsh-agent-mesh'
+
+    - id: agent-mesh-tools
+      name: '@deepseek-ai/dsh-agent-mesh-tools'
+      config:
+        contextMaxBytes: 2097152
+
+    - id: agent-mesh-controller
+      name: '@deepseek-ai/dsh-agent-mesh-controller'
+
+    - id: agent-mesh-commands
+      name: '@deepseek-ai/dsh-agent-mesh-commands'
+
+    # One row per external agent. Each adapter registers itself on the mesh and
+    # stays inert until a caller reads or dispatches; a machine without that
+    # agent's binary reports it as not installed rather than failing the tree.
+    - id: agent-codex
+      name: '@deepseek-ai/dsh-agent-codex'
+
+    - id: agent-grok
+      name: '@deepseek-ai/dsh-agent-grok'
+
+    - id: agent-pi
+      name: '@deepseek-ai/dsh-agent-pi'
+
+    - id: agent-omp
+      name: '@deepseek-ai/dsh-agent-omp'
+
+    # Worktree-isolated multi-agent work: one plan, one todo board, per-agent
+    # worktrees, conflict reports, and task dispatch. Inert until a caller
+    # starts a collaboration.
+    - id: agent-mesh-collaboration
+      name: '@deepseek-ai/dsh-agent-mesh-collaboration'
+
     # Persisted projection cache: throttled write-behind over the
     # session_projcache domain (per-record layout — one version-stamped
     # checkpoint document per session), serving the session listing's

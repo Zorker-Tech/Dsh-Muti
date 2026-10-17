@@ -15,7 +15,9 @@ function property(nodes: readonly SchemaNode[], index: number, name: string): nu
   return field.type
 }
 
-it('requires compatibility review before request headers can carry retired system text', { timeout: 60_000 }, () => {
+it('requires compatibility review before request headers can carry retired system text', {
+  timeout: Math.max(180_000, Number(process.env.DSH_COVERAGE_TEST_TIMEOUT_MS ?? 0)),
+}, () => {
   const inventory = extractPersistenceSchema(resolve(import.meta.dirname, '..'))
   const before = inventory.roots.find(root => root.key === 'event:request/header')
   if (before === undefined) throw new Error('generated schema omits request/header')

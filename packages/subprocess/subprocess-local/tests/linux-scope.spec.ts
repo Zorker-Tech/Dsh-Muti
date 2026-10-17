@@ -322,6 +322,17 @@ describe('Linux native capability selection', () => {
     }
   })
 
+  it('uses the kernel socket table default when no path is supplied', () => {
+    const runtime = mkdtempSync(join(tmpdir(), 'dsh-runtime-default-table-'))
+    directories.push(runtime)
+    try {
+      vi.stubEnv('XDG_RUNTIME_DIR', runtime)
+      expect(linuxManagerListener()).toBeUndefined()
+    } finally {
+      vi.unstubAllEnvs()
+    }
+  })
+
   it.skipIf(process.platform === 'win32')('identifies the systemd-run binary that PATH resolves', () => {
     const root = mkdtempSync(join(tmpdir(), 'dsh-path-'))
     directories.push(root)

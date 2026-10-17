@@ -5,6 +5,7 @@ import type {
   AttachmentIdType, ImageAttachmentLimits, ImageAttachmentRef, ImageMediaType,
 } from '@deepseek-ai/dsh-attachment'
 import type { Branded } from '@deepseek-ai/dsh-brand'
+import type { AgentId, AgentSessionKey, AgentSessionStatus } from '@deepseek-ai/dsh-agent-mesh/types'
 import type { LlmAttemptId, MessageId } from '@deepseek-ai/dsh-llm/brand'
 import type { TextBlock } from '@deepseek-ai/dsh-llm'
 import type { SessionId, SessionSeqCursor } from '@deepseek-ai/dsh-session/types'
@@ -190,6 +191,48 @@ export interface SessionSummary {
   readonly projections?: SessionProjectionHints
 }
 
+/** One external agent session in the Host session catalog. */
+export interface AgentSessionSummary {
+  /** Source discriminator; this row never owns a Harness Session. */
+  readonly source: 'agent-mesh'
+  /** Agent that owns the native session store. */
+  readonly agentId: AgentId
+  /** Stable mesh identity, distinct from every Harness Session id. */
+  readonly key: AgentSessionKey
+  /** Agent-native session id. */
+  readonly nativeId: string
+  /** Native or adapter-projected title. */
+  readonly title?: string
+  /** Recorded working directory. */
+  readonly cwd?: string
+  /** Model identifier, when the agent recorded one. */
+  readonly model?: string
+  /** ISO-8601 creation instant. */
+  readonly createdAt: string
+  /** ISO-8601 last activity instant. */
+  readonly updatedAt: string
+  /** Lifecycle state the adapter could observe. */
+  readonly status: AgentSessionStatus
+  /** Whether the user pinned this external session in Harness browsing surfaces. */
+  readonly pinned: boolean
+  /** Whether the user archived this external session in Harness browsing surfaces. */
+  readonly archived: boolean
+  /** Message count when the adapter can count it exactly. */
+  readonly messageCount?: number
+  /** Native parent session id, when recorded. */
+  readonly parentNativeId?: string
+  /** Notes about fields the adapter could not project. */
+  readonly notes: readonly string[]
+}
+
+/** One agent store that failed to contribute rows to the session catalog. */
+export interface AgentSessionListFailure {
+  /** Agent whose store failed. */
+  readonly agentId: AgentId
+  /** Actionable reader-facing failure detail. */
+  readonly message: string
+}
+
 /** One session-content search result. */
 export interface SessionSearchItem {
   readonly sessionId: SessionId
@@ -271,6 +314,10 @@ export interface SessionListRequest {
 /** Session list response value. */
 export interface SessionListValue {
   readonly items: readonly SessionSummary[]
+  /** External native sessions, separate from Harness Session ids and logs. */
+  readonly agentSessions: readonly AgentSessionSummary[]
+  /** Per-agent store failures; successful agents still contribute rows. */
+  readonly agentSessionFailures: readonly AgentSessionListFailure[]
 }
 
 /** Session search request. */

@@ -568,6 +568,7 @@ export function collectExportJsdocViolations(scanRoot: string = root): string[] 
   const violations: string[] = []
   const rels = globSync('packages/*/*/src/**/*.ts', { cwd: scanRoot })
     .map(path => path.split(sep).join('/'))
+    .filter(path => !/(?:^|\/)oxlint-contract-[^/]+\.ts$/.test(path))
     .sort()
   const program = ts.createProgram(rels.map(rel => resolve(scanRoot, rel)), loadCompilerOptions(scanRoot))
   const checker = program.getTypeChecker()

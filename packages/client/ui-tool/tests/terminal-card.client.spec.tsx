@@ -500,7 +500,7 @@ describe('BashRow terminal card', () => {
     ids: [SID],
     byId: { [SID]: { id: SID, displayTitle: 'r', running: false, retainedBy: {}, blank: false, updatedAt: 0 } },
     phase: 'ready',
-    projectionsBySession: {},
+    agentSessions: [], agentSessionFailures: [], projectionsBySession: {},
   })
 
   const rowProps = (block: StartedToolCall | ToolResultNode): BashRowProps => ({

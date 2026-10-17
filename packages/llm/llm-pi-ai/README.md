@@ -33,6 +33,10 @@ The adapter accepts the LLM service's [request-only user inputs](../llm/README.m
 
 Choose this adapter when the same composition serves several providers, when a route needs pi-ai's catalog defaults with a few fields corrected, or when a hand-declared gateway must be reached through its own endpoint and protocol. Choose `dsh-llm-deepseek` for the direct DeepSeek route when the deployment needs no other provider. Both adapters can be mounted together because their route names do not collide; registering a route another adapter already owns fails plugin loading.
 
+### Project a CLI-owned model catalog
+
+Agent packages can use the exported `NativeProviderLlmAdapter` to contribute a CLI's configured providers to `ctx.llm` without moving that CLI's configuration into this plugin. Each agent registers one stable Harness provider id; its model ids retain the native provider/model pair, and each request resolves the route and credential from the agent's own files. `nativeProviderAuth()` supplies pi-ai's ambient auth interface while keeping the Harness credential store empty and refusing writes, so a native credential is never copied into the Harness credential domain. The agent package owns which ambient environment variables or native key files a route may read.
+
 ### Configure provider routes
 
 Each profile may set a `retryPolicy`; omission uses normal mode with five retries. `apiKeyEnv` is a credential reference resolved per request through the harness credential seam, so no secret enters the configuration file; a reference that resolves to nothing fails the request with `MISSING_CREDENTIAL`. Omitting it leaves the route configured-but-keyless, which for an installed catalog route defers to pi-ai's provider-native ambient discovery.
@@ -151,6 +155,7 @@ Initial prompt text and active tools use pi-ai's `Context.systemPrompt` and `Con
 | [`src/catalog.ts`](src/catalog.ts) | Installed-catalog integration and drift gates |
 | [`src/provider-data.ts`](src/provider-data.ts) | Generated authentication and endpoint metadata for configuration surfaces |
 | [`src/models.ts`](src/models.ts) | Model collections, static providers, and reasoning levels over narrow pi-ai entry points |
+| [`src/native-adapter.ts`](src/native-adapter.ts) | Dynamic `ctx.llm` projection for CLI-owned routes and read-only pi-ai auth injection |
 | [`src/provider.ts`](src/provider.ts) | The supported-protocol table and provider construction |
 | [`src/context.ts`](src/context.ts) | Harness-to-pi-ai context conversion, image handling, replay restore |
 | [`src/stream.ts`](src/stream.ts) | pi-ai event conversion into harness `StreamChunk` values |

@@ -4,8 +4,9 @@
  * the real Connection, and Agent Context identity through the Typert registry.
  */
 import { RemoteStreamCarrierError } from '@deepseek-ai/dsh-api-gateway/client'
-import { ok, type RemoteMock } from '@deepseek-ai/dsh-remote-mock'
+import { type RemoteMock } from '@deepseek-ai/dsh-remote-mock'
 import { createClientTest, type TestClient, webApp } from '@deepseek-ai/dsh-client-test-runtime/src/assembly/index.ts'
+import { sessionListSuccess } from '@deepseek-ai/dsh-client-test-runtime'
 import type { SessionId } from '@deepseek-ai/dsh-session/types'
 import type { RemoteResult } from '@deepseek-ai/dsh-typert-protocol'
 import { isTypertOwnedValue } from '@deepseek-ai/dsh-typert-protocol'
@@ -83,7 +84,7 @@ describe('Session Controller Client apply', () => {
   it('keeps immediate control projections when the ready notification follows their baseline', async ({ mock, start }) => {
     const connected = vi.spyOn(ClientSessions.prototype, 'handleConnected')
     const sessionId = sid('immediate-baseline')
-    mock.remote.session.list.mockResolvedValue(ok({ items: [{
+    mock.remote.session.list.mockResolvedValue(sessionListSuccess({ items: [{
       sessionId, updatedAt: 1, running: false, blank: false, agentAvailable: true,
     }] }))
     let projection = { asOfSeq: 20, values: { title: 'Before restart' } }
@@ -146,7 +147,7 @@ describe('Session Controller Client apply', () => {
     expect(secondOwner.value).toBe(firstOwner.value)
     expect(sessions.retainInfo(sid('agent-early')).getSnapshot()).toEqual({ referenceCount: 2, retainedBy: { gateway: 2 } })
     expect(mock.log.requests('session/follow')).toHaveLength(0)
-    list.resolve(ok({ items: [] }))
+    list.resolve(sessionListSuccess({ items: [] }))
     await vi.waitFor(() => { expect(sessions.list.getSnapshot().phase).toBe('ready') })
     expect(sessions.scope(sid('agent-early'))).toBe(firstOwner.value)
   })

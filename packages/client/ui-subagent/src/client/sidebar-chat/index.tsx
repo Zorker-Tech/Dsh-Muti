@@ -123,7 +123,10 @@ export function FixedChatConversationView(props: ConversationViewsProps) {
 }
 
 /** Props supplied to the child-Session Conversation host. */
-export type ConversationSlotPanelProps = PropsRuntime<'sidebar.chat.conversation'> & PropsRenderFactories
+export type ConversationSlotPanelProps = Pick<
+  PropsRuntime<'sidebar.chat.conversation'>,
+  'sessionId' | 'useSession' | 'useConversation' | 'useSessions'
+> & PropsRenderFactories
 
 /** Render the shared Conversation content for one explicitly provided child Session. */
 export function ConversationSlotPanel({

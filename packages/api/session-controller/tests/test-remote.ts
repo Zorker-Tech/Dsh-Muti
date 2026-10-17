@@ -292,6 +292,12 @@ function installControllers(
   }
   installSessionReadTestServices(ctx)
   if (ctx.get('remoteAccess') === undefined) new RemoteAccessService(ctx)
+  if (ctx.get('agentMesh') === undefined) {
+    ctx.provide('agentMesh', {
+      listSessions: async () => ({ items: [], failures: [] }),
+      sessionMarks: () => [],
+    } as never)
+  }
   const cwd = vi.spyOn(process, 'cwd').mockReturnValue(defaults.cwd)
   let controller: SessionController
   try {

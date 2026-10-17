@@ -484,6 +484,14 @@ export const TYPE_API: readonly TypeApiEntry[] = [
     declaration: 'export type AgentContext = Omit<Context, \'remote\'> & {\n    readonly remote: ClientRemote & TypertRemoteScopeApi<\'agent\'>;\n};',
   },
   {
+    name: 'AgentSessionListFailure',
+    declaration: 'export interface AgentSessionListFailure {\n    readonly agentId: AgentId;\n    readonly message: string;\n}',
+  },
+  {
+    name: 'AgentSessionSummary',
+    declaration: 'export interface AgentSessionSummary {\n    readonly source: \'agent-mesh\';\n    readonly agentId: AgentId;\n    readonly key: AgentSessionKey;\n    readonly nativeId: string;\n    readonly title?: string;\n    readonly cwd?: string;\n    readonly model?: string;\n    readonly createdAt: string;\n    readonly updatedAt: string;\n    readonly status: AgentSessionStatus;\n    readonly pinned: boolean;\n    readonly archived: boolean;\n    readonly messageCount?: number;\n    readonly parentNativeId?: string;\n    readonly notes: readonly string[];\n}',
+  },
+  {
     name: 'AssistantLiveChunkEvent',
     declaration: 'export interface AssistantLiveChunkEvent {\n    readonly type: \'assistant/live-chunk\';\n    readonly seq: number;\n    readonly time: number;\n    readonly data: {\n        readonly attemptId: LlmAttemptId;\n        readonly turn: number;\n        readonly step: number;\n        readonly chunk: StreamChunk;\n    };\n}',
   },
@@ -900,12 +908,20 @@ export const TYPE_API: readonly TypeApiEntry[] = [
     declaration: 'export type SessionIdOf = SessionStandardProps extends {\n    sessionId: infer S;\n} ? S : string;',
   },
   {
+    name: 'SessionListEntry',
+    declaration: 'export interface SessionListEntry {\n    sessionId: SessionId;\n    title?: string;\n    updatedAt: number;\n    running: boolean;\n    blank: boolean;\n    parentSessionId?: SessionId;\n    origin?: \'subagent\';\n    formatStatus?: SessionSummary[\'formatStatus\'];\n    cwd?: string;\n    projectionValues?: Readonly<Partial<SessionProjectionMap>>;\n    depth: number;\n}',
+  },
+  {
     name: 'SessionListPhase',
     declaration: 'export type SessionListPhase = \'pending\' | \'ready\';',
   },
   {
+    name: 'SessionListSnapshot',
+    declaration: 'export interface SessionListSnapshot {\n    items: readonly SessionListEntry[];\n    agentSessions: readonly AgentSessionSummary[];\n    agentSessionFailures: readonly AgentSessionListFailure[];\n    state: \'idle\' | \'loading\' | \'error\';\n    phase: SessionListPhase;\n    error: RemoteFailure | null;\n    projectionsBySession: Readonly<Record<SessionId, SessionProjectionSnapshot>>;\n}',
+  },
+  {
     name: 'SessionListState',
-    declaration: 'export interface SessionListState {\n    ids: SessionId[];\n    byId: Record<SessionId, SessionSummary>;\n    phase: SessionListPhase;\n    projectionsBySession: Readonly<Record<SessionId, SessionProjectionSnapshot>>;\n}',
+    declaration: 'export interface SessionListState {\n    ids: SessionId[];\n    byId: Record<SessionId, SessionSummary>;\n    agentSessions: SessionListSnapshot[\'agentSessions\'];\n    agentSessionFailures: SessionListSnapshot[\'agentSessionFailures\'];\n    phase: SessionListPhase;\n    projectionsBySession: Readonly<Record<SessionId, SessionProjectionSnapshot>>;\n}',
   },
   {
     name: 'SessionMaybeStandardProps',

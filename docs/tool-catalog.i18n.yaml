@@ -6,11 +6,11 @@
   en: 0be8ffbf23193557
   zh: ce2c69aa86875171
 /tool-schema-catalog:
-  en: 6cc2cd9ced70bb09
-  zh: 1c0e6cb4ba2ed637
+  en: 3e22402238217bbc
+  zh: 34c68a4a75a87e1f
 /tool-schema-catalog/tool-package-map:
-  en: e72ad7af437fa362
-  zh: d8f3683a4efe01b0
+  en: 9254eaa3de07fe5d
+  zh: 7a04f1d9314cf3d0
 /tool-schema-catalog/deepseek-ai-dsh-plugin-manager:
   en: e0143916bb634762
   zh: e0143916bb634762
@@ -288,8 +288,86 @@
   en: 2eac7360ba68b1bd
   zh: b5d676bf288c245e
 /tool-schema-catalog/deepseek-ai-dsh-experimental-tool-agent-team/wait-agent:
-  en: e70c77a45832bb28
-  zh: 7d03bec294b65452
+  en: 391e599e9f16172e
+  zh: b74c152ccc00465d
+/tool-schema-catalog/deepseek-ai-dsh-agent-mesh-collaboration:
+  en: 2f0d9ff4d8958a35
+  zh: 2f0d9ff4d8958a35
+/tool-schema-catalog/deepseek-ai-dsh-agent-mesh-collaboration/mesh-collaboration-start:
+  en: 5673dfa0fb1cefdb
+  zh: 0e84aa5cccb90e93
+/tool-schema-catalog/deepseek-ai-dsh-agent-mesh-collaboration/mesh-collaborations:
+  en: 4d2340c1d226cd1f
+  zh: 92420db0fced6e18
+/tool-schema-catalog/deepseek-ai-dsh-agent-mesh-collaboration/mesh-plan-advance:
+  en: 29741f685b65876d
+  zh: b9341c680178c8b7
+/tool-schema-catalog/deepseek-ai-dsh-agent-mesh-collaboration/mesh-plan-set:
+  en: 93f40b11ae6750eb
+  zh: 3128351b92de0ae9
+/tool-schema-catalog/deepseek-ai-dsh-agent-mesh-collaboration/mesh-task-dispatch:
+  en: 661ffd74832eca2a
+  zh: 6a0e933581b77bc1
+/tool-schema-catalog/deepseek-ai-dsh-agent-mesh-collaboration/mesh-todos-get:
+  en: 75b1682644a554f4
+  zh: 7213014a8ea4191b
+/tool-schema-catalog/deepseek-ai-dsh-agent-mesh-collaboration/mesh-todos-observe:
+  en: 49fd118d96cc81bc
+  zh: e8fabfb435ba899f
+/tool-schema-catalog/deepseek-ai-dsh-agent-mesh-collaboration/mesh-todos-set:
+  en: f14cd2fee01cc866
+  zh: 740cf926a674a578
+/tool-schema-catalog/deepseek-ai-dsh-agent-mesh-collaboration/mesh-worktree-conflicts:
+  en: 71410eb4015e17fc
+  zh: a74507783107d6e8
+/tool-schema-catalog/deepseek-ai-dsh-agent-mesh-collaboration/mesh-worktree-create:
+  en: 4c07808fdb1272fc
+  zh: 8105106f9e90c63e
+/tool-schema-catalog/deepseek-ai-dsh-agent-mesh-collaboration/mesh-worktree-integrated:
+  en: e1a98f8e60cef559
+  zh: 56ba8851b0cfc3e6
+/tool-schema-catalog/deepseek-ai-dsh-agent-mesh-collaboration/mesh-worktree-remove:
+  en: 7d36fa614ae96b2a
+  zh: e03adf3804acc8b5
+/tool-schema-catalog/deepseek-ai-dsh-agent-mesh-collaboration/mesh-worktrees:
+  en: 5780c2488921dfd1
+  zh: a011d22a74c2583e
+/tool-schema-catalog/deepseek-ai-dsh-agent-mesh-tools:
+  en: b548a5c3a4de1c29
+  zh: b548a5c3a4de1c29
+/tool-schema-catalog/deepseek-ai-dsh-agent-mesh-tools/mesh-agents:
+  en: 05429fdd90f0de69
+  zh: 9fadb4b4a9557809
+/tool-schema-catalog/deepseek-ai-dsh-agent-mesh-tools/mesh-capabilities:
+  en: 1b44ff9f29ed50f6
+  zh: ab899e509952ab14
+/tool-schema-catalog/deepseek-ai-dsh-agent-mesh-tools/mesh-capability-read:
+  en: 2d6052fb05218ea1
+  zh: 176160b6d3f45c86
+/tool-schema-catalog/deepseek-ai-dsh-agent-mesh-tools/mesh-mcp-connect:
+  en: 1c2d48263ec7692c
+  zh: 070d63142b409901
+/tool-schema-catalog/deepseek-ai-dsh-agent-mesh-tools/mesh-mcp-disconnect:
+  en: 0db0b21712ff8222
+  zh: b71b14142d24c60d
+/tool-schema-catalog/deepseek-ai-dsh-agent-mesh-tools/mesh-run:
+  en: b6e439ecaa060b9c
+  zh: d1a8c23ded48beaf
+/tool-schema-catalog/deepseek-ai-dsh-agent-mesh-tools/mesh-run-cancel:
+  en: aa41536690aa57bd
+  zh: f5f9e91328884b21
+/tool-schema-catalog/deepseek-ai-dsh-agent-mesh-tools/mesh-runs:
+  en: 3f000fd96adc3c07
+  zh: df380bb9ab15c751
+/tool-schema-catalog/deepseek-ai-dsh-agent-mesh-tools/mesh-sessions:
+  en: cef911d1b48480a8
+  zh: fab9988e606f6d49
+/tool-schema-catalog/deepseek-ai-dsh-agent-mesh-tools/mesh-tasks:
+  en: 6668c7ac74d5792c
+  zh: df2fc2f3d37ca24c
+/tool-schema-catalog/deepseek-ai-dsh-agent-mesh-tools/mesh-transcript:
+  en: 3a4fdd8ada067f34
+  zh: e8f4bbef9233c062
 /tool-schema-catalog/deepseek-ai-dsh-tool-todo:
   en: dea62d26fb18ff68
   zh: dea62d26fb18ff68

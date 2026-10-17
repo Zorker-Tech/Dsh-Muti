@@ -149,7 +149,11 @@ function hostSourceFiles(root: string, configPath: string, seen = new Set<string
   const errors = parsed.errors.filter(error => error.code !== 18003)
   if (errors.length > 0) throw new PersistenceSchemaError(errors.map(diagnosticText).join('\n'))
   return [
-    ...parsed.fileNames.filter(file => /^packages\/[^/]+\/[^/]+\/src\//.test(slash(relative(root, file)))),
+    ...parsed.fileNames.filter((file) => {
+      const path = slash(relative(root, file))
+      return /^packages\/[^/]+\/[^/]+\/src\//.test(path)
+        && !/(?:^|\/)oxlint-contract-[^/]+\.ts$/.test(path)
+    }),
     ...(parsed.projectReferences ?? []).flatMap(reference =>
       hostSourceFiles(root, extname(reference.path) === '.json' ? reference.path : resolve(reference.path, 'tsconfig.json'), seen)),
   ]

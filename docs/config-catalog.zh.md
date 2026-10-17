@@ -35,6 +35,50 @@ export interface AcpConfig {
 ```
 <!-- END GENERATED config-catalog:@deepseek-ai/dsh-acp -->
 
+<!-- BEGIN GENERATED config-catalog:@deepseek-ai/dsh-agent-codex -->
+<a id="deepseek-aidsh-agent-codex"></a>
+
+## `@deepseek-ai/dsh-agent-codex`
+
+- `inject`: `agentMesh` · `llm` · `fs` · `subprocess`
+- `refs`: [`AgentRunMode`](../packages/agent-mesh/mesh/src/index.ts)
+- `source`: [`packages/agent-mesh/agent-codex/src/config.ts:15`](../packages/agent-mesh/agent-codex/src/config.ts)
+
+```ts config-catalog
+/** Caller-supplied adapter configuration; every field is optional. */
+export interface CodexAdapterConfig {
+  /** Explicit Codex executable path; tried before `PATH` and the well-known directories. */
+  readonly binaryPath?: string
+  /** Explicit Codex home; tried before `$CODEX_HOME` and `~/.codex`. */
+  readonly homeDir?: string
+  /** Extra environment entries for every child process this adapter starts. */
+  readonly env?: Readonly<Record<string, string>>
+  /** Default model for runs that name none, in Codex's own naming. */
+  readonly model?: string
+  /** Native run transport; app-server is the default, with exec JSON available as an alternate. */
+  readonly runMode?: AgentRunMode
+  /** Default sandbox profile for runs that name none; must be one of the declared profiles. */
+  readonly sandbox?: string
+  /** Default approval mode for runs that name none; must be one of the declared modes. */
+  readonly approval?: string
+  /** Default wall-clock budget for a run in milliseconds; `0` leaves runs unbounded. */
+  readonly timeoutMs?: number
+  /** Time to wait for Codex to finish a turn after a native interrupt request. */
+  readonly interruptGraceMs?: number
+  /** Bytes read from the tail of a rollout when projecting a transcript. */
+  readonly transcriptTailBytes?: number
+  /** Bytes read from the tail of a rollout when extracting native task state. */
+  readonly taskTailBytes?: number
+  /** Wall-clock budget for a delegated login, which waits for a human in the loop. */
+  readonly loginTimeoutMs?: number
+  /** Wall-clock budget for a delegated logout. */
+  readonly logoutTimeoutMs?: number
+  /** Wall-clock budget for the `--version` detection probe. */
+  readonly versionProbeTimeoutMs?: number
+}
+```
+<!-- END GENERATED config-catalog:@deepseek-ai/dsh-agent-codex -->
+
 <!-- BEGIN GENERATED config-catalog:@deepseek-ai/dsh-agent-default-model -->
 <a id="deepseek-aidsh-agent-default-model"></a>
 
@@ -55,6 +99,58 @@ export interface Config {
 }
 ```
 <!-- END GENERATED config-catalog:@deepseek-ai/dsh-agent-default-model -->
+
+<!-- BEGIN GENERATED config-catalog:@deepseek-ai/dsh-agent-grok -->
+<a id="deepseek-aidsh-agent-grok"></a>
+
+## `@deepseek-ai/dsh-agent-grok`
+
+- `inject`: `agentMesh` · `llm` · `fs` · `subprocess`
+- `refs`: [`AgentRunMode`](../packages/agent-mesh/mesh/src/index.ts)
+- `source`: [`packages/agent-mesh/agent-grok/src/config.ts:14`](../packages/agent-mesh/agent-grok/src/config.ts)
+
+```ts config-catalog
+/** Caller-supplied adapter configuration; every field is optional. */
+export interface GrokAdapterConfig {
+  /** Explicit Grok executable path; tried before `PATH` and the well-known directories. */
+  readonly binaryPath?: string
+  /** Explicit Grok home; tried before `$GROK_HOME` and `~/.grok`. */
+  readonly homeDir?: string
+  /** Extra environment entries for every child process this adapter starts. */
+  readonly env?: Readonly<Record<string, string>>
+  /** Native transport; ACP is the default, with one-shot streaming JSON available as an alternate. */
+  readonly runMode?: AgentRunMode
+  /** Time to wait for an ACP cancel before terminating its process. */
+  readonly interruptGraceMs?: number
+  /** Default model for runs that name none, in Grok's own naming. */
+  readonly model?: string
+  /** Default sandbox profile for runs that name none; one of the declared profiles. */
+  readonly sandbox?: string
+  /** Default approval mode for runs that name none; one of the declared modes. */
+  readonly approval?: string
+  /** Default `--max-turns` for every dispatch; omitted leaves Grok's own limit in force. */
+  readonly maxTurns?: number
+  /** Default `--reasoning-effort` for every dispatch. */
+  readonly reasoningEffort?: string
+  /** Pass `--no-plan` on every dispatch. */
+  readonly noPlan?: boolean
+  /** Pass `--no-subagents` on every dispatch. */
+  readonly noSubagents?: boolean
+  /** Pass `--disable-web-search` on every dispatch. */
+  readonly disableWebSearch?: boolean
+  /** Default wall-clock budget for a run in milliseconds; `0` leaves runs unbounded. */
+  readonly timeoutMs?: number
+  /** Bytes read from the tail of `updates.jsonl` when projecting a transcript. */
+  readonly transcriptTailBytes?: number
+  /** Wall-clock budget for a delegated login, which waits for a human in the loop. */
+  readonly loginTimeoutMs?: number
+  /** Wall-clock budget for a delegated logout. */
+  readonly logoutTimeoutMs?: number
+  /** Wall-clock budget for the `--version` detection probe. */
+  readonly versionProbeTimeoutMs?: number
+}
+```
+<!-- END GENERATED config-catalog:@deepseek-ai/dsh-agent-grok -->
 
 <!-- BEGIN GENERATED config-catalog:@deepseek-ai/dsh-agent-instructions -->
 <a id="deepseek-aidsh-agent-instructions"></a>
@@ -118,6 +214,114 @@ export interface Config {
 }
 ```
 <!-- END GENERATED config-catalog:@deepseek-ai/dsh-agent-loop -->
+
+<!-- BEGIN GENERATED config-catalog:@deepseek-ai/dsh-agent-mesh-collaboration -->
+<a id="deepseek-aidsh-agent-mesh-collaboration"></a>
+
+## `@deepseek-ai/dsh-agent-mesh-collaboration`
+
+- `inject`: `storageDomain` · `agentMesh` · `tools`
+- `refs`: `z` (`zod`)
+- `source`: [`packages/agent-mesh/collaboration/src/index.ts:84`](../packages/agent-mesh/collaboration/src/index.ts)
+
+```ts config-catalog
+/** Deployment choices for worktree isolation. */
+export interface Config {
+  /** Mesh-owned directory inside a repository holding created worktrees. */
+  worktreeDir?: string
+  /** Prefix for the branch created for one worktree. */
+  branchPrefix?: string
+  /** Git executable; a bare name is resolved through the child's `PATH`. */
+  gitCommand?: string
+  /** Wall-clock budget for one git command, in milliseconds. */
+  gitTimeoutMs?: number
+  /** Commit-ish a worktree branches from when neither the task nor the caller names one. */
+  baseRef?: string
+  /** Isolation a task seeded without one gets. */
+  defaultIsolation?: IsolationMode
+  /** Whether same-hunk overlaps are warnings or blocking findings. */
+  conflictPolicy?: 'report' | 'block'
+  /** Repository-relative path prefixes used to identify shared feature areas. */
+  featureBoundaries?: string[]
+}
+
+/** How a task's working directory is isolated. */
+export type IsolationMode = z.infer<typeof isolationMode>
+```
+<!-- END GENERATED config-catalog:@deepseek-ai/dsh-agent-mesh-collaboration -->
+
+<!-- BEGIN GENERATED config-catalog:@deepseek-ai/dsh-agent-mesh-tools -->
+<a id="deepseek-aidsh-agent-mesh-tools"></a>
+
+## `@deepseek-ai/dsh-agent-mesh-tools`
+
+- `inject`: `agentMesh` · `agents` · `tools` · `approval` · `fs` · `workingDirectory` · `systemPrompt`
+- `source`: [`packages/agent-mesh/tools/src/index.ts:41`](../packages/agent-mesh/tools/src/index.ts)
+
+```ts config-catalog
+/** Bounds the native context text contributed to one DSH Agent step. */
+export interface Config {
+  /** Maximum UTF-8 bytes of rendered native context; increase when declared instruction files exceed the default. */
+  contextMaxBytes?: number
+  /** Maximum native CLI tools exposed as DSH task-delegation tools per bound Agent; set to zero to disable them. */
+  maxProxyTools?: number
+}
+```
+<!-- END GENERATED config-catalog:@deepseek-ai/dsh-agent-mesh-tools -->
+
+<!-- BEGIN GENERATED config-catalog:@deepseek-ai/dsh-agent-omp -->
+<a id="deepseek-aidsh-agent-omp"></a>
+
+## `@deepseek-ai/dsh-agent-omp`
+
+- `inject`: `agentMesh` · `llm` · `fs` · `subprocess`
+- `source`: [`packages/agent-mesh/agent-omp/src/index.ts:377`](../packages/agent-mesh/agent-omp/src/index.ts)
+
+```ts config-catalog
+/** Deployment-owned inputs of the OMP adapter. */
+export interface Config {
+  /** Explicit `omp` executable path; tried before `PATH` and the well-known directories. */
+  binaryPath?: string
+  /** Explicit OMP agent directory, the highest-priority source of the store root. */
+  homeDir?: string
+  /** Session directory override, as `omp --session-dir` defines it. */
+  sessionDir?: string
+  /** Environment entries layered over the harness process environment. */
+  env?: Record<string, string>
+}
+```
+<!-- END GENERATED config-catalog:@deepseek-ai/dsh-agent-omp -->
+
+<!-- BEGIN GENERATED config-catalog:@deepseek-ai/dsh-agent-pi -->
+<a id="deepseek-aidsh-agent-pi"></a>
+
+## `@deepseek-ai/dsh-agent-pi`
+
+- `inject`: `agentMesh` · `llm` · `fs` · `subprocess`
+- `refs`: [`AgentRunMode`](../packages/agent-mesh/mesh/src/index.ts)
+- `source`: [`packages/agent-mesh/agent-pi/src/index.ts:505`](../packages/agent-mesh/agent-pi/src/index.ts)
+
+```ts config-catalog
+/** Plugin configuration; every field is optional. */
+export interface Config {
+  /** Explicit Pi executable path; tried before `PATH` and the well-known directories. */
+  binaryPath?: string
+  /** Pi's agent directory; tried before `$PI_CODING_AGENT_DIR` and `~/.pi/agent`. */
+  homeDir?: string
+  /**
+   * Flat session directory override; tried before `$PI_CODING_AGENT_SESSION_DIR` and the
+   * `sessionDir` of Pi's own `settings.json`.
+   */
+  sessionDir?: string
+  /** Extra environment entries for every child process this adapter starts. */
+  env?: Record<string, string>
+  /** Native run transport; RPC is the default. */
+  runMode?: AgentRunMode
+  /** Time to wait for Pi to settle after an RPC abort before terminating its process. */
+  interruptGraceMs?: number
+}
+```
+<!-- END GENERATED config-catalog:@deepseek-ai/dsh-agent-pi -->
 
 <!-- BEGIN GENERATED config-catalog:@deepseek-ai/dsh-agent-preset -->
 <a id="deepseek-aidsh-agent-preset"></a>
@@ -221,8 +425,8 @@ export interface Config {
 
 ## `@deepseek-ai/dsh-api-session-controller`
 
-- `inject`: `agentDefaultModel` · `agents` · `attachments` · `fileUploads` · `fs` · `llm` · `remoteAccess` · `sessions` · `sessionProjections` · `sessionQuery` · `typert` · `workspaceRegistry`
-- `source`: [`packages/api/session-controller/src/index.ts:94`](../packages/api/session-controller/src/index.ts)
+- `inject`: `agentDefaultModel` · `agentMesh` · `agents` · `attachments` · `fileUploads` · `fs` · `llm` · `remoteAccess` · `sessions` · `sessionProjections` · `sessionQuery` · `typert` · `workspaceRegistry`
+- `source`: [`packages/api/session-controller/src/index.ts:96`](../packages/api/session-controller/src/index.ts)
 
 ```ts config-catalog
 /** Session Controller deployment policy. */
@@ -3084,7 +3288,7 @@ export interface Config {
 ## `@deepseek-ai/dsh-skill-filesystem`
 
 - `inject`: `skills`
-- `source`: [`packages/skill/skill-filesystem/src/index.ts:48`](../packages/skill/skill-filesystem/src/index.ts)
+- `source`: [`packages/skill/skill-filesystem/src/index.ts:50`](../packages/skill/skill-filesystem/src/index.ts)
 
 ```ts config-catalog
 /** Local filesystem skill provider configuration. */
@@ -3097,6 +3301,8 @@ export interface Config {
   dshHome?: string
   /** Shared agent config root. Defaults to `$DSH_AGENTS_HOME` or `~/.agents`. */
   agentsHome?: string
+  /** Home directory used for native agent skill roots; defaults to the host home. */
+  nativeAgentHome?: string
   /** Additional skill roots scanned after project roots and before user roots. */
   customSkillDirs?: string[]
   /** Whether host-local skill roots are watched for catalog changes. */
@@ -3543,7 +3749,7 @@ export interface Config {
 
 ## `@deepseek-ai/dsh-system-prompt`
 
-- `source`: [`packages/core/system-prompt/src/index.ts:258`](../packages/core/system-prompt/src/index.ts)
+- `source`: [`packages/core/system-prompt/src/index.ts:259`](../packages/core/system-prompt/src/index.ts)
 
 ```ts config-catalog
 /** Plugin config: the deployment-authored fragment of the system prompt (see {@link Config.personaPrefix} for its contract). */
@@ -4565,6 +4771,9 @@ export interface Config {
 | --- | --- | --- |
 | `@deepseek-ai/dsh-acp-app` | `cmdlineArgs` | [`packages/bundle/acp-app/src/index.ts`](../packages/bundle/acp-app/src/index.ts) |
 | `@deepseek-ai/dsh-agent` | — | [`packages/core/agent/src/index.ts`](../packages/core/agent/src/index.ts) |
+| `@deepseek-ai/dsh-agent-mesh` | `storageDomain` | [`packages/agent-mesh/mesh/src/index.ts`](../packages/agent-mesh/mesh/src/index.ts) |
+| `@deepseek-ai/dsh-agent-mesh-commands` | `agentMesh` · `commands` · `agents` · `workingDirectory` | [`packages/agent-mesh/commands/src/index.ts`](../packages/agent-mesh/commands/src/index.ts) |
+| `@deepseek-ai/dsh-agent-mesh-controller` | `agentMesh` · `remoteAccess` · `typert` | [`packages/agent-mesh/controller/src/index.ts`](../packages/agent-mesh/controller/src/index.ts) |
 | `@deepseek-ai/dsh-api-account-controller` | `deepseekAccount` · `agents` | [`packages/api/account-controller/src/index.ts`](../packages/api/account-controller/src/index.ts) |
 | `@deepseek-ai/dsh-api-remote-access` | — | [`packages/api/remote-access/src/index.ts`](../packages/api/remote-access/src/index.ts) |
 | `@deepseek-ai/dsh-api-remotes` | `typertGateway` | [`packages/api/remotes/src/index.ts`](../packages/api/remotes/src/index.ts) |
@@ -4574,6 +4783,7 @@ export interface Config {
 | `@deepseek-ai/dsh-client-locale` | — | [`packages/client/locale/src/index.ts`](../packages/client/locale/src/index.ts) |
 | `@deepseek-ai/dsh-client-modules` | `loader` | [`packages/client/modules/src/index.ts`](../packages/client/modules/src/index.ts) |
 | `@deepseek-ai/dsh-client-resources` | — | [`packages/client/resources/src/index.ts`](../packages/client/resources/src/index.ts) |
+| `@deepseek-ai/dsh-client-ui-agent-mesh` | — | [`packages/client/ui-agent-mesh/src/index.ts`](../packages/client/ui-agent-mesh/src/index.ts) |
 | `@deepseek-ai/dsh-client-ui-agent-preset` | — | [`packages/client/ui-agent-preset/src/index.ts`](../packages/client/ui-agent-preset/src/index.ts) |
 | `@deepseek-ai/dsh-client-ui-approval` | — | [`packages/client/ui-approval/src/index.ts`](../packages/client/ui-approval/src/index.ts) |
 | `@deepseek-ai/dsh-client-ui-attachment` | — | [`packages/client/ui-attachment/src/index.ts`](../packages/client/ui-attachment/src/index.ts) |

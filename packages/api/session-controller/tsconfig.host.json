@@ -42,6 +42,9 @@
       "path": "../../core/session"
     },
     {
+      "path": "../../agent-mesh/mesh"
+    },
+    {
       "path": "../../context/file-reference"
     },
     {

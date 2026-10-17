@@ -104,7 +104,7 @@ async function baseContext(
   const id = 'cold-original' as SessionId
   const sessions: SessionListState = {
     ids: [id], byId: { [id]: { id, displayTitle: id, running: false, blank: false, updatedAt: 0, retainedBy: {} } },
-    phase: 'ready', projectionsBySession: {},
+    phase: 'ready', agentSessions: [], agentSessionFailures: [], projectionsBySession: {},
   }
   const workspaces: WorkspaceSnapshot = { items: [], archivedSessionIds: [], pinnedSessionIds: [], state: 'idle', phase: 'ready', error: null }
   ctx.provide('sessions', {

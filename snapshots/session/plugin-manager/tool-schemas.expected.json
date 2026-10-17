@@ -261,6 +261,665 @@
       }
     },
     {
+      "name": "mesh_agents",
+      "description": "List the external coding agents the mesh can read (Codex, Grok Build, Pi, OMP), with their detection state and declared capabilities.",
+      "parameters": {
+        "type": "object",
+        "properties": {}
+      }
+    },
+    {
+      "name": "mesh_capabilities",
+      "description": "Read one external agent's declared tools, skills, MCP servers, commands and context files from its own configuration.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "agentId": {
+            "type": "string",
+            "description": "Agent id, as reported by mesh_agents."
+          },
+          "cwd": {
+            "type": "string",
+            "description": "Working directory whose project-level configuration applies."
+          }
+        },
+        "required": [
+          "agentId"
+        ]
+      }
+    },
+    {
+      "name": "mesh_capability_read",
+      "description": "Read one skill, command template, or context file currently declared by an external agent, through DSH's filesystem policy.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "agentId": {
+            "type": "string",
+            "description": "Agent id, as reported by mesh_agents."
+          },
+          "path": {
+            "type": "string",
+            "description": "Exact skill, context-file, or command-template path reported by mesh_capabilities."
+          },
+          "cwd": {
+            "type": "string",
+            "description": "Working directory whose project-level declarations apply."
+          }
+        },
+        "required": [
+          "agentId",
+          "path"
+        ]
+      }
+    },
+    {
+      "name": "mesh_collaboration_start",
+      "description": "Create a collaboration: one authoritative plan, one shared todo board, and optional tasks assigned to agents. A worktree-isolated task gets its own git worktree when it is dispatched.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "Short human title."
+          },
+          "objective": {
+            "type": "string",
+            "description": "What the collaboration as a whole must achieve."
+          },
+          "repoRoot": {
+            "type": "string",
+            "description": "Absolute path of the repository the tasks work in."
+          },
+          "tasks": {
+            "type": "array",
+            "description": "Initial tasks. A seed may name a sibling by position (\"task-1\") or by id in dependsOn.",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "title": {
+                  "type": "string"
+                },
+                "instruction": {
+                  "type": "string"
+                },
+                "assignee": {
+                  "type": "string"
+                },
+                "dependsOn": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "isolation": {
+                  "type": "string",
+                  "enum": [
+                    "worktree",
+                    "shared-cwd"
+                  ]
+                }
+              },
+              "required": [
+                "title",
+                "instruction",
+                "assignee"
+              ]
+            }
+          }
+        },
+        "required": [
+          "title",
+          "objective",
+          "repoRoot"
+        ]
+      }
+    },
+    {
+      "name": "mesh_collaborations",
+      "description": "List collaborations with their plan, board counts, tasks and worktrees, or read one collaboration by id.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "collaborationId": {
+            "type": "string",
+            "description": "Read one collaboration instead of listing every one."
+          }
+        }
+      }
+    },
+    {
+      "name": "mesh_mcp_connect",
+      "description": "After DSH approval, start one native MCP server declared by an external agent and expose its tools only to the calling DSH Agent.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "agentId": {
+            "type": "string",
+            "description": "Agent id whose native MCP configuration declares the server."
+          },
+          "serverName": {
+            "type": "string",
+            "description": "Exact server name from mesh_capabilities."
+          },
+          "cwd": {
+            "type": "string",
+            "description": "Absolute project working directory used to resolve native project configuration."
+          }
+        },
+        "required": [
+          "agentId",
+          "serverName",
+          "cwd"
+        ]
+      }
+    },
+    {
+      "name": "mesh_mcp_disconnect",
+      "description": "Disconnect one MCP server previously approved for the calling DSH Agent and remove its tools from that Agent.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "agentId": {
+            "type": "string",
+            "description": "External agent id used when connecting the server."
+          },
+          "serverName": {
+            "type": "string",
+            "description": "Exact server name used when connecting."
+          }
+        },
+        "required": [
+          "agentId",
+          "serverName"
+        ]
+      }
+    },
+    {
+      "name": "mesh_plan_advance",
+      "description": "Move the plan to a phase, marking every earlier phase done. Refused while an earlier phase is still open.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "collaborationId": {
+            "type": "string",
+            "description": "Collaboration to change."
+          },
+          "phaseId": {
+            "type": "string",
+            "description": "Phase to activate."
+          }
+        },
+        "required": [
+          "collaborationId",
+          "phaseId"
+        ]
+      }
+    },
+    {
+      "name": "mesh_plan_set",
+      "description": "Replace a collaboration's plan fields. The plan is the authoritative input every dispatched run receives.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "collaborationId": {
+            "type": "string",
+            "description": "Collaboration to change."
+          },
+          "objective": {
+            "type": "string",
+            "description": "The objective; it replaces the current one."
+          },
+          "phases": {
+            "type": "array",
+            "description": "The complete new phase list, in order.",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "title": {
+                  "type": "string"
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "todo",
+                    "active",
+                    "done"
+                  ]
+                },
+                "exitCriteria": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "id",
+                "title",
+                "status"
+              ]
+            }
+          },
+          "activePhaseId": {
+            "type": "string",
+            "description": "Phase to mark active; it must exist in the resulting list."
+          },
+          "decisions": {
+            "type": "array",
+            "description": "The complete decisions log.",
+            "items": {
+              "type": "string"
+            }
+          },
+          "mode": {
+            "type": "string",
+            "description": "Whether the plan is injected into dispatched prompts or only observed.",
+            "enum": [
+              "inject",
+              "observe"
+            ]
+          }
+        },
+        "required": [
+          "collaborationId",
+          "objective"
+        ]
+      }
+    },
+    {
+      "name": "mesh_run",
+      "description": "Dispatch a task to an external coding agent in a working directory and return its terminal result. Adapters that expose native approval requests route them through DSH approval.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "agentId": {
+            "type": "string",
+            "description": "Agent id, as reported by mesh_agents."
+          },
+          "prompt": {
+            "type": "string",
+            "description": "The task to hand the agent."
+          },
+          "cwd": {
+            "type": "string",
+            "description": "Absolute working directory the agent runs in."
+          },
+          "commandName": {
+            "type": "string",
+            "description": "Optional exact file-backed command name from mesh_capabilities; its prompt body is prepended to this task."
+          },
+          "model": {
+            "type": "string",
+            "description": "Model in the agent's own naming."
+          },
+          "approval": {
+            "type": "string",
+            "description": "Approval mode in the agent's own vocabulary."
+          },
+          "resumeNativeId": {
+            "type": "string",
+            "description": "Native session id to continue."
+          },
+          "timeoutMs": {
+            "type": "integer",
+            "description": "Wall-clock budget in milliseconds."
+          }
+        },
+        "required": [
+          "agentId",
+          "prompt",
+          "cwd"
+        ]
+      }
+    },
+    {
+      "name": "mesh_run_cancel",
+      "description": "Cancel a dispatched run. Cancellation terminates the agent process group; it is not a resumable pause.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "runId": {
+            "type": "string",
+            "description": "Run to cancel."
+          },
+          "reason": {
+            "type": "string",
+            "description": "Reason recorded with the cancellation."
+          }
+        },
+        "required": [
+          "runId"
+        ]
+      }
+    },
+    {
+      "name": "mesh_runs",
+      "description": "Read dispatched runs: their status, final answer, classified failure, and recent events.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "runId": {
+            "type": "string",
+            "description": "One run to read; omit for every tracked run."
+          },
+          "wait": {
+            "type": "boolean",
+            "description": "With runId, wait for that run to reach a terminal status before answering."
+          }
+        }
+      }
+    },
+    {
+      "name": "mesh_sessions",
+      "description": "List one external agent's own sessions (as that agent's CLI stored them), newest first.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "agentId": {
+            "type": "string",
+            "description": "Agent id, as reported by mesh_agents."
+          },
+          "cwd": {
+            "type": "string",
+            "description": "Only sessions whose recorded working directory resolves to this path."
+          },
+          "limit": {
+            "type": "integer",
+            "description": "Maximum number of sessions to return."
+          }
+        },
+        "required": [
+          "agentId"
+        ]
+      }
+    },
+    {
+      "name": "mesh_task_dispatch",
+      "description": "Dispatch one collaboration task: create or reuse its worktree, hand the agent the plan and board context plus the instruction, and record the run on the task. Refused when the task is already running or succeeded, or when a dependency is unfinished.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "collaborationId": {
+            "type": "string",
+            "description": "Collaboration owning the task."
+          },
+          "taskId": {
+            "type": "string",
+            "description": "Task to dispatch, as reported by mesh_collaborations."
+          },
+          "baseRef": {
+            "type": "string",
+            "description": "Commit-ish a newly created worktree branches from."
+          },
+          "timeoutMs": {
+            "type": "integer",
+            "description": "Wall-clock budget handed to the agent."
+          }
+        },
+        "required": [
+          "collaborationId",
+          "taskId"
+        ]
+      }
+    },
+    {
+      "name": "mesh_tasks",
+      "description": "Read one external agent's own todo list and plan for a session, when that agent records them.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "agentId": {
+            "type": "string",
+            "description": "Agent id, as reported by mesh_agents."
+          },
+          "sessionId": {
+            "type": "string",
+            "description": "Native session id, as reported by mesh_sessions."
+          }
+        },
+        "required": [
+          "agentId",
+          "sessionId"
+        ]
+      }
+    },
+    {
+      "name": "mesh_todos_get",
+      "description": "Read a collaboration's shared todo board with its revision.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "collaborationId": {
+            "type": "string",
+            "description": "Collaboration to read."
+          }
+        },
+        "required": [
+          "collaborationId"
+        ]
+      }
+    },
+    {
+      "name": "mesh_todos_observe",
+      "description": "Read one agent's own todo list for a session and fold it into the shared board. Authored items are never overwritten, and an item the board considers done is never reopened.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "collaborationId": {
+            "type": "string",
+            "description": "Collaboration whose board is folded into."
+          },
+          "agentId": {
+            "type": "string",
+            "description": "Agent whose own store is read, as reported by mesh_agents."
+          },
+          "sessionId": {
+            "type": "string",
+            "description": "The agent's native session id; the newest session is read when omitted."
+          }
+        },
+        "required": [
+          "collaborationId",
+          "agentId"
+        ]
+      }
+    },
+    {
+      "name": "mesh_todos_set",
+      "description": "Replace a collaboration's shared todo board. Pass expectedRevision from a previous read to be refused instead of clobbering another writer's change.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "collaborationId": {
+            "type": "string",
+            "description": "Collaboration whose board is replaced."
+          },
+          "todos": {
+            "type": "array",
+            "description": "The complete new board.",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "content": {
+                  "type": "string"
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "pending",
+                    "in_progress",
+                    "completed",
+                    "blocked",
+                    "cancelled"
+                  ]
+                },
+                "owner": {
+                  "type": "string"
+                },
+                "blockedBy": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              },
+              "required": [
+                "id",
+                "content",
+                "status"
+              ]
+            }
+          },
+          "expectedRevision": {
+            "type": "integer",
+            "description": "Revision the caller read; the write is refused when the board moved on."
+          }
+        },
+        "required": [
+          "collaborationId",
+          "todos"
+        ]
+      }
+    },
+    {
+      "name": "mesh_transcript",
+      "description": "Read a window of one external agent's session transcript, projected onto a common message shape.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "agentId": {
+            "type": "string",
+            "description": "Agent id, as reported by mesh_agents."
+          },
+          "sessionId": {
+            "type": "string",
+            "description": "Native session id, as reported by mesh_sessions."
+          },
+          "maxMessages": {
+            "type": "integer",
+            "description": "Maximum number of trailing messages to return."
+          }
+        },
+        "required": [
+          "agentId",
+          "sessionId"
+        ]
+      }
+    },
+    {
+      "name": "mesh_worktree_conflicts",
+      "description": "Compare the live worktrees of one repository and report the files two of them changed. Detection is advisory: it reports same-file overlap only, never a semantic conflict in different files.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "repoRoot": {
+            "type": "string",
+            "description": "Repository to analyse."
+          }
+        },
+        "required": [
+          "repoRoot"
+        ]
+      }
+    },
+    {
+      "name": "mesh_worktree_create",
+      "description": "Create a git worktree on a new branch inside the mesh-owned directory of a repository, or reuse a clean idle one already reserved for that agent.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "agentId": {
+            "type": "string",
+            "description": "Agent the worktree is reserved for."
+          },
+          "repoRoot": {
+            "type": "string",
+            "description": "Absolute path inside the repository."
+          },
+          "baseRef": {
+            "type": "string",
+            "description": "Commit-ish to branch from; the repository HEAD when omitted."
+          },
+          "label": {
+            "type": "string",
+            "description": "Label used in the branch name and the worktree directory."
+          },
+          "collaborationId": {
+            "type": "string",
+            "description": "Collaboration the worktree serves."
+          },
+          "reuse": {
+            "type": "boolean",
+            "description": "Reuse a clean idle worktree reserved for the same agent."
+          }
+        },
+        "required": [
+          "agentId",
+          "repoRoot"
+        ]
+      }
+    },
+    {
+      "name": "mesh_worktree_integrated",
+      "description": "Mark a worktree integrated so it stops appearing as outstanding work, or outstanding again with merged=false.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "worktreeId": {
+            "type": "string",
+            "description": "Worktree to mark."
+          },
+          "merged": {
+            "type": "boolean",
+            "description": "false marks it outstanding again; defaults to true."
+          }
+        },
+        "required": [
+          "worktreeId"
+        ]
+      }
+    },
+    {
+      "name": "mesh_worktree_remove",
+      "description": "Remove a mesh-owned git worktree. DANGEROUS: a worktree with uncommitted changes or unmerged commits is refused unless force is true, and a forced removal discards that work permanently.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "worktreeId": {
+            "type": "string",
+            "description": "Worktree to remove."
+          },
+          "force": {
+            "type": "boolean",
+            "description": "Discard uncommitted and unmerged work. Only pass this after a human approved the loss."
+          }
+        },
+        "required": [
+          "worktreeId"
+        ]
+      }
+    },
+    {
+      "name": "mesh_worktrees",
+      "description": "List mesh-owned git worktrees with a live progress sample: changed files, HEAD, and whether the tree is dirty.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "repoRoot": {
+            "type": "string",
+            "description": "Restrict to worktrees of one repository."
+          }
+        }
+      }
+    },
+    {
       "name": "plugin_manager",
       "description": "List plugins or bundles in the current profile, enable or disable them, install a bundle, or remove an installed bundle. Every action requires danger-full-access permission or approval for this call. Approval does not change the session permission mode. Changes affect every session in this profile. List first to obtain exact identifiers. Package installation can execute allowed build scripts. Live profiles apply changes immediately, including upgrades of installed packages; a change result that is not applied carries nextStep, which says what to do or tell the user. Unmet DSH version requirements (engines.dsh, else DSH peer dependencies) block installation and activation. Version exemptions risk crashes and data loss: warn the user and obtain explicit permission for the exact plugin and runtime versions before granting one.",
       "parameters": {

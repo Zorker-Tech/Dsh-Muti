@@ -384,6 +384,14 @@ describe('persistent PTC host protocol', () => {
     }
   })
 
+  it('terminates an idle worker after its control channel reports an I/O error', async () => {
+    const h = await setup()
+    h.onBoot(() => { h.emit(frame({ type: 'done' })) })
+    await h.start()
+    h.control.emit('error', new Error('control pipe failed'))
+    await vi.waitFor(() => { expect(h.terminate).toHaveBeenCalled() })
+  })
+
   it('reports failed managed cleanup and waits for both exit and pipe drain', async () => {
     const h = await setup()
     h.waitForExit.mockRejectedValue(new Error('cleanup failed'))

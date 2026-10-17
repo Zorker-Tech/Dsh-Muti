@@ -93,7 +93,7 @@ function mount({
         updatedAt: 0,
       },
     },
-    phase: 'ready', projectionsBySession: {},
+    phase: 'ready', agentSessions: [], agentSessionFailures: [], projectionsBySession: {},
   }
   const unusedHook = (() => { throw new Error('unused by SettingsRoot') }) as never
   const shell = createSettingsShellStore().create()

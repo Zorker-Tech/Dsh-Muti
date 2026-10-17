@@ -3,6 +3,7 @@
 import { hostname } from 'node:os'
 import { resolve } from 'node:path'
 import type { Agent } from '@deepseek-ai/dsh-agent'
+import type {} from '@deepseek-ai/dsh-agent-mesh'
 import type {} from '@deepseek-ai/dsh-fs'
 import { Context } from '@deepseek-ai/cordis'
 import z from '@deepseek-ai/schemastery'
@@ -49,6 +50,7 @@ import type {
   SessionForkValue,
   SessionListRequest,
   SessionListValue,
+  AgentSessionSummary,
   SessionOpenWorkspacePathRequest,
   SessionOpenWorkspacePathValue,
   SessionPage,
@@ -119,6 +121,7 @@ export interface SessionControllerInternals {
 export class SessionController extends TypertRemoteService {
   static inject = [
     'agentDefaultModel',
+    'agentMesh',
     'agents',
     'attachments',
     'fileUploads',
@@ -274,8 +277,37 @@ export class SessionController extends TypertRemoteService {
    */
   @Remote('list')
   async list(_request: SessionListRequest, signal: AbortSignal): Promise<SessionListValue> {
-    const items = await this.listState.list(signal)
-    return { items: items.filter(item => this.ctx.remoteAccess.allows({ kind: 'session', id: item.sessionId })) }
+    const [items, agentCatalog] = await Promise.all([
+      this.listState.list(signal),
+      this.ctx.agentMesh.listSessions({ signal }),
+    ])
+    const sessionDispositions = new Map(this.ctx.agentMesh.sessionMarks().map(mark => [mark.key, mark.disposition]))
+    const agentSessions: AgentSessionSummary[] = agentCatalog.items
+      .filter(item => this.ctx.remoteAccess.allows({ kind: 'agent', id: item.agentId }))
+      .map(item => ({
+        source: 'agent-mesh',
+        agentId: item.agentId,
+        key: item.key,
+        nativeId: item.nativeId,
+        ...(item.title === undefined ? {} : { title: item.title }),
+        ...(item.cwd === undefined ? {} : { cwd: item.cwd }),
+        ...(item.model === undefined ? {} : { model: item.model }),
+        createdAt: item.createdAt,
+        updatedAt: item.updatedAt,
+        status: item.status,
+        pinned: sessionDispositions.get(item.key) === 'pinned',
+        archived: sessionDispositions.get(item.key) === 'archived',
+        ...(item.messageCount === undefined ? {} : { messageCount: item.messageCount }),
+        ...(item.parentNativeId === undefined ? {} : { parentNativeId: item.parentNativeId }),
+        notes: [...item.notes],
+      }))
+    const agentSessionFailures = agentCatalog.failures
+      .filter(item => this.ctx.remoteAccess.allows({ kind: 'agent', id: item.agentId }))
+    return {
+      items: items.filter(item => this.ctx.remoteAccess.allows({ kind: 'session', id: item.sessionId })),
+      agentSessions,
+      agentSessionFailures,
+    }
   }
 
   /**

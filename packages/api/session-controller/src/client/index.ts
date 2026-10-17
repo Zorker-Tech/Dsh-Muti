@@ -34,6 +34,7 @@ export type {
   SessionSearchResultItem,
   SessionProjectionSnapshot,
 } from './sessions/manager.ts'
+export type { AgentSessionListFailure, AgentSessionSummary } from '../types.ts'
 export type { Session } from './sessions/session.ts'
 export type {
   ProjectionsBaseline,

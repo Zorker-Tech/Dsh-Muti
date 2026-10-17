@@ -166,7 +166,7 @@ describe('ReviewTab', () => {
       ids: [SESSION],
       byId: { [SESSION]: { id: SESSION, displayTitle: 'Workspace', cwd: options.cwd ?? '/work/app',
         running: false, retainedBy: {}, blank: false, updatedAt: 0 } },
-      phase: 'ready', projectionsBySession: {},
+      phase: 'ready', agentSessions: [], agentSessionFailures: [], projectionsBySession: {},
     }
     const navigation = { address: options.address ?? ADDRESS, params: options.params, revision: options.revision ?? 1 }
     const runtime = {

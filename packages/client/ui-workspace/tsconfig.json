@@ -45,7 +45,7 @@
       "path": "../../core/agent"
     },
     {
-      "path": "../../core/session"
+      "path": "../../core/session/tsconfig.client.json"
     },
     {
       "path": "../../subagent/subagent"
@@ -61,6 +61,9 @@
     },
     {
       "path": "../ui-conversation/tsconfig.client.json"
+    },
+    {
+      "path": "../ui-agent-mesh"
     },
     {
       "path": "../ui-layout"

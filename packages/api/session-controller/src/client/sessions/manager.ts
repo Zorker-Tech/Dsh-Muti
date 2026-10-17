@@ -5,6 +5,8 @@ import { SessionSeq, type SessionId, type SessionSeqCursor } from '@deepseek-ai/
 import type { SessionProjectionMap } from '@deepseek-ai/dsh-session-projection/types'
 import type { WorkspaceId } from '@deepseek-ai/dsh-workspace/types'
 import type {
+  AgentSessionListFailure,
+  AgentSessionSummary,
   SessionControlBaseline,
   SessionControlFrame,
   SessionProjectionHints,
@@ -50,6 +52,10 @@ export interface SessionSearchResultItem {
 /** Immutable session-list snapshot for useSessionList. */
 export interface SessionListSnapshot {
   items: readonly SessionListEntry[]
+  /** External native sessions, with source identity and lifecycle intact. */
+  agentSessions: readonly AgentSessionSummary[]
+  /** Per-agent store failures; available rows are retained independently. */
+  agentSessionFailures: readonly AgentSessionListFailure[]
   state: 'idle' | 'loading' | 'error'
   /** Arrival lifecycle (see {@link SessionListPhase}); `state` stays the pull-activity axis. */
   phase: SessionListPhase
@@ -100,6 +106,8 @@ export class SessionManager {
    *  same store so history-baseline seeding and frames converge on one row set. */
   private readonly projectionStores = new Map<SessionId, ProjectionValueStore>()
   private summaries: SessionSummary[] = []
+  private agentSessions: readonly AgentSessionSummary[] = []
+  private agentSessionFailures: readonly AgentSessionListFailure[] = []
   private listState: 'idle' | 'loading' | 'error' = 'idle'
   /** Arrival phase; the pending → ready edge fires on the first successful pull (see SessionListPhase). */
   private listPhase: SessionListPhase = 'pending'
@@ -436,6 +444,8 @@ export class SessionManager {
           }
           const summaries = mutations.reduce(applyMutation, baseline)
           this.summaries = summaries
+          this.agentSessions = result.value.agentSessions
+          this.agentSessionFailures = result.value.agentSessionFailures
           // A full list can remove identities without a removal frame.
           const retained = this.retainedIds(summaries)
           for (const sessionId of this.engagedSessions) this.pruneEngagement(sessionId, retained)
@@ -813,6 +823,8 @@ export class SessionManager {
     if (!sameOrder) this.itemsCache = items
     return {
       items: this.itemsCache,
+      agentSessions: this.agentSessions,
+      agentSessionFailures: this.agentSessionFailures,
       state: this.listState,
       phase: this.listPhase,
       error: this.listError,

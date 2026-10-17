@@ -11,6 +11,7 @@
 
 import { access, lstat, readdir, readFile, realpath, stat } from 'node:fs/promises'
 import { unwatchFile, watchFile, type Stats } from 'node:fs'
+import { homedir } from 'node:os'
 import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path'
 import type { Context } from '@deepseek-ai/cordis'
 import chokidar from 'chokidar'
@@ -19,6 +20,7 @@ import type Schema from '@deepseek-ai/schemastery'
 import { parse as parseYaml } from 'yaml'
 import type { FileSystem, FsDirEntry, FsTarget } from '@deepseek-ai/dsh-fs'
 import { canonicalizeWatchPath, resolveAgentsHome, resolveDshHome } from '@deepseek-ai/dsh-home-paths'
+import { launchEnvironmentOf } from '@deepseek-ai/dsh-launch-environment'
 import {
   BUNDLED_SKILL_RANK,
   isSkillName,
@@ -54,6 +56,8 @@ export interface Config {
   dshHome?: string
   /** Shared agent config root. Defaults to `$DSH_AGENTS_HOME` or `~/.agents`. */
   agentsHome?: string
+  /** Home directory used for native agent skill roots; defaults to the host home. */
+  nativeAgentHome?: string
   /** Additional skill roots scanned after project roots and before user roots. */
   customSkillDirs?: string[]
   /** Whether host-local skill roots are watched for catalog changes. */
@@ -77,6 +81,7 @@ export const Config: Schema<Config> = z.object({
   includeDefaultRoots: z.boolean().default(true),
   dshHome: z.string(),
   agentsHome: z.string(),
+  nativeAgentHome: z.string(),
   customSkillDirs: z.array(z.string()).default([]),
   watch: z.boolean().default(true),
   watchUsePolling: z.boolean().default(false),
@@ -151,6 +156,8 @@ export class FileSystemSkillProvider implements SkillProvider {
   private readonly includeDefaultRoots: boolean
   private readonly dshHome: string
   private readonly agentsHome: string
+  private readonly nativeAgentHome: string
+  private readonly nativeUserSkillDirs: readonly string[]
   private readonly customSkillDirs: string[]
   private readonly watchManager: SkillWatchManager
   private readonly bundledSkillDir: string | undefined
@@ -165,6 +172,8 @@ export class FileSystemSkillProvider implements SkillProvider {
     this.includeDefaultRoots = config.includeDefaultRoots ?? true
     this.dshHome = resolveDshHome(config.dshHome)
     this.agentsHome = resolveAgentsHome(config.agentsHome)
+    this.nativeAgentHome = resolveUserPath(homedir(), config.nativeAgentHome ?? homedir())
+    this.nativeUserSkillDirs = resolveNativeUserSkillDirs(ctx, this.nativeAgentHome)
     this.customSkillDirs = (config.customSkillDirs ?? []).map(root => resolve(root))
     this.watchManager = new SkillWatchManager(ctx, control.invalidate, resolveWatchConfig(config))
     control.signal.addEventListener('abort', () => { void this.dispose() }, { once: true })
@@ -249,6 +258,11 @@ export class FileSystemSkillProvider implements SkillProvider {
         { path: join(projectRoot, '.dsh/skills'), source: 'project-dsh', rank: PROJECT_DSH_RANK, projectRoot },
         { path: join(projectRoot, '.agents/skills'), source: 'project-agents', rank: PROJECT_AGENTS_RANK, projectRoot },
       )
+      for (const directory of projectDirectories(resolve(cwd), projectRoot)) {
+        for (const path of ['.codex/skills', '.grok/skills', '.pi/skills', '.omp/skills', '.github/skills', '.claude/skills', '.cursor/skills']) {
+          roots.push({ path: join(directory, path), source: 'project-agents', rank: PROJECT_AGENTS_RANK, projectRoot })
+        }
+      }
     }
     roots.push(...this.customSkillDirs.map(path => ({ path, source: 'custom' as const, rank: CUSTOM_RANK })))
     if (this.includeDefaultRoots) {
@@ -256,12 +270,78 @@ export class FileSystemSkillProvider implements SkillProvider {
         { path: join(this.dshHome, 'skills'), source: 'user-dsh', rank: USER_DSH_RANK, skipSystem: true },
         { path: join(this.agentsHome, 'skills'), source: 'user-agents', rank: USER_AGENTS_RANK },
       )
+      roots.push(...this.nativeUserSkillDirs.map(path => ({ path, source: 'user-agents' as const, rank: USER_AGENTS_RANK })))
     }
     if (this.bundledSkillDir !== undefined) {
       roots.push({ path: this.bundledSkillDir, source: 'bundled', rank: BUNDLED_SKILL_RANK, trustedHost: true })
     }
     return roots
   }
+}
+
+/** Resolve the user skill roots owned by the installed coding-agent CLIs. */
+function resolveNativeUserSkillDirs(ctx: Context, home: string): readonly string[] {
+  const environment = launchEnvironmentOf(ctx)
+  const read = (name: string): string | undefined => {
+    const value = environment.get(name)?.value
+    return value === undefined || value.trim() === '' ? undefined : value.trim()
+  }
+  const configuredPath = (name: string, fallback: string): string => resolveUserPath(home, read(name) ?? fallback)
+  const codexHome = configuredPath('CODEX_HOME', join(home, '.codex'))
+  const grokHome = configuredPath('GROK_HOME', join(home, '.grok'))
+  const piAgentDir = configuredPath('PI_CODING_AGENT_DIR', join(home, '.pi', 'agent'))
+  const ompConfigDir = resolveUserPath(home, join(home, read('PI_CONFIG_DIR') ?? '.omp'))
+  const ompProfileValue = environment.get('OMP_PROFILE')?.value
+  const rawProfile = (ompProfileValue === undefined ? environment.get('PI_PROFILE')?.value : ompProfileValue)?.trim()
+  const profile = resolveOmpProfile(rawProfile)
+  const ompAgentDir = profile === undefined
+    ? configuredPath('PI_CODING_AGENT_DIR', join(ompConfigDir, 'agent'))
+    : join(ompConfigDir, 'profiles', profile, 'agent')
+  return [
+    join(codexHome, 'skills'),
+    join(grokHome, 'skills'),
+    join(piAgentDir, 'skills'),
+    join(ompAgentDir, 'skills'),
+    join(ompAgentDir, 'managed-skills'),
+    join(home, '.claude', 'skills'),
+  ]
+}
+
+/** Validate OMP's selected profile before using it as a path component. */
+function resolveOmpProfile(profile: string | undefined): string | undefined {
+  if (profile === undefined || profile === '' || profile === 'default') return undefined
+  if (profile === '.' || profile === '..' || profile.endsWith('.')
+    || !/^[a-z0-9][a-z0-9._-]{0,63}$/.test(profile)
+    || /^(?:CON|PRN|AUX|NUL|COM[0-9]|LPT[0-9])(?:\..*)?$/i.test(profile)) {
+    throw new Error('skill-filesystem: OMP_PROFILE or PI_PROFILE is not a valid OMP profile name')
+  }
+  return profile
+}
+
+/** Expand a leading home marker and resolve one configured native skill path. */
+function resolveUserPath(home: string, path: string): string {
+  if (path === '~') return home
+  if (path.startsWith('~/')) return resolve(home, path.slice(2))
+  return resolve(path)
+}
+
+/** Project directories from cwd up to and including the discovered project root. */
+function projectDirectories(cwd: string, projectRoot: string): readonly string[] {
+  const directories: string[] = []
+  let current = cwd
+  while (true) {
+    directories.push(current)
+    if (current === projectRoot) return directories
+    const parent = dirname(current)
+    if (parent === current || !isWithin(projectRoot, parent)) return [...directories, projectRoot]
+    current = parent
+  }
+}
+
+/** Whether `child` is `parent` or one of its descendants. */
+function isWithin(parent: string, child: string): boolean {
+  const path = relative(parent, child)
+  return path === '' || (path !== '..' && !path.startsWith(`..${sep}`) && !isAbsolute(path))
 }
 
 type SkillWatchEvent = 'add' | 'addDir' | 'change' | 'unlink' | 'unlinkDir'

@@ -95,6 +95,121 @@
   color: var(--dsw-alias-label-secondary);
 }
 
+.agentSessionGroup {
+  margin-top: 8px;
+  padding-top: 6px;
+  border-top: 0.5px solid var(--dsw-alias-border-l3);
+}
+
+.agentSessionHeading {
+  margin: 0;
+  padding: 4px 8px;
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 18px;
+}
+
+.agentSessionHint {
+  margin: 0 8px 4px;
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 11px;
+  line-height: 16px;
+}
+
+.agentSessionList {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.agentSessionItem {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  border-radius: var(--dsw-radius-md);
+}
+
+.agentSessionItem:hover {
+  background: var(--dsw-alias-interactive-bg-hover);
+}
+
+.agentSessionRow {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  width: 100%;
+  min-height: 42px;
+  box-sizing: border-box;
+  border: 0;
+  border-radius: var(--dsw-radius-md);
+  padding: 4px 8px;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  color: var(--dsw-alias-label-primary);
+}
+
+.agentSessionRow:hover {
+  background: transparent;
+}
+
+.agentSessionActions {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  margin-inline-end: 4px;
+  border: 0;
+  border-radius: var(--dsw-radius-sm);
+  padding: 0;
+  background: transparent;
+  color: var(--dsw-alias-label-tertiary);
+  cursor: pointer;
+}
+
+.agentSessionActions:hover {
+  color: var(--dsw-alias-label-primary);
+}
+
+.agentSessionTitle {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+  line-height: 18px;
+}
+
+.agentSessionMeta {
+  display: flex;
+  gap: 6px;
+  overflow: hidden;
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 11px;
+  line-height: 16px;
+}
+
+.agentSessionMeta span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.agentSessionFailure {
+  margin: 0;
+  padding: 4px 8px;
+  color: var(--dsw-alias-state-danger-primary);
+  font-size: 11px;
+  line-height: 16px;
+}
+
 /* Compact one-line Workspace row after removing the session-count subtitle. */
 .projectRow {
   height: 34px;

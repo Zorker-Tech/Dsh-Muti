@@ -67,6 +67,8 @@ ctx.systemPrompt.section({
 
 `refreshContext(assembly, context)` 在 pre-step 与路由准备之后刷新已注册的运行时事实。它保留已接纳的段、工具、变量及仅由组装 waterfall 添加的上下文，应用当前的可选上下文抑制，并恢复缺失的必需条目。将变化的事实放在上下文 provider 中；已注册上下文的文本会在准入前再次读取。
 
+仓库自带的 runtime-context 顺序由 `getContextOrder(name)` 分配。`AGENT_MESH_CONTEXT` 位于工作目录之后、沙箱与审批策略之前，使 adapter 的原生工作区指令较早进入持久化 runtime-context 快照。
+
 ### 贡献提示词变量
 
 变量从段或上下文文本中以 `{{name}}` 引用，每次组装时解析；带作用域的变量会为该 agent 遮蔽同名全局变量。循环提供 `provider` 和 `model`；插件可注册自己拥有的事实。工作目录服务通过不执行插值的用户上下文提供目录文本。

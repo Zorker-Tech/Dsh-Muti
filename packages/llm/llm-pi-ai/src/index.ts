@@ -76,6 +76,8 @@ import { providerDefaultsOf } from './provider-data.ts'
 
 export { PiAiAdapter } from './adapter.ts'
 export type { PiAiAdapterOptions } from './adapter.ts'
+export { NativeProviderLlmAdapter, nativeProviderAuth, nativeProviderImages } from './native-adapter.ts'
+export type { NativeProviderLlmAdapterOptions, NativeProviderLlmRoute } from './native-adapter.ts'
 export { Config } from './config.ts'
 export type {
   Options,

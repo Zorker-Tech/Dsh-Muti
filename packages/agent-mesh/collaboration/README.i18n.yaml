@@ -1,0 +1,70 @@
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write packages/agent-mesh/collaboration/README.md
+/:
+  en: dc7f7cac41aa3aa8
+  zh: 50a1464d2cccd46a
+/deepseek-ai-dsh-agent-mesh-collaboration:
+  en: b838972756eba53f
+  zh: c20ec011109fc77b
+/deepseek-ai-dsh-agent-mesh-collaboration/summary:
+  en: a4b79e97913eb583
+  zh: 92ded2089e2500c4
+/deepseek-ai-dsh-agent-mesh-collaboration/table-of-contents:
+  en: 65663b0d5dfa1600
+  zh: dc8dd4f5941b9f74
+/deepseek-ai-dsh-agent-mesh-collaboration/use-this-package:
+  en: 355dae771fa6557e
+  zh: 4f5612ba9787242e
+/deepseek-ai-dsh-agent-mesh-collaboration/understand-the-implementation:
+  en: 13ab8b28757ac88e
+  zh: b13e3b74a004ec5c
+/deepseek-ai-dsh-agent-mesh-collaboration/further-exploration:
+  en: e634cd8f3ca2e8d0
+  zh: 4d9d2ade0fc4d95b
+/deepseek-ai-dsh-agent-mesh-collaboration/model-experience:
+  en: 215e7ba838619b7b
+  zh: a311da3843709f90
+/deepseek-ai-dsh-agent-mesh-collaboration/model-experience/starting-and-reading-collaborations:
+  en: 2d6ec8764b8c2fa0
+  zh: 27984ec53cf5ccb2
+/deepseek-ai-dsh-agent-mesh-collaboration/model-experience/starting-and-reading-collaborations/what-the-model-sees:
+  en: 85c85ffcc2c71aed
+  zh: 8a9ce4e5d116cc1f
+/deepseek-ai-dsh-agent-mesh-collaboration/model-experience/starting-and-reading-collaborations/token-effect:
+  en: 794fbe98318f66cb
+  zh: 4213c506fe341ae4
+/deepseek-ai-dsh-agent-mesh-collaboration/model-experience/starting-and-reading-collaborations/kv-cache-effect:
+  en: 62125dff9f058fda
+  zh: 52d3d698932a7bf4
+/deepseek-ai-dsh-agent-mesh-collaboration/model-experience/the-plan-and-the-todo-board:
+  en: 9f0435bc9f49d41c
+  zh: 75e07f6bd68b7c29
+/deepseek-ai-dsh-agent-mesh-collaboration/model-experience/the-plan-and-the-todo-board/what-the-model-sees:
+  en: 76203a94de28de04
+  zh: b186462fe04a358d
+/deepseek-ai-dsh-agent-mesh-collaboration/model-experience/the-plan-and-the-todo-board/token-effect:
+  en: e45a969027e490d1
+  zh: 147e0344a5008c8d
+/deepseek-ai-dsh-agent-mesh-collaboration/model-experience/the-plan-and-the-todo-board/kv-cache-effect:
+  en: 18762baa7234e2d6
+  zh: cf727465c79423d8
+/deepseek-ai-dsh-agent-mesh-collaboration/model-experience/worktrees-conflicts-and-dispatch:
+  en: 83181201715c5c16
+  zh: fe36c5fbf0c687c5
+/deepseek-ai-dsh-agent-mesh-collaboration/model-experience/worktrees-conflicts-and-dispatch/what-the-model-sees:
+  en: a58df1b62e100e73
+  zh: efe05fb5e54570dd
+/deepseek-ai-dsh-agent-mesh-collaboration/model-experience/worktrees-conflicts-and-dispatch/token-effect:
+  en: 8f1db5f30e600621
+  zh: 047b9740c69efb1a
+/deepseek-ai-dsh-agent-mesh-collaboration/model-experience/worktrees-conflicts-and-dispatch/kv-cache-effect:
+  en: 41647bb76ba432b3
+  zh: 8a477835fbda1036
+/deepseek-ai-dsh-agent-mesh-collaboration/known-limitations-and-deferred-work:
+  en: e78cdfbd9a3936e7
+  zh: 61f83227459da8e2
+/deepseek-ai-dsh-agent-mesh-collaboration/known-limitations-and-deferred-work/dev-note:
+  en: c73f32e177fdf37c
+  zh: a295a53a3bd4ff78

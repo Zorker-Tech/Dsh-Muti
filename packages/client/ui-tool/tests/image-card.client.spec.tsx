@@ -267,12 +267,14 @@ describe('imageCardModel', () => {
 describe('ReadImageRow keyed toolview', () => {
   const list = () => createSnapshotStore<SessionListState>({
     ids: [SID],
-    byId: { [SID]: { id: SID, displayTitle: 'r', running: false, blank: false, updatedAt: 0, cwd: '/w/app' } },
-    current: SID,
+    byId: { [SID]: {
+      id: SID, displayTitle: 'r', running: false, retainedBy: {}, blank: false, updatedAt: 0, cwd: '/w/app',
+    } },
     phase: 'ready',
-    projectionsBySession: {}, jobsBySession: {},
-    currentAddress: undefined,
-  } as unknown as SessionListState)
+    agentSessions: [],
+    agentSessionFailures: [],
+    projectionsBySession: {},
+  })
 
   const rowProps = (
     block: StartedToolCall | ToolResultNode,

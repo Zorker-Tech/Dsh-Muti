@@ -190,6 +190,10 @@ describe('Session-list work slices', () => {
     h.ctx.provide('fileUploads', { registerAgentResolver: () => dispose } as never)
     h.ctx.provide('agentDefaultModel', { currentSelection: () => ({ provider: 'test', model: 'test' }) } as never)
     h.ctx.provide('workspaceRegistry', { list: () => [], archivedSessionIds: [] } as never)
+    h.ctx.provide('agentMesh', {
+      listSessions: async () => ({ items: [], failures: [] }),
+      sessionMarks: () => [],
+    } as never)
     new RemoteAccessService(h.ctx)
     const controller = new SessionController(h.ctx, { nativeOpen: false, listWorkSliceMs: 4 }, { canOpenPath: () => false })
     const yieldWork = vi.spyOn(scheduler, 'yield')

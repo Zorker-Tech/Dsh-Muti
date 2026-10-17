@@ -110,6 +110,16 @@ flowchart TD
   subgraph group_acp["packages/acp"]
     pkg_acp["acp"]
   end
+  subgraph group_agent_mesh["packages/agent-mesh"]
+    pkg_agent_codex["agent-codex"]
+    pkg_agent_grok["agent-grok"]
+    pkg_agent_mesh["agent-mesh"]
+    pkg_agent_mesh_collaboration["agent-mesh-collaboration"]
+    pkg_agent_mesh_controller["agent-mesh-controller"]
+    pkg_agent_mesh_tools["agent-mesh-tools"]
+    pkg_agent_omp["agent-omp"]
+    pkg_agent_pi["agent-pi"]
+  end
   subgraph group_api["packages/api"]
     pkg_api_account_controller["api-account-controller"]
     pkg_api_gateway["api-gateway"]
@@ -155,6 +165,7 @@ flowchart TD
     pkg_client_resources["client-resources"]
     pkg_client_shortcuts["client-shortcuts"]
     pkg_client_store["client-store"]
+    pkg_client_ui_agent_mesh["client-ui-agent-mesh"]
     pkg_client_ui_agent_preset["client-ui-agent-preset"]
     pkg_client_ui_approval["client-ui-approval"]
     pkg_client_ui_attachment["client-ui-attachment"]
@@ -598,6 +609,11 @@ flowchart TD
   pkg_skill_filesystem --> pkg_fs
   pkg_skill_filesystem --> pkg_home_paths
   pkg_skill_filesystem --> pkg_skill
+  pkg_agent_mesh --> pkg_brand
+  pkg_agent_mesh --> pkg_fs
+  pkg_agent_mesh --> pkg_session
+  pkg_agent_mesh --> pkg_storage_domain
+  pkg_agent_mesh --> pkg_subprocess
   pkg_api_workspace_controller --> pkg_api_gateway
   pkg_api_workspace_controller --> pkg_client_connection
   pkg_api_workspace_controller --> pkg_host_directory_picker
@@ -643,6 +659,23 @@ flowchart TD
   pkg_goal --> pkg_session
   pkg_goal --> pkg_session_projection
   pkg_goal --> pkg_typert_protocol
+  pkg_agent_codex --> pkg_agent_mesh
+  pkg_agent_codex --> pkg_brand
+  pkg_agent_grok --> pkg_agent_mesh
+  pkg_agent_grok --> pkg_brand
+  pkg_agent_grok --> pkg_fs
+  pkg_agent_grok --> pkg_session
+  pkg_agent_grok --> pkg_subprocess
+  pkg_agent_mesh_controller --> pkg_agent_mesh
+  pkg_agent_mesh_controller --> pkg_brand
+  pkg_agent_mesh_controller --> pkg_session
+  pkg_agent_mesh_controller --> pkg_typert_protocol
+  pkg_agent_omp --> pkg_agent_mesh
+  pkg_agent_omp --> pkg_brand
+  pkg_agent_omp --> pkg_session
+  pkg_agent_pi --> pkg_agent_mesh
+  pkg_agent_pi --> pkg_brand
+  pkg_agent_pi --> pkg_session
   pkg_file_reference --> pkg_agent
   pkg_harness_dev_context --> pkg_agent
   pkg_harness_dev_context --> pkg_session
@@ -865,6 +898,16 @@ flowchart TD
   pkg_plan_mode --> pkg_system_prompt
   pkg_plan_mode --> pkg_tools
   pkg_plan_mode --> pkg_user_questions
+  pkg_agent_mesh_collaboration --> pkg_agent_mesh
+  pkg_agent_mesh_collaboration --> pkg_brand
+  pkg_agent_mesh_collaboration --> pkg_fs
+  pkg_agent_mesh_collaboration --> pkg_storage_domain
+  pkg_agent_mesh_collaboration --> pkg_tools
+  pkg_agent_mesh_collaboration --> pkg_typert_protocol
+  pkg_agent_mesh_tools --> pkg_agent_mesh
+  pkg_agent_mesh_tools --> pkg_brand
+  pkg_agent_mesh_tools --> pkg_system_prompt
+  pkg_agent_mesh_tools --> pkg_tools
   pkg_command_compact --> pkg_commands
   pkg_command_compact --> pkg_compaction
   pkg_compaction_image_offload --> pkg_agent
@@ -1462,6 +1505,7 @@ flowchart TD
 | [`client-resources`](../packages/client/resources) | `client` | — |
 | [`client-shortcuts`](../packages/client/shortcuts) | `client` | — |
 | [`client-store`](../packages/client/store) | `client` | — |
+| [`client-ui-agent-mesh`](../packages/client/ui-agent-mesh) | `client` | — |
 | [`client-ui-agent-preset`](../packages/client/ui-agent-preset) | `client` | — |
 | [`client-ui-approval`](../packages/client/ui-approval) | `client` | — |
 | [`client-ui-attachment`](../packages/client/ui-attachment) | `client` | — |
@@ -1620,6 +1664,7 @@ flowchart TD
 | [`fs-local`](../packages/fs/fs-local) | `fs` | [`fs`](../packages/fs/fs) |
 | [`fs-observation-policy`](../packages/fs/fs-observation-policy) | `fs` | [`fs`](../packages/fs/fs) |
 | [`skill-filesystem`](../packages/skill/skill-filesystem) | `skill` | [`fs`](../packages/fs/fs), [`home-paths`](../packages/util/home-paths), [`skill`](../packages/skill/skill) |
+| [`agent-mesh`](../packages/agent-mesh/mesh) | `agent-mesh` | [`brand`](../packages/util/brand), [`fs`](../packages/fs/fs), [`session`](../packages/core/session), [`storage-domain`](../packages/storage/storage-domain), [`subprocess`](../packages/subprocess/subprocess) |
 | [`api-workspace-controller`](../packages/api/workspace-controller) | `api` | [`api-gateway`](../packages/api/gateway), [`client-connection`](../packages/client/connection), [`host-directory-picker`](../packages/host/directory-picker), [`session`](../packages/core/session), [`storage-domain`](../packages/storage/storage-domain), [`typert-protocol`](../packages/typert/protocol), [`workspace`](../packages/workspace/workspace) |
 | [`experimental-api-speech-to-text`](../packages/experimental/api-speech-to-text) | `experimental` | [`experimental-speech-to-text`](../packages/experimental/speech-to-text), [`typert-protocol`](../packages/typert/protocol) |
 | [`experimental-client-ui-cot-translation`](../packages/experimental/client-ui-cot-translation) | `experimental` | [`experimental-translator`](../packages/experimental/translator) |
@@ -1632,6 +1677,11 @@ flowchart TD
 | [`llm-retry`](../packages/llm/llm-retry) | `llm` | [`agent`](../packages/core/agent), [`brand`](../packages/util/brand), [`llm`](../packages/llm/llm), [`session`](../packages/core/session), [`session-projection`](../packages/session/session-projection), [`timeout`](../packages/util/timeout) |
 | [`agent-default-model`](../packages/core/agent-default-model) | `core` | [`agent`](../packages/core/agent), [`llm`](../packages/llm/llm) |
 | [`goal`](../packages/goal/goal) | `goal` | [`agent`](../packages/core/agent), [`brand`](../packages/util/brand), [`llm`](../packages/llm/llm), [`scope`](../packages/core/scope), [`session`](../packages/core/session), [`session-projection`](../packages/session/session-projection), [`typert-protocol`](../packages/typert/protocol) |
+| [`agent-codex`](../packages/agent-mesh/agent-codex) | `agent-mesh` | [`agent-mesh`](../packages/agent-mesh/mesh), [`brand`](../packages/util/brand) |
+| [`agent-grok`](../packages/agent-mesh/agent-grok) | `agent-mesh` | [`agent-mesh`](../packages/agent-mesh/mesh), [`brand`](../packages/util/brand), [`fs`](../packages/fs/fs), [`session`](../packages/core/session), [`subprocess`](../packages/subprocess/subprocess) |
+| [`agent-mesh-controller`](../packages/agent-mesh/controller) | `agent-mesh` | [`agent-mesh`](../packages/agent-mesh/mesh), [`brand`](../packages/util/brand), [`session`](../packages/core/session), [`typert-protocol`](../packages/typert/protocol) |
+| [`agent-omp`](../packages/agent-mesh/agent-omp) | `agent-mesh` | [`agent-mesh`](../packages/agent-mesh/mesh), [`brand`](../packages/util/brand), [`session`](../packages/core/session) |
+| [`agent-pi`](../packages/agent-mesh/agent-pi) | `agent-mesh` | [`agent-mesh`](../packages/agent-mesh/mesh), [`brand`](../packages/util/brand), [`session`](../packages/core/session) |
 | [`file-reference`](../packages/context/file-reference) | `context` | [`agent`](../packages/core/agent) |
 | [`harness-dev-context`](../packages/context/harness-dev-context) | `context` | [`agent`](../packages/core/agent), [`session`](../packages/core/session), [`session-projection`](../packages/session/session-projection), [`system-prompt`](../packages/core/system-prompt) |
 | [`time-context`](../packages/context/time-context) | `context` | [`agent`](../packages/core/agent), [`llm`](../packages/llm/llm), [`session`](../packages/core/session), [`session-projection`](../packages/session/session-projection) |
@@ -1677,6 +1727,8 @@ flowchart TD
 | [`tool-web`](../packages/web/tool-web) | `web` | [`llm`](../packages/llm/llm), [`system-prompt`](../packages/core/system-prompt), [`tools`](../packages/core/tools), [`web`](../packages/web/web) |
 | [`tool-todo`](../packages/todo/tool-todo) | `todo` | [`agent`](../packages/core/agent), [`session`](../packages/core/session), [`session-projection`](../packages/session/session-projection), [`tools`](../packages/core/tools) |
 | [`plan-mode`](../packages/plan/plan-mode) | `plan` | [`agent`](../packages/core/agent), [`commands`](../packages/interaction/commands), [`llm`](../packages/llm/llm), [`session`](../packages/core/session), [`session-projection`](../packages/session/session-projection), [`system-prompt`](../packages/core/system-prompt), [`tools`](../packages/core/tools), [`user-questions`](../packages/interaction/user-questions) |
+| [`agent-mesh-collaboration`](../packages/agent-mesh/collaboration) | `agent-mesh` | [`agent-mesh`](../packages/agent-mesh/mesh), [`brand`](../packages/util/brand), [`fs`](../packages/fs/fs), [`storage-domain`](../packages/storage/storage-domain), [`tools`](../packages/core/tools), [`typert-protocol`](../packages/typert/protocol) |
+| [`agent-mesh-tools`](../packages/agent-mesh/tools) | `agent-mesh` | [`agent-mesh`](../packages/agent-mesh/mesh), [`brand`](../packages/util/brand), [`system-prompt`](../packages/core/system-prompt), [`tools`](../packages/core/tools) |
 | [`command-compact`](../packages/compaction/command-compact) | `compaction` | [`commands`](../packages/interaction/commands), [`compaction`](../packages/compaction/compaction) |
 | [`compaction-image-offload`](../packages/compaction/compaction-image-offload) | `compaction` | [`agent`](../packages/core/agent), [`compaction`](../packages/compaction/compaction), [`llm`](../packages/llm/llm), [`session`](../packages/core/session) |
 | [`agent-instructions`](../packages/context/agent-instructions) | `context` | [`agent`](../packages/core/agent), [`fs`](../packages/fs/fs), [`home-paths`](../packages/util/home-paths), [`llm`](../packages/llm/llm), [`session`](../packages/core/session), [`session-projection`](../packages/session/session-projection), [`tools`](../packages/core/tools), [`working-directory`](../packages/session/working-directory) |

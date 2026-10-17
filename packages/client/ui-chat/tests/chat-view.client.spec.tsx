@@ -232,7 +232,7 @@ const compaction = (over: Partial<CompactionSummaryNode> = {}): CompactionSummar
 /** Empty sessions-list hook for the global standard-kit seat. */
 function emptySessions() {
   const store = createSnapshotStore<SessionListState>(
-    { ids: [], byId: {}, phase: 'ready', projectionsBySession: {} })
+    { ids: [], byId: {}, phase: 'ready', agentSessions: [], agentSessionFailures: [], projectionsBySession: {} })
   return bindSnapshotSelector(store)
 }
 

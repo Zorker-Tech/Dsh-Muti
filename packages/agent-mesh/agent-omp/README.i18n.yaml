@@ -1,0 +1,52 @@
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write packages/agent-mesh/agent-omp/README.md
+/:
+  en: b8ca0ad181389daf
+  zh: 3d0c6f3cfb1a514e
+/deepseek-ai-dsh-agent-omp:
+  en: 7181cd7456d19870
+  zh: 7bdb39baa6f12db9
+/deepseek-ai-dsh-agent-omp/summary:
+  en: 785ec399113a6349
+  zh: 49fc6ca31c57d993
+/deepseek-ai-dsh-agent-omp/table-of-contents:
+  en: d152484eb41ac6b4
+  zh: 09388d293f9be9cb
+/deepseek-ai-dsh-agent-omp/use-this-package:
+  en: 4dd4447203c43c96
+  zh: 16950c43e1c44924
+/deepseek-ai-dsh-agent-omp/use-this-package/when-to-choose-it:
+  en: 564d0f63a5bed7f9
+  zh: 6ec85df925fce689
+/deepseek-ai-dsh-agent-omp/use-this-package/minimal-configuration:
+  en: 7321d1086227981e
+  zh: 0ac4e18de43721b4
+/deepseek-ai-dsh-agent-omp/understand-the-implementation:
+  en: 11bdd309518aa998
+  zh: 7e7b17588725083f
+/deepseek-ai-dsh-agent-omp/further-exploration:
+  en: 44e3539afae5c759
+  zh: 2fb13dcf2147fd67
+/deepseek-ai-dsh-agent-omp/model-experience:
+  en: 215e7ba838619b7b
+  zh: a311da3843709f90
+/deepseek-ai-dsh-agent-omp/model-experience/adapter-records:
+  en: 23ca71571f0d4fec
+  zh: 23ca71571f0d4fec
+/deepseek-ai-dsh-agent-omp/model-experience/adapter-records/what-the-model-sees:
+  en: 340f10ae61a9e2f4
+  zh: f5bc6ed5f31b8580
+/deepseek-ai-dsh-agent-omp/model-experience/adapter-records/token-effect:
+  en: 1e6d09c8678c921c
+  zh: d4935ee4309542c2
+/deepseek-ai-dsh-agent-omp/model-experience/adapter-records/kv-cache-effect:
+  en: d27bf2f3288c6f34
+  zh: 3adc20d8df27a771
+/deepseek-ai-dsh-agent-omp/known-limitations-and-deferred-work:
+  en: 1d146fa5d90819d7
+  zh: 4d412c604de2bd4e
+/deepseek-ai-dsh-agent-omp/known-limitations-and-deferred-work/dev-note:
+  en: 9ea3d2a5a6256aa2
+  zh: 9cbe25d771272728

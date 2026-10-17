@@ -27,6 +27,7 @@ import { createSnapshotStore } from '@deepseek-ai/dsh-client-store'
 import { writeClipboard } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { HostObservable, SnapshotSelectorHook } from '@deepseek-ai/dsh-client-ui-slots'
 import type { SessionId } from '@deepseek-ai/dsh-session/types'
+import type {} from '@deepseek-ai/dsh-client-ui-agent-mesh/client'
 // Type-only: pulls the Controller service merges.
 import type {} from '@deepseek-ai/dsh-api-session-controller/client'
 import type {} from '@deepseek-ai/dsh-api-workspace-controller/client'
@@ -101,6 +102,7 @@ const NS = 'workspace'
  */
 export const inject = [
   'slots', 'sessions', 'workspaces', 'locale', 'remote', 'remote.directoryPicker', 'layout', 'shortcuts', 'remoteAccess',
+  'agentMeshNavigation',
 ]
 
 /**
@@ -266,6 +268,17 @@ export function apply(ctx: Context): void {
     // the current Session Workspace before the recent-Workspace fallback.
     startSession: (workspaceId, options) => { uiWorkspace.startSession(workspaceId, options) },
     open: openSession,
+    openAgentSession: (reference) => { ctx.agentMeshNavigation.openSession(reference) },
+    setAgentSessionPinned: async (reference, pinned) => {
+      if (pinned) await ctx.agentMeshNavigation.pinSession(reference)
+      else await ctx.agentMeshNavigation.unpinSession(reference)
+      await sessions.refresh()
+    },
+    setAgentSessionArchived: async (reference, archived) => {
+      if (archived) await ctx.agentMeshNavigation.archiveSession(reference)
+      else await ctx.agentMeshNavigation.unarchiveSession(reference)
+      await sessions.refresh()
+    },
     searchSessions,
     searchResultLimit: sessions.searchResultLimit,
     requestSessionRename,

@@ -1,0 +1,25 @@
+# Bilingual-pair consistency record for agent-mesh.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write docs/subsystems/agent-mesh.md
+/agent-mesh:
+  en: 73af4ef4c8d5c144
+  zh: 8ad2d672c48ec2a6
+/agent-mesh/the-seam:
+  en: e62ef39fe9e0ea7e
+  zh: 1741f56428f538eb
+/agent-mesh/the-provider-contract:
+  en: 39b4900ddc264a8d
+  zh: b4e4e1119d466344
+/agent-mesh/native-model-routes:
+  en: 669c90c1d1f29eae
+  zh: 983775dcf57f74c3
+/agent-mesh/runs:
+  en: 18e513b00c10e46c
+  zh: 679e3918977f062c
+/agent-mesh/collaboration:
+  en: 6663d884afb37185
+  zh: 8c8bf588b57af517
+/agent-mesh/surfaces:
+  en: 8eed931b00547be7
+  zh: c829442dfd2c2d7b

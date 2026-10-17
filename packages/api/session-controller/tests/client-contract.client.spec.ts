@@ -167,4 +167,20 @@ describe('Client Session contracts', () => {
     })
   })
 
+  it('appends a settlement when no later durable event is in the window', () => {
+    const feed = new MutableSessionEventSource()
+    const opening = entry(SessionSeq(1))
+    const settlement = assistantSettlement(SessionSeq(2))
+    feed.replace([opening], false)
+
+    feed.settleAssistant(LlmAttemptId('attempt-one'), settlement)
+
+    expect(feed.getSnapshot().entries).toEqual([opening, settlement])
+    expect(feed.getSnapshot().change).toEqual({
+      kind: 'settle-assistant',
+      attemptId: 'attempt-one',
+      entry: settlement,
+    })
+  })
+
 })

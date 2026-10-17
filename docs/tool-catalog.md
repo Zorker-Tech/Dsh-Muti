@@ -5,9 +5,9 @@
 
 Every model-facing tool a shipped plugin contributes to `ctx.tools`: the `name`, `description`, and JSON-Schema `parameters` the model receives via the system-prompt assembly. It complements the [subsystem pages](subsystems/core.md) (the types plus each page's generated Cordis API region) — this page is the *tools* the agent is offered.
 
-This file is GENERATED and verified fresh by `pnpm run verify-tool-catalog` (part of `doc-sync`) — do not edit it by hand. Unlike the cordis catalog (a pure source-AST pass), this generator BOOTS each tool plugin on a real context and reads `ctx.tools.schemas()`, because a tool schema is not statically knowable (runtime-spread enums, concatenated descriptions, config-driven names, raw-JSON-Schema MCP tools). A completeness guard globs `packages/*/tool-*` and fails if any package is missing from the generator's boot manifest, so a new tool cannot be silently undocumented.
+This file is GENERATED and verified fresh by `pnpm run verify-tool-catalog` (part of `doc-sync`) — do not edit it by hand. Unlike the cordis catalog (a pure source-AST pass), this generator BOOTS each tool plugin on a real context and reads `ctx.tools.schemas()`, because a tool schema is not statically knowable (runtime-spread enums, concatenated descriptions, config-driven names, raw-JSON-Schema MCP tools). A completeness guard covers conventional `tool-*` packages and the agent-mesh tool providers, so an omitted package cannot be silently undocumented.
 
-Scope: shipped product tools under `packages/*/tool-*`, each booted with its DEFAULT config, except where a Config field is REQUIRED with no default — there the generator must choose, and the per-package note records which branch this page shows. The registered tool NAME can be a load-time config (e.g. `tool-subagent`'s `toolName`), so a deployment may expose a package under a different or additional name — a per-package note records those shipped aliases where they exist. The `examples/` demo tools (e.g. `echo`) are excluded, matching the cordis catalog's packages-only scope.
+Scope: shipped product tools in conventional `packages/*/tool-*` packages and the agent-mesh tools and collaboration providers. Each is booted with its DEFAULT config, except where a Config field is REQUIRED with no default — there the generator must choose, and the per-package note records which branch this page shows. The registered tool NAME can be a load-time config (e.g. `tool-subagent`'s `toolName`), so a deployment may expose a package under a different or additional name — a per-package note records those shipped aliases where they exist. The `examples/` demo tools (e.g. `echo`) are excluded, matching the cordis catalog's packages-only scope.
 
 ## Tool Package Map
 
@@ -42,6 +42,8 @@ This table connects model-visible tool names to the plugin package and service s
 | `@deepseek-ai/dsh-tool-subagent-control` | `interrupt_agent`, `list_agents`, `send_message` | `ctx.tools`, `ctx.subagents`, `ctx.agents and ctx.sessionProjections (list_agents only)` | `tool/call`, `tool/result`, `child session events through ctx.subagents` | - | The globally named discovery, interruption, and local-message tools over managed subagents: provider-bound `tool-subagent` instances register distinct delegation tools, while this package registers `send_message` and `interrupt_agent` once, plus `list_agents` from its separately loaded `/list-agents` plugin (whose catalog rows use the sessionProjections and live Agent registries). |
 | `@deepseek-ai/dsh-tool-jobs` | `job_kill`, `job_list`, `job_output` | `ctx.tools`, `ctx.jobs`, `ctx.systemPrompt` | `tool/call`, `tool/result`, `user/message via agent.inject() for background completion notices` | - | The kind-agnostic background-job controller: background bash commands and PTY sends are read, listed, and killed through the same three tools. Loading the plugin attaches the controller that arms producers' `ctx.jobs.start()`. |
 | `@deepseek-ai/dsh-experimental-tool-agent-team` | `interrupt_agent`, `list_agents`, `send_message`, `spawn_teammate`, `team_task_create`, `team_task_get`, `team_task_list`, `team_task_update`, `wait_agent` | `ctx.tools`, `ctx.systemPrompt`, `ctx.agentTeams`, `an exact live Team member Agent` | `tool/call`, `team/member`, `team/task`, `agent/inbox/spliced`, `user/message on inbox claim`, `tool/result` | - | All nine tools are scoped to implicit Team Leads and durable teammates. The shipped dsh-base bundle keeps the package disabled; the documented Agent Teams profile patch enables it while disabling the legacy continuable-child control names. |
+| `@deepseek-ai/dsh-agent-mesh-collaboration` | `mesh_collaboration_start`, `mesh_collaborations`, `mesh_plan_advance`, `mesh_plan_set`, `mesh_task_dispatch`, `mesh_todos_get`, `mesh_todos_observe`, `mesh_todos_set`, `mesh_worktree_conflicts`, `mesh_worktree_create`, `mesh_worktree_integrated`, `mesh_worktree_remove`, `mesh_worktrees` | `ctx.tools`, `ctx.meshCollaboration` | `tool/call`, `agent-mesh collaboration tables`, `tool/result` | - | Collaboration plans, task boards, and worktree records belong to the mesh collaboration storage domain; they are not session events. |
+| `@deepseek-ai/dsh-agent-mesh-tools` | `mesh_agents`, `mesh_capabilities`, `mesh_capability_read`, `mesh_mcp_connect`, `mesh_mcp_disconnect`, `mesh_run`, `mesh_run_cancel`, `mesh_runs`, `mesh_sessions`, `mesh_tasks`, `mesh_transcript` | `ctx.tools`, `ctx.agentMesh`, `ctx.fs` | `tool/call`, `agent-mesh run records`, `tool/result` | - | Capability files are read only from paths declared by the adapter and through ctx.fs. Run dispatch and cancellation use the registered transport and report its declared capabilities. |
 | `@deepseek-ai/dsh-tool-todo` | `todo_write` | `ctx.tools`, `owning Agent session` | `tool/call`, `todo/write`, `tool/result` | - | todo_write is session-owned state; UIs render the latest todo/write event as a checklist. `allowParallelInProgress` is required with no default, so the catalog states its choice: `true`, whose description invites several `in_progress` items. A deployment choosing `false` receives the same tool with a description asking for exactly one active task. |
 | `@deepseek-ai/dsh-tool-working-directory` | `working_directory` | `ctx.tools`, `ctx.workingDirectory` | `tool/call`, `working-directory/change`, `user context for directory changes`, `tool/result` | - | Reads or changes the calling Session directory. Existing shells and processes retain their own directories; origin metadata and permission roots stay fixed. |
 | `@deepseek-ai/dsh-experimental-tool-worktree` | `create_worktree` | `ctx.tools`, `ctx.worktrees`, `a calling Agent` | `tool/call`, `Git branch and checkout`, `working-directory/change`, `tool/result` | - | Explicit experimental composition only. Creates a new branch and checkout from a pinned local commit under existing write permissions, then changes the Session directory. Leaving retains the branch and checkout. |
@@ -2557,6 +2559,797 @@ Wait for the next teammate status, message, or shared-task change after this cal
 Source: [`packages/experimental/tool-agent-team/src/index.ts`](../packages/experimental/tool-agent-team/src/index.ts)
 
 All nine tools are scoped to implicit Team Leads and durable teammates. The shipped dsh-base bundle keeps the package disabled; the documented Agent Teams profile patch enables it while disabling the legacy continuable-child control names.
+
+<a id="deepseek-aidsh-agent-mesh-collaboration"></a>
+
+## `@deepseek-ai/dsh-agent-mesh-collaboration`
+
+### `mesh_collaboration_start`
+
+Create a collaboration: one authoritative plan, one shared todo board, and optional tasks assigned to agents. A worktree-isolated task gets its own git worktree when it is dispatched.
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "Short human title."
+    },
+    "objective": {
+      "type": "string",
+      "description": "What the collaboration as a whole must achieve."
+    },
+    "repoRoot": {
+      "type": "string",
+      "description": "Absolute path of the repository the tasks work in."
+    },
+    "tasks": {
+      "type": "array",
+      "description": "Initial tasks. A seed may name a sibling by position (\"task-1\") or by id in dependsOn.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "instruction": {
+            "type": "string"
+          },
+          "assignee": {
+            "type": "string"
+          },
+          "dependsOn": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "isolation": {
+            "type": "string",
+            "enum": [
+              "worktree",
+              "shared-cwd"
+            ]
+          }
+        },
+        "required": [
+          "title",
+          "instruction",
+          "assignee"
+        ]
+      }
+    }
+  },
+  "required": [
+    "title",
+    "objective",
+    "repoRoot"
+  ]
+}
+```
+
+Source: [`packages/agent-mesh/collaboration/src/tools.ts`](../packages/agent-mesh/collaboration/src/tools.ts)
+
+### `mesh_collaborations`
+
+List collaborations with their plan, board counts, tasks and worktrees, or read one collaboration by id.
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "collaborationId": {
+      "type": "string",
+      "description": "Read one collaboration instead of listing every one."
+    }
+  }
+}
+```
+
+Source: [`packages/agent-mesh/collaboration/src/tools.ts`](../packages/agent-mesh/collaboration/src/tools.ts)
+
+### `mesh_plan_advance`
+
+Move the plan to a phase, marking every earlier phase done. Refused while an earlier phase is still open.
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "collaborationId": {
+      "type": "string",
+      "description": "Collaboration to change."
+    },
+    "phaseId": {
+      "type": "string",
+      "description": "Phase to activate."
+    }
+  },
+  "required": [
+    "collaborationId",
+    "phaseId"
+  ]
+}
+```
+
+Source: [`packages/agent-mesh/collaboration/src/tools.ts`](../packages/agent-mesh/collaboration/src/tools.ts)
+
+### `mesh_plan_set`
+
+Replace a collaboration's plan fields. The plan is the authoritative input every dispatched run receives.
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "collaborationId": {
+      "type": "string",
+      "description": "Collaboration to change."
+    },
+    "objective": {
+      "type": "string",
+      "description": "The objective; it replaces the current one."
+    },
+    "phases": {
+      "type": "array",
+      "description": "The complete new phase list, in order.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "todo",
+              "active",
+              "done"
+            ]
+          },
+          "exitCriteria": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "status"
+        ]
+      }
+    },
+    "activePhaseId": {
+      "type": "string",
+      "description": "Phase to mark active; it must exist in the resulting list."
+    },
+    "decisions": {
+      "type": "array",
+      "description": "The complete decisions log.",
+      "items": {
+        "type": "string"
+      }
+    },
+    "mode": {
+      "type": "string",
+      "description": "Whether the plan is injected into dispatched prompts or only observed.",
+      "enum": [
+        "inject",
+        "observe"
+      ]
+    }
+  },
+  "required": [
+    "collaborationId",
+    "objective"
+  ]
+}
+```
+
+Source: [`packages/agent-mesh/collaboration/src/tools.ts`](../packages/agent-mesh/collaboration/src/tools.ts)
+
+### `mesh_task_dispatch`
+
+Dispatch one collaboration task: create or reuse its worktree, hand the agent the plan and board context plus the instruction, and record the run on the task. Refused when the task is already running or succeeded, or when a dependency is unfinished.
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "collaborationId": {
+      "type": "string",
+      "description": "Collaboration owning the task."
+    },
+    "taskId": {
+      "type": "string",
+      "description": "Task to dispatch, as reported by mesh_collaborations."
+    },
+    "baseRef": {
+      "type": "string",
+      "description": "Commit-ish a newly created worktree branches from."
+    },
+    "timeoutMs": {
+      "type": "integer",
+      "description": "Wall-clock budget handed to the agent."
+    }
+  },
+  "required": [
+    "collaborationId",
+    "taskId"
+  ]
+}
+```
+
+Source: [`packages/agent-mesh/collaboration/src/tools.ts`](../packages/agent-mesh/collaboration/src/tools.ts)
+
+### `mesh_todos_get`
+
+Read a collaboration's shared todo board with its revision.
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "collaborationId": {
+      "type": "string",
+      "description": "Collaboration to read."
+    }
+  },
+  "required": [
+    "collaborationId"
+  ]
+}
+```
+
+Source: [`packages/agent-mesh/collaboration/src/tools.ts`](../packages/agent-mesh/collaboration/src/tools.ts)
+
+### `mesh_todos_observe`
+
+Read one agent's own todo list for a session and fold it into the shared board. Authored items are never overwritten, and an item the board considers done is never reopened.
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "collaborationId": {
+      "type": "string",
+      "description": "Collaboration whose board is folded into."
+    },
+    "agentId": {
+      "type": "string",
+      "description": "Agent whose own store is read, as reported by mesh_agents."
+    },
+    "sessionId": {
+      "type": "string",
+      "description": "The agent's native session id; the newest session is read when omitted."
+    }
+  },
+  "required": [
+    "collaborationId",
+    "agentId"
+  ]
+}
+```
+
+Source: [`packages/agent-mesh/collaboration/src/tools.ts`](../packages/agent-mesh/collaboration/src/tools.ts)
+
+### `mesh_todos_set`
+
+Replace a collaboration's shared todo board. Pass expectedRevision from a previous read to be refused instead of clobbering another writer's change.
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "collaborationId": {
+      "type": "string",
+      "description": "Collaboration whose board is replaced."
+    },
+    "todos": {
+      "type": "array",
+      "description": "The complete new board.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "in_progress",
+              "completed",
+              "blocked",
+              "cancelled"
+            ]
+          },
+          "owner": {
+            "type": "string"
+          },
+          "blockedBy": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "content",
+          "status"
+        ]
+      }
+    },
+    "expectedRevision": {
+      "type": "integer",
+      "description": "Revision the caller read; the write is refused when the board moved on."
+    }
+  },
+  "required": [
+    "collaborationId",
+    "todos"
+  ]
+}
+```
+
+Source: [`packages/agent-mesh/collaboration/src/tools.ts`](../packages/agent-mesh/collaboration/src/tools.ts)
+
+### `mesh_worktree_conflicts`
+
+Compare live worktrees for same-file and same-hunk edits, shared configured feature areas, and differing base commits. Findings are heuristic and advisory; this report does not prevent a separate dispatch.
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "repoRoot": {
+      "type": "string",
+      "description": "Repository to analyse."
+    }
+  },
+  "required": [
+    "repoRoot"
+  ]
+}
+```
+
+Source: [`packages/agent-mesh/collaboration/src/tools.ts`](../packages/agent-mesh/collaboration/src/tools.ts)
+
+### `mesh_worktree_create`
+
+Create a git worktree on a new branch inside the mesh-owned directory of a repository, or reuse a clean idle one already reserved for that agent.
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "agentId": {
+      "type": "string",
+      "description": "Agent the worktree is reserved for."
+    },
+    "repoRoot": {
+      "type": "string",
+      "description": "Absolute path inside the repository."
+    },
+    "baseRef": {
+      "type": "string",
+      "description": "Commit-ish to branch from; the repository HEAD when omitted."
+    },
+    "label": {
+      "type": "string",
+      "description": "Label used in the branch name and the worktree directory."
+    },
+    "collaborationId": {
+      "type": "string",
+      "description": "Collaboration the worktree serves."
+    },
+    "reuse": {
+      "type": "boolean",
+      "description": "Reuse a clean idle worktree reserved for the same agent."
+    }
+  },
+  "required": [
+    "agentId",
+    "repoRoot"
+  ]
+}
+```
+
+Source: [`packages/agent-mesh/collaboration/src/tools.ts`](../packages/agent-mesh/collaboration/src/tools.ts)
+
+### `mesh_worktree_integrated`
+
+Mark a worktree integrated so it stops appearing as outstanding work, or outstanding again with merged=false.
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "worktreeId": {
+      "type": "string",
+      "description": "Worktree to mark."
+    },
+    "merged": {
+      "type": "boolean",
+      "description": "false marks it outstanding again; defaults to true."
+    }
+  },
+  "required": [
+    "worktreeId"
+  ]
+}
+```
+
+Source: [`packages/agent-mesh/collaboration/src/tools.ts`](../packages/agent-mesh/collaboration/src/tools.ts)
+
+### `mesh_worktree_remove`
+
+Remove a mesh-owned git worktree. DANGEROUS: a worktree with uncommitted changes or unmerged commits is refused unless force is true, and a forced removal discards that work permanently.
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "worktreeId": {
+      "type": "string",
+      "description": "Worktree to remove."
+    },
+    "force": {
+      "type": "boolean",
+      "description": "Discard uncommitted and unmerged work. Only pass this after a human approved the loss."
+    }
+  },
+  "required": [
+    "worktreeId"
+  ]
+}
+```
+
+Source: [`packages/agent-mesh/collaboration/src/tools.ts`](../packages/agent-mesh/collaboration/src/tools.ts)
+
+### `mesh_worktrees`
+
+List mesh-owned git worktrees with a live progress sample: changed files, HEAD, and whether the tree is dirty.
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "repoRoot": {
+      "type": "string",
+      "description": "Restrict to worktrees of one repository."
+    }
+  }
+}
+```
+
+Source: [`packages/agent-mesh/collaboration/src/tools.ts`](../packages/agent-mesh/collaboration/src/tools.ts)
+
+Collaboration plans, task boards, and worktree records belong to the mesh collaboration storage domain; they are not session events.
+
+<a id="deepseek-aidsh-agent-mesh-tools"></a>
+
+## `@deepseek-ai/dsh-agent-mesh-tools`
+
+### `mesh_agents`
+
+List the external coding agents the mesh can read (Codex, Grok Build, Pi, OMP), with their detection state and declared capabilities.
+
+```json
+{
+  "type": "object",
+  "properties": {}
+}
+```
+
+Source: [`packages/agent-mesh/tools/src/index.ts`](../packages/agent-mesh/tools/src/index.ts)
+
+### `mesh_capabilities`
+
+Read one external agent's declared tools, skills, MCP servers, commands and context files from its own configuration.
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "agentId": {
+      "type": "string",
+      "description": "Agent id, as reported by mesh_agents."
+    },
+    "cwd": {
+      "type": "string",
+      "description": "Working directory whose project-level configuration applies."
+    }
+  },
+  "required": [
+    "agentId"
+  ]
+}
+```
+
+Source: [`packages/agent-mesh/tools/src/index.ts`](../packages/agent-mesh/tools/src/index.ts)
+
+### `mesh_capability_read`
+
+Read one skill, command template, or context file currently declared by an external agent, through DSH's filesystem policy.
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "agentId": {
+      "type": "string",
+      "description": "Agent id, as reported by mesh_agents."
+    },
+    "path": {
+      "type": "string",
+      "description": "Exact skill, context-file, or command-template path reported by mesh_capabilities."
+    },
+    "cwd": {
+      "type": "string",
+      "description": "Working directory whose project-level declarations apply."
+    }
+  },
+  "required": [
+    "agentId",
+    "path"
+  ]
+}
+```
+
+Source: [`packages/agent-mesh/tools/src/index.ts`](../packages/agent-mesh/tools/src/index.ts)
+
+### `mesh_mcp_connect`
+
+After DSH approval, start one native MCP server declared by an external agent and expose its tools only to the calling DSH Agent.
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "agentId": {
+      "type": "string",
+      "description": "Agent id whose native MCP configuration declares the server."
+    },
+    "serverName": {
+      "type": "string",
+      "description": "Exact server name from mesh_capabilities."
+    },
+    "cwd": {
+      "type": "string",
+      "description": "Absolute project working directory used to resolve native project configuration."
+    }
+  },
+  "required": [
+    "agentId",
+    "serverName",
+    "cwd"
+  ]
+}
+```
+
+Source: [`packages/agent-mesh/tools/src/index.ts`](../packages/agent-mesh/tools/src/index.ts)
+
+### `mesh_mcp_disconnect`
+
+Disconnect one MCP server previously approved for the calling DSH Agent and remove its tools from that Agent.
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "agentId": {
+      "type": "string",
+      "description": "External agent id used when connecting the server."
+    },
+    "serverName": {
+      "type": "string",
+      "description": "Exact server name used when connecting."
+    }
+  },
+  "required": [
+    "agentId",
+    "serverName"
+  ]
+}
+```
+
+Source: [`packages/agent-mesh/tools/src/index.ts`](../packages/agent-mesh/tools/src/index.ts)
+
+### `mesh_run`
+
+Dispatch a task to an external coding agent in a working directory and return its terminal result. Adapters that expose native approval requests route them through DSH approval.
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "agentId": {
+      "type": "string",
+      "description": "Agent id, as reported by mesh_agents."
+    },
+    "prompt": {
+      "type": "string",
+      "description": "The task to hand the agent."
+    },
+    "cwd": {
+      "type": "string",
+      "description": "Absolute working directory the agent runs in."
+    },
+    "commandName": {
+      "type": "string",
+      "description": "Optional exact file-backed command name from mesh_capabilities; its prompt body is prepended to this task."
+    },
+    "model": {
+      "type": "string",
+      "description": "Model in the agent's own naming."
+    },
+    "approval": {
+      "type": "string",
+      "description": "Approval mode in the agent's own vocabulary."
+    },
+    "resumeNativeId": {
+      "type": "string",
+      "description": "Native session id to continue."
+    },
+    "timeoutMs": {
+      "type": "integer",
+      "description": "Wall-clock budget in milliseconds."
+    }
+  },
+  "required": [
+    "agentId",
+    "prompt",
+    "cwd"
+  ]
+}
+```
+
+Source: [`packages/agent-mesh/tools/src/index.ts`](../packages/agent-mesh/tools/src/index.ts)
+
+### `mesh_run_cancel`
+
+Cancel a dispatched run. Cancellation terminates the agent process group; it is not a resumable pause.
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "runId": {
+      "type": "string",
+      "description": "Run to cancel."
+    },
+    "reason": {
+      "type": "string",
+      "description": "Reason recorded with the cancellation."
+    }
+  },
+  "required": [
+    "runId"
+  ]
+}
+```
+
+Source: [`packages/agent-mesh/tools/src/index.ts`](../packages/agent-mesh/tools/src/index.ts)
+
+### `mesh_runs`
+
+Read dispatched runs: their status, final answer, classified failure, and recent events.
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "runId": {
+      "type": "string",
+      "description": "One run to read; omit for every tracked run."
+    },
+    "wait": {
+      "type": "boolean",
+      "description": "With runId, wait for that run to reach a terminal status before answering."
+    }
+  }
+}
+```
+
+Source: [`packages/agent-mesh/tools/src/index.ts`](../packages/agent-mesh/tools/src/index.ts)
+
+### `mesh_sessions`
+
+List one external agent's own sessions (as that agent's CLI stored them), newest first.
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "agentId": {
+      "type": "string",
+      "description": "Agent id, as reported by mesh_agents."
+    },
+    "cwd": {
+      "type": "string",
+      "description": "Only sessions whose recorded working directory resolves to this path."
+    },
+    "limit": {
+      "type": "integer",
+      "description": "Maximum number of sessions to return."
+    }
+  },
+  "required": [
+    "agentId"
+  ]
+}
+```
+
+Source: [`packages/agent-mesh/tools/src/index.ts`](../packages/agent-mesh/tools/src/index.ts)
+
+### `mesh_tasks`
+
+Read one external agent's own todo list and plan for a session, when that agent records them.
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "agentId": {
+      "type": "string",
+      "description": "Agent id, as reported by mesh_agents."
+    },
+    "sessionId": {
+      "type": "string",
+      "description": "Native session id, as reported by mesh_sessions."
+    }
+  },
+  "required": [
+    "agentId",
+    "sessionId"
+  ]
+}
+```
+
+Source: [`packages/agent-mesh/tools/src/index.ts`](../packages/agent-mesh/tools/src/index.ts)
+
+### `mesh_transcript`
+
+Read a window of one external agent's session transcript, projected onto a common message shape.
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "agentId": {
+      "type": "string",
+      "description": "Agent id, as reported by mesh_agents."
+    },
+    "sessionId": {
+      "type": "string",
+      "description": "Native session id, as reported by mesh_sessions."
+    },
+    "maxMessages": {
+      "type": "integer",
+      "description": "Maximum number of trailing messages to return."
+    }
+  },
+  "required": [
+    "agentId",
+    "sessionId"
+  ]
+}
+```
+
+Source: [`packages/agent-mesh/tools/src/index.ts`](../packages/agent-mesh/tools/src/index.ts)
+
+Capability files are read only from paths declared by the adapter and through ctx.fs. Run dispatch and cancellation use the registered transport and report its declared capabilities.
 
 <a id="deepseek-aidsh-tool-todo"></a>
 

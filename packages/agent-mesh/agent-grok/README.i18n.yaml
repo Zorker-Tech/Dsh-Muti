@@ -1,0 +1,52 @@
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write packages/agent-mesh/agent-grok/README.md
+/:
+  en: 08124591a6e7ca89
+  zh: 8d986cdfad6380f8
+/deepseek-ai-dsh-agent-grok:
+  en: 50a9725ad9559c93
+  zh: 0d7f3188a8059bb0
+/deepseek-ai-dsh-agent-grok/summary:
+  en: 8728e3a9aadad972
+  zh: 91fa80cb79743194
+/deepseek-ai-dsh-agent-grok/table-of-contents:
+  en: d152484eb41ac6b4
+  zh: 09388d293f9be9cb
+/deepseek-ai-dsh-agent-grok/use-this-package:
+  en: 4dd4447203c43c96
+  zh: 16950c43e1c44924
+/deepseek-ai-dsh-agent-grok/use-this-package/when-to-choose-it:
+  en: 97cbee196104a3cb
+  zh: 03a2cdd15a2c6a76
+/deepseek-ai-dsh-agent-grok/use-this-package/minimal-configuration:
+  en: b90c670b276b8f38
+  zh: 27ab7e2379194b53
+/deepseek-ai-dsh-agent-grok/understand-the-implementation:
+  en: e278b73ee0fe1f55
+  zh: ae8f77f36b5c0e6b
+/deepseek-ai-dsh-agent-grok/further-exploration:
+  en: 44e3539afae5c759
+  zh: 2fb13dcf2147fd67
+/deepseek-ai-dsh-agent-grok/model-experience:
+  en: 215e7ba838619b7b
+  zh: a311da3843709f90
+/deepseek-ai-dsh-agent-grok/model-experience/adapter-records:
+  en: 23ca71571f0d4fec
+  zh: 23ca71571f0d4fec
+/deepseek-ai-dsh-agent-grok/model-experience/adapter-records/what-the-model-sees:
+  en: a6053a963c714a86
+  zh: 432c45aaaae8efb2
+/deepseek-ai-dsh-agent-grok/model-experience/adapter-records/token-effect:
+  en: 1e6d09c8678c921c
+  zh: d4935ee4309542c2
+/deepseek-ai-dsh-agent-grok/model-experience/adapter-records/kv-cache-effect:
+  en: d27bf2f3288c6f34
+  zh: 3adc20d8df27a771
+/deepseek-ai-dsh-agent-grok/known-limitations-and-deferred-work:
+  en: 64433e67dddfa6c0
+  zh: 4290637267bd64ac
+/deepseek-ai-dsh-agent-grok/known-limitations-and-deferred-work/dev-note:
+  en: a36b04e70a0c4497
+  zh: 02230d691846fcb3

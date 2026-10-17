@@ -27,6 +27,16 @@ export interface RepositoryReference {
   kind: 'commit-hash' | 'organization-url'
 }
 
+/** A bare decimal value in a structured record is numeric data, not a hash token. */
+function isBareNumericField(line: string, start: number, end: number): boolean {
+  const value = line.slice(start, end)
+  if (!/^\d+$/.test(value)) return false
+  const before = line.slice(0, start)
+  const after = line.slice(end)
+  return /(?:^|[,{]\s*)(?:[a-zA-Z_][\w.-]*|"[^\"]+"|'[^']+')\s*(?:=|:)\s*$/.test(before)
+    && /^\s*(?:[,}\]]|#|$)/.test(after)
+}
+
 function isMaintained(file: string): boolean {
   return !excludedPrefixes.some(prefix => file.startsWith(prefix))
 }
@@ -49,7 +59,9 @@ export function findRepositoryReferences(
     if (organizationUrl.test(canonicalReferenceText(line).replace(kitRepositoryUrl, ''))) {
       references.push({ file, line: index + 1, kind: 'organization-url' })
     }
-    if ([...line.matchAll(commitCandidate)].some(match => commits.has(match[0].toLowerCase()))) {
+    if ([...line.matchAll(commitCandidate)].some(match =>
+      !isBareNumericField(line, match.index, match.index + match[0].length)
+      && commits.has(match[0].toLowerCase()))) {
       references.push({ file, line: index + 1, kind: 'commit-hash' })
     }
   }

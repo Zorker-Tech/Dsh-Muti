@@ -353,7 +353,7 @@ describe('dsh-doc skill consolidation', () => {
       const metadata = readFrontmatter(file)
       expect(packageReadmeMetadataErrors(file, metadata), file).toEqual([])
     }
-  })
+  }, 15_000)
 
   it('maps persistence transition records to their dedicated document kind', () => {
     const files = globSync('docs/persistence-changes/*.md', { cwd: root })

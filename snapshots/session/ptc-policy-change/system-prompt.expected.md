@@ -140,6 +140,226 @@ interface ToolArgsMap {
     /** children (default) lists direct children, which accept send_message in any status. descendants lists the whole tree below you with each entry's parent session id and depth; entries deeper than 1 accept only interrupt_agent. */
     scope?: "children" | "descendants";
   } & Record<string, JsonValue>;
+  /** List the external coding agents the mesh can read (Codex, Grok Build, Pi, OMP), with their detection state and declared capabilities. */
+  mesh_agents: Record<string, JsonValue>;
+  /** Read one external agent's declared tools, skills, MCP servers, commands and context files from its own configuration. */
+  mesh_capabilities: {
+    /** Agent id, as reported by mesh_agents. */
+    agentId: string;
+    /** Working directory whose project-level configuration applies. */
+    cwd?: string;
+  } & Record<string, JsonValue>;
+  /** Read one skill, command template, or context file currently declared by an external agent, through DSH's filesystem policy. */
+  mesh_capability_read: {
+    /** Agent id, as reported by mesh_agents. */
+    agentId: string;
+    /** Exact skill, context-file, or command-template path reported by mesh_capabilities. */
+    path: string;
+    /** Working directory whose project-level declarations apply. */
+    cwd?: string;
+  } & Record<string, JsonValue>;
+  /** Create a collaboration: one authoritative plan, one shared todo board, and optional tasks assigned to agents. A worktree-isolated task gets its own git worktree when it is dispatched. */
+  mesh_collaboration_start: {
+    /** Short human title. */
+    title: string;
+    /** What the collaboration as a whole must achieve. */
+    objective: string;
+    /** Absolute path of the repository the tasks work in. */
+    repoRoot: string;
+    /** Initial tasks. A seed may name a sibling by position ("task-1") or by id in dependsOn. */
+    tasks?: ({
+      title: string;
+      instruction: string;
+      assignee: string;
+      dependsOn?: string[];
+      isolation?: "worktree" | "shared-cwd";
+    })[];
+  } & Record<string, JsonValue>;
+  /** List collaborations with their plan, board counts, tasks and worktrees, or read one collaboration by id. */
+  mesh_collaborations: {
+    /** Read one collaboration instead of listing every one. */
+    collaborationId?: string;
+  } & Record<string, JsonValue>;
+  /** After DSH approval, start one native MCP server declared by an external agent and expose its tools only to the calling DSH Agent. */
+  mesh_mcp_connect: {
+    /** Agent id whose native MCP configuration declares the server. */
+    agentId: string;
+    /** Exact server name from mesh_capabilities. */
+    serverName: string;
+    /** Absolute project working directory used to resolve native project configuration. */
+    cwd: string;
+  } & Record<string, JsonValue>;
+  /** Disconnect one MCP server previously approved for the calling DSH Agent and remove its tools from that Agent. */
+  mesh_mcp_disconnect: {
+    /** External agent id used when connecting the server. */
+    agentId: string;
+    /** Exact server name used when connecting. */
+    serverName: string;
+  } & Record<string, JsonValue>;
+  /** Move the plan to a phase, marking every earlier phase done. Refused while an earlier phase is still open. */
+  mesh_plan_advance: {
+    /** Collaboration to change. */
+    collaborationId: string;
+    /** Phase to activate. */
+    phaseId: string;
+  } & Record<string, JsonValue>;
+  /** Replace a collaboration's plan fields. The plan is the authoritative input every dispatched run receives. */
+  mesh_plan_set: {
+    /** Collaboration to change. */
+    collaborationId: string;
+    /** The objective; it replaces the current one. */
+    objective: string;
+    /** The complete new phase list, in order. */
+    phases?: ({
+      id: string;
+      title: string;
+      status: "todo" | "active" | "done";
+      exitCriteria?: string;
+    })[];
+    /** Phase to mark active; it must exist in the resulting list. */
+    activePhaseId?: string;
+    /** The complete decisions log. */
+    decisions?: string[];
+    /** Whether the plan is injected into dispatched prompts or only observed. */
+    mode?: "inject" | "observe";
+  } & Record<string, JsonValue>;
+  /** Dispatch a task to an external coding agent in a working directory and return its terminal result. Adapters that expose native approval requests route them through DSH approval. */
+  mesh_run: {
+    /** Agent id, as reported by mesh_agents. */
+    agentId: string;
+    /** The task to hand the agent. */
+    prompt: string;
+    /** Absolute working directory the agent runs in. */
+    cwd: string;
+    /** Optional exact file-backed command name from mesh_capabilities; its prompt body is prepended to this task. */
+    commandName?: string;
+    /** Model in the agent's own naming. */
+    model?: string;
+    /** Approval mode in the agent's own vocabulary. */
+    approval?: string;
+    /** Native session id to continue. */
+    resumeNativeId?: string;
+    /** Wall-clock budget in milliseconds. */
+    timeoutMs?: number;
+  } & Record<string, JsonValue>;
+  /** Cancel a dispatched run. Cancellation terminates the agent process group; it is not a resumable pause. */
+  mesh_run_cancel: {
+    /** Run to cancel. */
+    runId: string;
+    /** Reason recorded with the cancellation. */
+    reason?: string;
+  } & Record<string, JsonValue>;
+  /** Read dispatched runs: their status, final answer, classified failure, and recent events. */
+  mesh_runs: {
+    /** One run to read; omit for every tracked run. */
+    runId?: string;
+    /** With runId, wait for that run to reach a terminal status before answering. */
+    wait?: boolean;
+  } & Record<string, JsonValue>;
+  /** List one external agent's own sessions (as that agent's CLI stored them), newest first. */
+  mesh_sessions: {
+    /** Agent id, as reported by mesh_agents. */
+    agentId: string;
+    /** Only sessions whose recorded working directory resolves to this path. */
+    cwd?: string;
+    /** Maximum number of sessions to return. */
+    limit?: number;
+  } & Record<string, JsonValue>;
+  /** Dispatch one collaboration task: create or reuse its worktree, hand the agent the plan and board context plus the instruction, and record the run on the task. Refused when the task is already running or succeeded, or when a dependency is unfinished. */
+  mesh_task_dispatch: {
+    /** Collaboration owning the task. */
+    collaborationId: string;
+    /** Task to dispatch, as reported by mesh_collaborations. */
+    taskId: string;
+    /** Commit-ish a newly created worktree branches from. */
+    baseRef?: string;
+    /** Wall-clock budget handed to the agent. */
+    timeoutMs?: number;
+  } & Record<string, JsonValue>;
+  /** Read one external agent's own todo list and plan for a session, when that agent records them. */
+  mesh_tasks: {
+    /** Agent id, as reported by mesh_agents. */
+    agentId: string;
+    /** Native session id, as reported by mesh_sessions. */
+    sessionId: string;
+  } & Record<string, JsonValue>;
+  /** Read a collaboration's shared todo board with its revision. */
+  mesh_todos_get: {
+    /** Collaboration to read. */
+    collaborationId: string;
+  } & Record<string, JsonValue>;
+  /** Read one agent's own todo list for a session and fold it into the shared board. Authored items are never overwritten, and an item the board considers done is never reopened. */
+  mesh_todos_observe: {
+    /** Collaboration whose board is folded into. */
+    collaborationId: string;
+    /** Agent whose own store is read, as reported by mesh_agents. */
+    agentId: string;
+    /** The agent's native session id; the newest session is read when omitted. */
+    sessionId?: string;
+  } & Record<string, JsonValue>;
+  /** Replace a collaboration's shared todo board. Pass expectedRevision from a previous read to be refused instead of clobbering another writer's change. */
+  mesh_todos_set: {
+    /** Collaboration whose board is replaced. */
+    collaborationId: string;
+    /** The complete new board. */
+    todos: ({
+      id: string;
+      content: string;
+      status: "pending" | "in_progress" | "completed" | "blocked" | "cancelled";
+      owner?: string;
+      blockedBy?: string[];
+    })[];
+    /** Revision the caller read; the write is refused when the board moved on. */
+    expectedRevision?: number;
+  } & Record<string, JsonValue>;
+  /** Read a window of one external agent's session transcript, projected onto a common message shape. */
+  mesh_transcript: {
+    /** Agent id, as reported by mesh_agents. */
+    agentId: string;
+    /** Native session id, as reported by mesh_sessions. */
+    sessionId: string;
+    /** Maximum number of trailing messages to return. */
+    maxMessages?: number;
+  } & Record<string, JsonValue>;
+  /** Compare the live worktrees of one repository and report the files two of them changed. Detection is advisory: it reports same-file overlap only, never a semantic conflict in different files. */
+  mesh_worktree_conflicts: {
+    /** Repository to analyse. */
+    repoRoot: string;
+  } & Record<string, JsonValue>;
+  /** Create a git worktree on a new branch inside the mesh-owned directory of a repository, or reuse a clean idle one already reserved for that agent. */
+  mesh_worktree_create: {
+    /** Agent the worktree is reserved for. */
+    agentId: string;
+    /** Absolute path inside the repository. */
+    repoRoot: string;
+    /** Commit-ish to branch from; the repository HEAD when omitted. */
+    baseRef?: string;
+    /** Label used in the branch name and the worktree directory. */
+    label?: string;
+    /** Collaboration the worktree serves. */
+    collaborationId?: string;
+    /** Reuse a clean idle worktree reserved for the same agent. */
+    reuse?: boolean;
+  } & Record<string, JsonValue>;
+  /** Mark a worktree integrated so it stops appearing as outstanding work, or outstanding again with merged=false. */
+  mesh_worktree_integrated: {
+    /** Worktree to mark. */
+    worktreeId: string;
+    /** false marks it outstanding again; defaults to true. */
+    merged?: boolean;
+  } & Record<string, JsonValue>;
+  /** Remove a mesh-owned git worktree. DANGEROUS: a worktree with uncommitted changes or unmerged commits is refused unless force is true, and a forced removal discards that work permanently. */
+  mesh_worktree_remove: {
+    /** Worktree to remove. */
+    worktreeId: string;
+    /** Discard uncommitted and unmerged work. Only pass this after a human approved the loss. */
+    force?: boolean;
+  } & Record<string, JsonValue>;
+  /** List mesh-owned git worktrees with a live progress sample: changed files, HEAD, and whether the tree is dirty. */
+  mesh_worktrees: {
+    /** Restrict to worktrees of one repository. */
+    repoRoot?: string;
+  } & Record<string, JsonValue>;
   /** Read a UTF-8 text file and return line-numbered content. */
   read: {
     /** Path to read, resolved by the filesystem backend. */
@@ -409,6 +629,346 @@ interface ToolOutputMap {
     parent?: string;
     depth?: number;
   })[];
+  mesh_agents: {
+    agents: {
+      id: string;
+      displayName: string;
+      installed: boolean;
+      version: string;
+      binaryPath: string;
+      sessionRoot: string;
+      credentialPath: string;
+      warning: string;
+    }[];
+  };
+  mesh_capabilities: {
+    agentId: string;
+    tools: {
+      name: string;
+      description?: string;
+      source: string;
+      approval?: string;
+      discoverable?: boolean;
+      path?: string;
+    }[];
+    skills: {
+      name: string;
+      description?: string;
+      source: string;
+      path?: string;
+      userInvocable?: boolean;
+    }[];
+    mcpServers: {
+      name: string;
+      transport: string;
+      command?: string;
+      url?: string;
+      enabled: boolean;
+      source: string;
+    }[];
+    commands: {
+      name: string;
+      description?: string;
+      source: string;
+      path?: string;
+    }[];
+    contextFiles: string[];
+    sources: {
+      path: string;
+      present: boolean;
+      note?: string;
+    }[];
+    notes: {
+      field: string;
+      reason: string;
+    }[];
+    observedAt: string;
+  };
+  mesh_capability_read: {
+    agentId: string;
+    path: string;
+    kind: "context" | "command" | "skill";
+    content: string;
+  };
+  mesh_collaboration_start: {
+    collaborationId: string;
+    title: string;
+    repoRoot: string;
+    phases: {
+      id: string;
+      title: string;
+      status: string;
+    }[];
+    tasks: {
+      id: string;
+      title: string;
+      assignee: string;
+      status: string;
+      isolation: string;
+      dependsOn: string[];
+    }[];
+  };
+  mesh_collaborations: {
+    collaborations: {
+      id: string;
+      title: string;
+      repoRoot: string;
+      updatedAt: string;
+      objective: string;
+      mode: string;
+      activePhaseId: string;
+      phases: {
+        id: string;
+        title: string;
+        status: string;
+        exitCriteria: string;
+      }[];
+      decisions: string[];
+      todoRevision: number;
+      todoCount: number;
+      tasks: {
+        id: string;
+        title: string;
+        assignee: string;
+        status: string;
+        isolation: string;
+        dependsOn: string[];
+        runId: string;
+        worktreeId: string;
+        note: string;
+      }[];
+      worktrees: {
+        id: string;
+        path: string;
+        branch: string;
+        state: string;
+        runId: string;
+        taskId: string;
+      }[];
+    }[];
+  };
+  mesh_mcp_connect: {
+    agentId: string;
+    serverName: string;
+    toolNamespace: string;
+    status: string;
+    tools: string[];
+  };
+  mesh_mcp_disconnect: {
+    agentId: string;
+    serverName: string;
+    disconnected: boolean;
+  };
+  mesh_plan_advance: {
+    collaborationId: string;
+    activePhaseId: string;
+    phases: {
+      id: string;
+      title: string;
+      status: string;
+    }[];
+  };
+  mesh_plan_set: {
+    collaborationId: string;
+    objective: string;
+    mode: string;
+    activePhaseId: string;
+    phases: {
+      id: string;
+      title: string;
+      status: string;
+      exitCriteria: string;
+    }[];
+    decisions: string[];
+  };
+  mesh_run: {
+    runId: string;
+    agentId: string;
+    status: string;
+    finalText?: string;
+    error?: {
+      code: string;
+      message: string;
+      remediation?: string;
+      output?: string;
+    };
+    notes: string[];
+  };
+  mesh_run_cancel: {
+    cancelled: boolean;
+  };
+  mesh_runs: {
+    runs: {
+      runId: string;
+      agentId: string;
+      status: string;
+      cwd: string;
+      prompt: string;
+      finalText: string;
+      errorCode: string;
+      errorMessage: string;
+      eventCount: number;
+      recentEvents: string[];
+      notes: string[];
+    }[];
+  };
+  mesh_sessions: {
+    sessions: {
+      key: string;
+      agentId: string;
+      nativeId: string;
+      title: string;
+      cwd: string;
+      updatedAt: string;
+      status: string;
+      messageCount: number;
+      notes: string[];
+    }[];
+  };
+  mesh_task_dispatch: {
+    taskId: string;
+    runId: string;
+    cwd: string;
+    status: string;
+    contextHash: string;
+  };
+  mesh_tasks: {
+    available: boolean;
+    planActive: boolean;
+    todos: {
+      content: string;
+      status: string;
+      updatedAt: string;
+    }[];
+    plan: string[];
+    notes: string[];
+  };
+  mesh_todos_get: {
+    collaborationId: string;
+    revision: number;
+    updatedAt: string;
+    todos: {
+      id: string;
+      content: string;
+      status: string;
+      owner: string;
+      blockedBy: string[];
+      updatedAt: string;
+      nativeKey: string;
+      observedIn: string;
+    }[];
+  };
+  mesh_todos_observe: {
+    observed: number;
+    collaborationId: string;
+    revision: number;
+    updatedAt: string;
+    todos: {
+      id: string;
+      content: string;
+      status: string;
+      owner: string;
+      blockedBy: string[];
+      updatedAt: string;
+      nativeKey: string;
+      observedIn: string;
+    }[];
+    notes: string[];
+  };
+  mesh_todos_set: {
+    collaborationId: string;
+    revision: number;
+    updatedAt: string;
+    todos: {
+      id: string;
+      content: string;
+      status: string;
+      owner: string;
+      blockedBy: string[];
+      updatedAt: string;
+      nativeKey: string;
+      observedIn: string;
+    }[];
+  };
+  mesh_transcript: {
+    key: string;
+    hasMore: boolean;
+    totalMessages: number;
+    messages: {
+      index: number;
+      role: string;
+      kind: string;
+      text: string;
+      toolName: string;
+      failed: boolean;
+      timestamp: string;
+    }[];
+    notes: string[];
+  };
+  mesh_worktree_conflicts: {
+    repoRoot: string;
+    at: string;
+    worktrees: string[];
+    findings: {
+      kind: string;
+      severity: string;
+      left: string;
+      right: string;
+      paths: string[];
+      detail: string;
+    }[];
+    suggestedOrder: string[];
+    notes: string[];
+  };
+  mesh_worktree_create: {
+    worktree: {
+      id: string;
+      path: string;
+      repoRoot: string;
+      branch: string;
+      baseCommit: string;
+      baseRef: string;
+      state: string;
+      reusable: boolean;
+      agentId: string;
+      collaborationId: string;
+      taskId: string;
+      runId: string;
+      changedFiles: number;
+      dirty: boolean;
+      ahead: number;
+      progressNotes: string[];
+    };
+  };
+  mesh_worktree_integrated: {
+    worktreeId: string;
+    state: string;
+  };
+  mesh_worktree_remove: {
+    worktreeId: string;
+    state: string;
+    forced: boolean;
+  };
+  mesh_worktrees: {
+    worktrees: {
+      id: string;
+      path: string;
+      repoRoot: string;
+      branch: string;
+      baseCommit: string;
+      baseRef: string;
+      state: string;
+      reusable: boolean;
+      agentId: string;
+      collaborationId: string;
+      taskId: string;
+      runId: string;
+      changedFiles: number;
+      dirty: boolean;
+      ahead: number;
+      progressNotes: string[];
+    }[];
+  };
   read: {
     /** Canonical absolute path in the filesystem execution world. */
     path: string;

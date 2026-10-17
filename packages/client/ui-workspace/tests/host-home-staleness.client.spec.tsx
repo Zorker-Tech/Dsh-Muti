@@ -32,6 +32,7 @@ async function bench() {
   runtime.ctx.provide('shortcuts', { register: () => () => {}, catalog: createSnapshotStore([]) })
   runtime.ctx.provide('uiConversation', {})
   runtime.ctx.provide('layout', { selectPanel: vi.fn(), beginNavigation: () => new AbortController().signal })
+  runtime.ctx.provide('agentMeshNavigation', { openSession: vi.fn() })
   runtime.releaseWorkspaceSource()
   const directoryPicker = {}
   const { remote } = runtime

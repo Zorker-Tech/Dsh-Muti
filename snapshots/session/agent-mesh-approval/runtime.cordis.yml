@@ -1,0 +1,3 @@
+- insert:
+    - id: snapshot-native-context
+      name: './native-context-fixture.mjs'

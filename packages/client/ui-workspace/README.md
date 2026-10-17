@@ -11,7 +11,7 @@ Desktop product events use the optional [product analytics service](../product-a
 
 ## Summary
 
-This package lets users browse grouped or flat Session lists, choose a Workspace for a new Session, and manage Workspaces and Sessions through add, rename, reorder, search, fork, archive, and Workspace deletion; the Session row menu and its hover buttons are slot lists that client plugins extend. Pending interactions appear as warning dots, and subagent-origin Sessions remain hidden. An idle, unarchived Session row with active scheduled tasks shows a clock mark, and its hover card lists those tasks. Canonically distinct folder paths remain separate Workspaces. Adding a Workspace requires a composed directory picker; without one, adding is unavailable.
+Browse grouped or flat Harness Sessions and external agent sessions, choose a Workspace for a new Session, and manage Workspaces and Harness Sessions with search, fork, pin, archive, rename, reorder, and delete. External sessions keep their native identities. Client plugins can extend row actions. Pending interactions show warning dots; subagent Sessions stay hidden. Active schedules mark idle rows. Distinct canonical folders remain separate Workspaces. Adding one requires a composed directory picker.
 
 ## Table of Contents
 
@@ -47,7 +47,9 @@ Hierarchy uses registered canonical paths only. It does not scan for projects or
 
 ### Search
 
-Collapsed search is one header action beside the view and add actions: activating it expands the field across the header. A non-blank query replaces either browsing mode with one flat result list — case-insensitive title and Workspace substring matches appear immediately, while a 250 ms debounced Host request adds ranked current-conversation content matches and snippets. Each new query aborts the preceding request; a failed content search leaves metadata matches visible without an additional warning. The list is capped at 20. Choosing an unarchived result clears and collapses search, opens the Session, and scrolls its row into view in the configured browsing mode; grouped browsing also expands its Workspace and the full Session list when required. Archived results offer Unarchive; attempting to open one explains that restriction without clearing the query or navigating.
+Collapsed search is one header action beside the view and add actions: activating it expands the field across the header. A non-blank query replaces either browsing mode with one flat result list — case-insensitive title and Workspace substring matches appear immediately, while a 250 ms debounced Host request adds ranked Harness-conversation content matches and snippets. External agent sessions also match by title, working directory, model, and native id; their transcript content is not searched. Each new query aborts the preceding request; a failed content search leaves metadata matches visible without an additional warning. The list is capped at 20. Choosing an unarchived result clears and collapses search, opens the Harness Session or selects the source-owned session in Agent Mesh, and scrolls a Harness row into view in the configured browsing mode; grouped browsing also expands its Workspace and the full Harness Session list when required. Archived results offer Unarchive; attempting to open one explains that restriction without clearing the query or navigating.
+
+External agent rows appear in their exact registered Workspace when their source reports the same working directory, and otherwise appear under Ungrouped. Pin and archive choices are stored by the Harness for that exact agent and native session id; they do not modify the agent's own store or Harness Session history. Row actions navigate to the Agent Mesh panel with the source-owned identity.
 
 ### Managing sessions
 

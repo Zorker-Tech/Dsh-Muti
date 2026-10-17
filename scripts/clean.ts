@@ -82,7 +82,7 @@ export class RepositoryCleaner {
     )
 
     // The root project-reference graph is the source of truth for live build targets.
-    // Each emitting project declares lib/types as outDir; its parent lib also owns
+    // Each emitting project declares lib/*-types as outDir; its parent lib also owns
     // the sibling runtime bundles, so the complete build output root is removed.
     for (const outputDirectory of this.buildOutputDirectories()) {
       await this.addIfPresent(targets, outputDirectory, canonicalRoot)
@@ -134,13 +134,16 @@ export class RepositoryCleaner {
       const parsed = parseConfig(configPath)
       if (parsed.options.outDir !== undefined) {
         const typesDirectory = resolve(parsed.options.outDir)
-        const outputDirectory = basename(typesDirectory) === 'types'
-          ? dirname(typesDirectory)
+        const outputParent = dirname(typesDirectory)
+        const outputLeaf = basename(typesDirectory)
+        const outputDirectory = basename(outputParent) === 'lib'
+          && (outputLeaf === 'types' || outputLeaf.endsWith('-types'))
+          ? outputParent
           : typesDirectory === nativeEntryOutput
             ? typesDirectory
             : undefined
         if (outputDirectory === undefined) {
-          throw new Error(`clean: expected TypeScript outDir to end in /types: ${repositoryPath(this.root, typesDirectory)}`)
+          throw new Error(`clean: expected TypeScript outDir to be lib/types or lib/*-types: ${repositoryPath(this.root, typesDirectory)}`)
         }
         this.assertRepositoryTarget(outputDirectory)
         outputs.add(outputDirectory)

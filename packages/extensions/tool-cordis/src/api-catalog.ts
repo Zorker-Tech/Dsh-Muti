@@ -131,6 +131,248 @@ export const SERVICE_API: readonly ServiceApiEntry[] = [
     ],
   },
   {
+    key: 'agentMesh',
+    summary: 'The mesh registry.',
+    description: 'The mesh registry. Adapters register as effects, so unmounting an adapter removes it and its agents\' rows disappear with it.',
+    methods: [
+      {
+        signature: 'startRun(agentId: AgentId | string, request: AgentRunRequest): MeshRunHandle',
+        description: 'Dispatch one run on a registered agent.',
+        parameters: [{ name: 'agentId', description: 'Agent to run.' }, { name: 'request', description: 'Prompt, working directory, and transport options.' }],
+        returns: 'the run\'s identity and its terminal result. The run continues.',
+      },
+      {
+        signature: 'run(runId: string): MeshRunSnapshot | undefined',
+        description: 'Read one tracked run.',
+        parameters: [{ name: 'runId', description: 'Run identity.' }],
+        returns: 'the snapshot, or undefined when the run is unknown or evicted.',
+      },
+      {
+        signature: 'async readCapabilities( agentId: AgentId | string, request: AgentCapabilityReadRequest = {}, ): Promise<AgentCapabilityInventory>',
+        description: 'Read one agent\'s declared tools, skills, servers, commands, and context files.',
+        parameters: [{ name: 'agentId', description: 'Agent whose native configuration is read.' }, { name: 'request', description: 'Project directory and cancellation signal.' }],
+        returns: 'the agent\'s capability inventory and any declared gaps.',
+      },
+      {
+        signature: 'async resolveMcpServer( agentId: AgentId | string, request: AgentMcpServerResolveRequest, ): Promise<AgentMcpServerConfig | undefined>',
+        description: 'Resolve one native MCP server declaration without connecting to it.',
+        parameters: [{ name: 'agentId', description: 'Agent whose native MCP configuration is read.' }, { name: 'request', description: 'Server name, project working directory, and cancellation.' }],
+        returns: 'the effective server config, or `undefined` when that name is absent.',
+      },
+      {
+        signature: 'cancelRun(runId: string, reason?: string): boolean',
+        description: 'Cancel one run.',
+        parameters: [{ name: 'runId', description: 'Run identity.' }, { name: 'reason', description: 'Recorded reason.' }],
+        returns: 'whether a live run was cancelled.',
+      },
+      {
+        signature: 'async waitForRun(runId: string): Promise<MeshRunSnapshot | undefined>',
+        description: 'Wait for one run to settle.',
+        parameters: [{ name: 'runId', description: 'Run identity.' }],
+        returns: 'the terminal snapshot, or undefined when the run is unknown.',
+      },
+      {
+        signature: 'async listSessions(options: AgentSessionListOptions = {}): Promise<AgentSessionCatalog>',
+        description: 'Read every registered agent\'s own session store. A single adapter failure is retained beside readable stores so callers can show incomplete coverage without losing usable rows.',
+        parameters: [{ name: 'options', description: 'Session filters, result bound, and cancellation.' }],
+        returns: 'readable sessions in activity order and per-adapter failures.',
+      },
+      {
+        signature: 'sessionMarks(): readonly AgentSessionMark[]',
+        description: 'Read the persisted pin/archive choices for external sessions.',
+        parameters: [],
+        returns: 'marks newest first.',
+      },
+      {
+        signature: 'sessionMark(reference: AgentSessionReference): AgentSessionMark | undefined',
+        description: 'Read one external session\'s persisted pin/archive choice.',
+        parameters: [{ name: 'reference', description: 'Exact agent-owned session identity.' }],
+        returns: 'the current mark, or undefined when neither pinned nor archived.',
+      },
+      {
+        signature: 'async pinSession(reference: AgentSessionReference): Promise<void>',
+        description: 'Pin an existing external session.',
+        parameters: [{ name: 'reference', description: 'Exact agent-owned session identity.' }],
+        returns: 'resolution after the Harness-owned mark is durable.',
+      },
+      {
+        signature: 'async archiveSession(reference: AgentSessionReference): Promise<void>',
+        description: 'Archive an existing external session.',
+        parameters: [{ name: 'reference', description: 'Exact agent-owned session identity.' }],
+        returns: 'resolution after the Harness-owned mark is durable.',
+      },
+      {
+        signature: 'async clearSessionDisposition( reference: AgentSessionReference, expected?: AgentSessionDisposition, ): Promise<boolean>',
+        description: 'Remove a session\'s pin or archive mark.',
+        parameters: [{ name: 'reference', description: 'Exact agent-owned session identity.' }, { name: 'expected', description: 'Current disposition to remove when the caller is reversing one specific action.' }],
+        returns: 'whether a persisted mark was removed.',
+      },
+      {
+        signature: 'register(adapter: AgentAdapter): () => void',
+        description: 'Register one agent adapter.',
+        parameters: [{ name: 'adapter', description: 'The provider to register.' }],
+        returns: 'the disposer that unregisters it.',
+      },
+      {
+        signature: 'adapter(id: AgentId | string): AgentAdapter',
+        description: 'Resolve one adapter.',
+        parameters: [{ name: 'id', description: 'Agent identity.' }],
+        returns: 'the registered adapter.',
+      },
+      {
+        signature: 'async describe(): Promise<readonly AgentDescriptor[]>',
+        description: 'Describe every registered agent.',
+        parameters: [],
+        returns: 'one descriptor per adapter, in registration order.',
+      },
+      {
+        signature: 'async diagnostics(): Promise<AgentMeshDiagnostics>',
+        description: 'Report every registered agent, turning an adapter failure into a warning for that agent instead of failing the whole report.',
+        parameters: [],
+        returns: 'the diagnostics report.',
+      },
+      {
+        signature: 'async bind(sessionId: SessionId, agentId: AgentId): Promise<void>',
+        description: 'Bind one harness session to one agent.',
+        parameters: [{ name: 'sessionId', description: 'Harness session identity.' }, { name: 'agentId', description: 'Agent the session belongs to.' }],
+      },
+      {
+        signature: 'bound(sessionId: SessionId): AgentId | undefined',
+        description: 'Read one session\'s binding.',
+        parameters: [{ name: 'sessionId', description: 'Harness session identity.' }],
+        returns: 'the bound agent, or undefined when the session is unbound.',
+      },
+      {
+        signature: 'async unbind(sessionId: SessionId): Promise<boolean>',
+        description: 'Remove one session\'s binding.',
+        parameters: [{ name: 'sessionId', description: 'Harness session identity.' }],
+        returns: 'whether a binding was removed.',
+      },
+      {
+        signature: 'bindings(): readonly { readonly sessionId: SessionId; readonly agentId: AgentId; readonly boundAt: string }[]',
+        description: 'Every binding, for callers that project the binding onto session lists.',
+        parameters: [],
+        returns: 'one row per bound session.',
+      },
+    ],
+  },
+  {
+    key: 'agentMeshController',
+    summary: 'The mesh\'s Remote service, mounted in the API assembly as `remote.agentMesh`.',
+    description: 'The mesh\'s Remote service, mounted in the API assembly as `remote.agentMesh`.',
+    methods: [
+      {
+        signature: '@Remote(\'agents\') async remoteExportAgents(signal: AbortSignal): Promise<readonly MeshAgentRow[]>',
+        description: 'Every registered agent with its detection state.',
+        parameters: [{ name: 'signal', description: 'Carrier cancellation.' }],
+        returns: 'one row per registered adapter, in registration order.',
+      },
+      {
+        signature: '@Remote(\'sessions\') async remoteExportSessions(request: MeshSessionListRequest, signal: AbortSignal): Promise<readonly MeshSessionRow[]>',
+        description: 'One agent\'s own sessions, newest first.',
+        parameters: [{ name: 'request', description: 'Agent and filters.' }, { name: 'signal', description: 'Carrier cancellation.' }],
+        returns: 'the session rows.',
+      },
+      {
+        signature: '@Remote(\'launchCommand\') async remoteExportLaunchCommand(request: MeshSessionRequest, signal: AbortSignal): Promise<MeshLaunchCommand | null>',
+        description: 'Native TUI argv for one exact agent-owned session; this endpoint never starts it.',
+        parameters: [{ name: 'request', description: 'Agent and native session identity.' }, { name: 'signal', description: 'Carrier cancellation.' }],
+        returns: 'argv plus the Host shell dialect, or null when this adapter has no native TUI launcher.',
+      },
+      {
+        signature: '@Remote(\'pinSession\') async remotePinSession(request: MeshSessionDispositionRequest, signal: AbortSignal): Promise<void>',
+        description: 'Pin one session in its source-owned store in Harness browsing surfaces.',
+        parameters: [{ name: 'request', description: 'Agent and native session identity.' }, { name: 'signal', description: 'Carrier cancellation.' }],
+      },
+      {
+        signature: '@Remote(\'unpinSession\') async remoteUnpinSession(request: MeshSessionDispositionRequest, signal: AbortSignal): Promise<void>',
+        description: 'Remove one external session from the Harness pin list.',
+        parameters: [{ name: 'request', description: 'Agent and native session identity.' }, { name: 'signal', description: 'Carrier cancellation.' }],
+      },
+      {
+        signature: '@Remote(\'archiveSession\') async remoteArchiveSession(request: MeshSessionDispositionRequest, signal: AbortSignal): Promise<void>',
+        description: 'Archive one external session from the Harness browsing surfaces without stopping its agent.',
+        parameters: [{ name: 'request', description: 'Agent and native session identity.' }, { name: 'signal', description: 'Carrier cancellation.' }],
+      },
+      {
+        signature: '@Remote(\'unarchiveSession\') async remoteUnarchiveSession(request: MeshSessionDispositionRequest, signal: AbortSignal): Promise<void>',
+        description: 'Restore one external session to the Harness browsing surfaces.',
+        parameters: [{ name: 'request', description: 'Agent and native session identity.' }, { name: 'signal', description: 'Carrier cancellation.' }],
+      },
+      {
+        signature: '@Remote(\'transcript\') async remoteExportTranscript(request: MeshTranscriptRequest, signal: AbortSignal): Promise<MeshTranscriptResponse>',
+        description: 'One window of a session\'s transcript.',
+        parameters: [{ name: 'request', description: 'Agent, session, and window bound.' }, { name: 'signal', description: 'Carrier cancellation.' }],
+        returns: 'the transcript window.',
+      },
+      {
+        signature: '@Remote(\'tasks\') async remoteExportTasks(request: MeshSessionRequest, signal: AbortSignal): Promise<AgentNativeTasks>',
+        description: 'One session\'s native todo and plan state.',
+        parameters: [{ name: 'request', description: 'Agent and session.' }, { name: 'signal', description: 'Carrier cancellation.' }],
+        returns: 'the agent\'s own task state.',
+      },
+      {
+        signature: '@Remote(\'capabilities\') async remoteExportCapabilities( request: MeshCapabilityRequest, signal: AbortSignal, ): Promise<MeshCapabilityResponse | null>',
+        description: 'Read the declarations in one agent\'s own configuration and skill roots.',
+        parameters: [{ name: 'request', description: 'Agent and optional project directory.' }, { name: 'signal', description: 'Carrier cancellation.' }],
+        returns: 'the inventory, or null when remote access excludes this agent.',
+      },
+      {
+        signature: '@Remote(\'credentials\') async remoteExportCredentials(agentId: string | null, signal: AbortSignal): Promise<readonly MeshCredentialRow[]>',
+        description: 'Credential state for every agent, or one agent.',
+        parameters: [{ name: 'agentId', description: 'Optional agent filter.' }, { name: 'signal', description: 'Carrier cancellation.' }],
+        returns: 'one row per requested agent.',
+      },
+      {
+        signature: '@Remote(\'login\') async remoteExportLogin(request: MeshLoginRequest, signal: AbortSignal): Promise<AgentAuthOperationResult>',
+        description: 'Log one agent in.',
+        parameters: [{ name: 'request', description: 'Agent, flow, and optional secret.' }, { name: 'signal', description: 'Carrier cancellation.' }],
+        returns: 'the operation result.',
+      },
+      {
+        signature: '@Remote(\'logout\') async remoteExportLogout(agentId: string, signal: AbortSignal): Promise<AgentAuthOperationResult>',
+        description: 'Log one agent out.',
+        parameters: [{ name: 'agentId', description: 'Agent to log out.' }, { name: 'signal', description: 'Carrier cancellation.' }],
+        returns: 'the operation result.',
+      },
+      {
+        signature: '@Remote(\'bind\') async remoteExportBind(sessionId: string, agentId: string, signal: AbortSignal): Promise<void>',
+        description: 'Bind one Harness session to one agent.',
+        parameters: [{ name: 'sessionId', description: 'Harness session id.' }, { name: 'agentId', description: 'Agent to bind.' }, { name: 'signal', description: 'Carrier cancellation.' }],
+      },
+      {
+        signature: '@Remote(\'unbind\') async remoteExportUnbind(sessionId: string, signal: AbortSignal): Promise<boolean>',
+        description: 'Remove one Harness session\'s binding.',
+        parameters: [{ name: 'sessionId', description: 'Harness session id.' }, { name: 'signal', description: 'Carrier cancellation.' }],
+        returns: 'whether a binding was removed.',
+      },
+      {
+        signature: '@Remote(\'bindings\') remoteExportBindings(signal: AbortSignal): Promise<readonly MeshBindingRow[]>',
+        description: 'Every binding, so a session list can show which agent each session belongs to.',
+        parameters: [{ name: 'signal', description: 'Carrier cancellation.' }],
+        returns: 'one row per binding.',
+      },
+      {
+        signature: '@Remote(\'runStart\') remoteExportRunStart( request: MeshRunStartRequest, signal: AbortSignal, ): Promise<{ readonly runId: string; readonly agentId: string }>',
+        description: 'Dispatch one run to an external agent.',
+        parameters: [{ name: 'request', description: 'Agent, prompt, working directory, and transport options.' }, { name: 'signal', description: 'Carrier cancellation.' }],
+        returns: 'the new run\'s id and agent.',
+      },
+      {
+        signature: '@Remote(\'runs\') remoteExportRuns(signal: AbortSignal): Promise<readonly MeshRunRow[]>',
+        description: 'Every tracked run, newest first.',
+        parameters: [{ name: 'signal', description: 'Carrier cancellation.' }],
+        returns: 'the run rows.',
+      },
+      {
+        signature: '@Remote(\'runCancel\') remoteExportRunCancel(runId: string, signal: AbortSignal): Promise<boolean>',
+        description: 'Cancel one run.',
+        parameters: [{ name: 'runId', description: 'Run to cancel.' }, { name: 'signal', description: 'Carrier cancellation.' }],
+        returns: 'whether a live run was cancelled.',
+      },
+    ],
+  },
+  {
     key: 'agentPresets',
     summary: 'Registry of YAML-declared presets and the revisions live Agents retain.',
     description: 'Registry of YAML-declared presets and the revisions live Agents retain.',
@@ -1556,6 +1798,212 @@ export const SERVICE_API: readonly ServiceApiEntry[] = [
         description: 'Register one server and expose resource tools while that scope has providers.',
         parameters: [{ name: 'server', description: 'configured server name, unique in this scope.' }, { name: 'provider', description: 'connection-owned resource operations.' }],
         returns: 'the effect disposer for this exact registration.',
+      },
+    ],
+  },
+  {
+    key: 'meshCollaboration',
+    summary: 'The collaboration service.',
+    description: 'The collaboration service.\n\nIt owns the domain, the worktree manager, and the plan and board documents; a consumer reaches all of them through this one key, and no other package writes the collaboration tables.',
+    methods: [
+      {
+        signature: 'async start(request: StartCollaborationRequest): Promise<CollaborationView>',
+        description: 'Create one collaboration with its plan, its board, and its initial tasks.',
+        parameters: [{ name: 'request', description: 'Title, objective, repository, and optional task seeds.' }],
+        returns: 'the created collaboration.',
+      },
+      {
+        signature: 'list(): readonly CollaborationView[]',
+        description: 'Every collaboration, most recently changed first.',
+        parameters: [],
+        returns: 'one view per collaboration, without live worktree samples.',
+      },
+      {
+        signature: 'get(collaborationId: string): CollaborationView',
+        description: 'Read one collaboration.',
+        parameters: [{ name: 'collaborationId', description: 'Collaboration id.' }],
+        returns: 'the collaboration with its plan, board, tasks and worktrees.',
+      },
+      {
+        signature: 'plan(collaborationId: string): PlanRecord',
+        description: 'Read one collaboration\'s plan.',
+        parameters: [{ name: 'collaborationId', description: 'Collaboration id.' }],
+        returns: 'the plan.',
+      },
+      {
+        signature: 'async setPlan(collaborationId: string, patch: PlanPatch): Promise<PlanRecord>',
+        description: 'Replace a collaboration\'s plan fields.',
+        parameters: [{ name: 'collaborationId', description: 'Collaboration id.' }, { name: 'patch', description: 'Fields to replace; an absent field keeps its current value.' }],
+        returns: 'the plan after the write.',
+      },
+      {
+        signature: 'async advancePhase(collaborationId: string, phaseId: string): Promise<PlanRecord>',
+        description: 'Move the plan to a phase, marking every earlier phase done.',
+        parameters: [{ name: 'collaborationId', description: 'Collaboration id.' }, { name: 'phaseId', description: 'Phase to activate.' }],
+        returns: 'the plan after the write.',
+      },
+      {
+        signature: 'getTodos(collaborationId: string): TodoBoardRecord',
+        description: 'Read a collaboration\'s todo board.',
+        parameters: [{ name: 'collaborationId', description: 'Collaboration id.' }],
+        returns: 'the board with its revision.',
+      },
+      {
+        signature: 'async setTodos(collaborationId: string, todos: readonly TodoInput[], options: SetTodosOptions = {}): Promise<TodoBoardRecord>',
+        description: 'Replace a collaboration\'s todo board.',
+        parameters: [{ name: 'collaborationId', description: 'Collaboration id.' }, { name: 'todos', description: 'The complete new board.' }, { name: 'options', description: 'Expected revision; a mismatch is refused rather than applied.' }],
+        returns: 'the board after the write.',
+      },
+      {
+        signature: 'async observeTodos(collaborationId: string, agentId: string, sessionId?: string): Promise<ObserveOutcome>',
+        description: 'Fold one agent\'s own native task state into a collaboration\'s board.',
+        parameters: [{ name: 'collaborationId', description: 'Collaboration id.' }, { name: 'agentId', description: 'Agent whose store is read.' }, { name: 'sessionId', description: 'The agent\'s native session id; its newest session when omitted.' }],
+        returns: 'the board, how many items changed, and what could not be observed.',
+      },
+      {
+        signature: 'contextPreview(collaborationId: string, agentId: string): ContextPreview | undefined',
+        description: 'Render exactly the context a dispatched run for one agent would receive.',
+        parameters: [{ name: 'collaborationId', description: 'Collaboration id.' }, { name: 'agentId', description: 'Agent the context would be rendered for.' }],
+        returns: 'the context block and its hash, or undefined when the plan mode is observe-only.',
+      },
+      {
+        signature: 'tasks(collaborationId: string): readonly CollaborationTaskRecord[]',
+        description: 'Every task of one collaboration, in creation order.',
+        parameters: [{ name: 'collaborationId', description: 'Collaboration id.' }],
+        returns: 'the tasks.',
+      },
+      {
+        signature: 'task(collaborationId: string, taskId: string): CollaborationTaskRecord',
+        description: 'Read one task.',
+        parameters: [{ name: 'collaborationId', description: 'Collaboration the task belongs to.' }, { name: 'taskId', description: 'Task id.' }],
+        returns: 'the task.',
+      },
+      {
+        signature: 'async dispatchTask(collaborationId: string, taskId: string, options: DispatchOptions = {}): Promise<TaskDispatchResult>',
+        description: 'Dispatch one task: isolate it, inject the shared context, and record the run.\n\nA task is refused when it already runs or succeeded, and when any task it depends on has not succeeded.',
+        parameters: [{ name: 'collaborationId', description: 'Collaboration owning the task.' }, { name: 'taskId', description: 'Task to dispatch.' }, { name: 'options', description: 'Base ref for a newly created worktree and a run budget.' }],
+        returns: 'the task after dispatch, the run id, the working directory, and the injected context.',
+      },
+      {
+        signature: 'async worktrees(repoRoot?: string): Promise<readonly WorktreeView[]>',
+        description: 'List worktrees with a live progress sample.',
+        parameters: [{ name: 'repoRoot', description: 'Restrict to one repository; every recorded worktree when omitted.' }],
+        returns: 'one view per worktree, newest first; an explicit path outside a git repository returns an empty list.',
+      },
+      {
+        signature: 'async createWorktree(request: CreateWorktreeRequest): Promise<WorktreeView>',
+        description: 'Create or reuse one worktree.',
+        parameters: [{ name: 'request', description: 'Agent, repository, base ref, and labels.' }],
+        returns: 'the worktree with its first sample.',
+      },
+      {
+        signature: 'async worktreeConflicts(repoRoot: string): Promise<ConflictReport>',
+        description: 'Compare the live worktrees of one repository.',
+        parameters: [{ name: 'repoRoot', description: 'Repository to analyse.' }],
+        returns: 'predicted same-file, same-hunk, feature-area, and base-commit findings.',
+      },
+      {
+        signature: 'async removeWorktree(worktreeId: string, options: RemoveWorktreeOptions = {}): Promise<WorktreeRecord>',
+        description: 'Remove one worktree.',
+        parameters: [{ name: 'worktreeId', description: 'Worktree to remove.' }, { name: 'options', description: '`force` discards uncommitted and unmerged work.' }],
+        returns: 'the record, marked `removed`.',
+      },
+      {
+        signature: 'async markWorktreeIntegrated(worktreeId: string, merged: boolean = true): Promise<WorktreeRecord>',
+        description: 'Mark one worktree integrated, or outstanding again.',
+        parameters: [{ name: 'worktreeId', description: 'Worktree to mark.' }, { name: 'merged', description: '`false` marks it outstanding again.' }],
+        returns: 'the updated record.',
+      },
+    ],
+  },
+  {
+    key: 'meshCollaborationController',
+    summary: 'The collaboration Remote service, mounted in the API assembly as `remote.meshCollaboration`.',
+    description: 'The collaboration Remote service, mounted in the API assembly as `remote.meshCollaboration`.',
+    methods: [
+      {
+        signature: '@Remote(\'collaborations\') remoteExportCollaborations( collaborationId: string | null, signal: AbortSignal, ): Promise<readonly MeshCollaborationRow[]>',
+        description: 'Every collaboration, most recently changed first, or one collaboration.',
+        parameters: [{ name: 'collaborationId', description: 'Collaboration to read; null lists every one.' }, { name: 'signal', description: 'Carrier cancellation.' }],
+        returns: 'one row per collaboration.',
+      },
+      {
+        signature: '@Remote(\'collaborationStart\') async remoteExportCollaborationStart(request: MeshCollaborationStartRequest, signal: AbortSignal): Promise<MeshCollaborationRow>',
+        description: 'Create one collaboration.',
+        parameters: [{ name: 'request', description: 'Title, objective, repository, and optional task seeds.' }, { name: 'signal', description: 'Carrier cancellation.' }],
+        returns: 'the created collaboration.',
+      },
+      {
+        signature: '@Remote(\'planSet\') async remoteExportPlanSet(request: MeshPlanSetRequest, signal: AbortSignal): Promise<readonly MeshPlanPhaseRow[]>',
+        description: 'Replace a collaboration\'s plan fields.',
+        parameters: [{ name: 'request', description: 'Collaboration, objective, and the fields to replace.' }, { name: 'signal', description: 'Carrier cancellation.' }],
+        returns: 'the plan after the write.',
+      },
+      {
+        signature: '@Remote(\'planAdvance\') async remoteExportPlanAdvance(request: MeshPlanAdvanceRequest, signal: AbortSignal): Promise<readonly MeshPlanPhaseRow[]>',
+        description: 'Move a plan to a phase, marking every earlier phase done.',
+        parameters: [{ name: 'request', description: 'Collaboration and phase.' }, { name: 'signal', description: 'Carrier cancellation.' }],
+        returns: 'the plan phases after the write.',
+      },
+      {
+        signature: '@Remote(\'planContextPreview\') async remoteExportPlanContextPreview(request: MeshContextPreviewRequest, signal: AbortSignal): Promise<MeshContextPreviewRow>',
+        description: 'Render exactly the context a dispatched run for one agent would receive.',
+        parameters: [{ name: 'request', description: 'Collaboration and agent.' }, { name: 'signal', description: 'Carrier cancellation.' }],
+        returns: 'the block and its hash, or an unavailable result when the plan is observe-only.',
+      },
+      {
+        signature: '@Remote(\'todosGet\') async remoteExportTodosGet(request: MeshCollaborationRequest, signal: AbortSignal): Promise<MeshTodoBoardRow>',
+        description: 'Read one collaboration\'s todo board.',
+        parameters: [{ name: 'request', description: 'Collaboration to read.' }, { name: 'signal', description: 'Carrier cancellation.' }],
+        returns: 'the board with its revision.',
+      },
+      {
+        signature: '@Remote(\'todosSet\') async remoteExportTodosSet(request: MeshTodosSetRequest, signal: AbortSignal): Promise<MeshTodoBoardRow>',
+        description: 'Replace one collaboration\'s todo board.',
+        parameters: [{ name: 'request', description: 'Collaboration, the complete new board, and the expected revision.' }, { name: 'signal', description: 'Carrier cancellation.' }],
+        returns: 'the board after the write.',
+      },
+      {
+        signature: '@Remote(\'todosObserve\') async remoteExportTodosObserve(request: MeshTodosObserveRequest, signal: AbortSignal): Promise<MeshTodosObserveResponse>',
+        description: 'Fold one agent\'s own native task state into a collaboration\'s board.',
+        parameters: [{ name: 'request', description: 'Collaboration, agent, and optional session.' }, { name: 'signal', description: 'Carrier cancellation.' }],
+        returns: 'the board after the fold and how many items changed.',
+      },
+      {
+        signature: '@Remote(\'taskDispatch\') async remoteExportTaskDispatch(request: MeshTaskDispatchRequest, signal: AbortSignal): Promise<MeshTaskDispatchResponse>',
+        description: 'Dispatch one collaboration task.',
+        parameters: [{ name: 'request', description: 'Collaboration, task, and dispatch options.' }, { name: 'signal', description: 'Carrier cancellation.' }],
+        returns: 'the run id, working directory, and injected context hash.',
+      },
+      {
+        signature: '@Remote(\'worktrees\') async remoteExportWorktrees(request: MeshWorktreeListRequest, signal: AbortSignal): Promise<readonly MeshWorktreeRow[]>',
+        description: 'List worktrees with a live progress sample.',
+        parameters: [{ name: 'request', description: 'Optional repository filter.' }, { name: 'signal', description: 'Carrier cancellation.' }],
+        returns: 'one row per worktree, newest first.',
+      },
+      {
+        signature: '@Remote(\'worktreeCreate\') async remoteExportWorktreeCreate(request: MeshWorktreeCreateRequest, signal: AbortSignal): Promise<MeshWorktreeRow>',
+        description: 'Create or reuse one worktree.',
+        parameters: [{ name: 'request', description: 'Agent, repository, base ref, and labels.' }, { name: 'signal', description: 'Carrier cancellation.' }],
+        returns: 'the worktree with its first sample.',
+      },
+      {
+        signature: '@Remote(\'worktreeConflicts\') async remoteExportWorktreeConflicts(request: MeshWorktreeConflictsRequest, signal: AbortSignal): Promise<MeshConflictReportRow>',
+        description: 'Compare the live worktrees of one repository.',
+        parameters: [{ name: 'request', description: 'Repository to analyse.' }, { name: 'signal', description: 'Carrier cancellation.' }],
+        returns: 'predicted same-file, same-hunk, feature-area, and base-commit findings.',
+      },
+      {
+        signature: '@Remote(\'worktreeRemove\') async remoteExportWorktreeRemove(request: MeshWorktreeRemoveRequest, signal: AbortSignal): Promise<MeshWorktreeRemoveResponse>',
+        description: 'Remove one worktree.',
+        parameters: [{ name: 'request', description: 'Worktree and whether uncommitted work may be discarded.' }, { name: 'signal', description: 'Carrier cancellation.' }],
+        returns: 'the removed worktree and whether its work was discarded.',
+      },
+      {
+        signature: '@Remote(\'worktreeIntegrated\') async remoteExportWorktreeIntegrated(request: MeshWorktreeIntegratedRequest, signal: AbortSignal): Promise<MeshWorktreeRow>',
+        description: 'Mark one worktree integrated, or outstanding again.',
+        parameters: [{ name: 'request', description: 'Worktree and the state to move it to.' }, { name: 'signal', description: 'Carrier cancellation.' }],
+        returns: 'the worktree after the write.',
       },
     ],
   },
@@ -4006,6 +4454,14 @@ export const EVENT_API: readonly EventApiEntry[] = [
     parameters: [{ name: 'payload', description: '.error - persistence, setup, or publication failure.' }],
   },
   {
+    name: 'agent-mesh/binding-change',
+    mode: 'parallel',
+    signature: '\'agent-mesh/binding-change\'(change: AgentMeshBindingChange): Promise<void>',
+    summary: 'The durable external-agent binding changed after its storage write completed.',
+    description: 'The durable external-agent binding changed after its storage write completed.',
+    parameters: [{ name: 'change', description: 'Harness Session and its new external-agent binding, if any.' }],
+  },
+  {
     name: 'agent-preset/selected',
     mode: 'emit',
     signature: '\'agent-preset/selected\'(sessionId: SessionId, agentPreset: string): void',
@@ -4714,8 +5170,72 @@ export const TYPE_API: readonly TypeApiEntry[] = [
     declaration: 'export interface Agent {\n    readonly id: SessionId;\n}',
   },
   {
+    name: 'AgentAdapter',
+    declaration: 'export interface AgentAdapter {\n    readonly id: AgentId;\n    describe(): Promise<AgentDescriptor>;\n    readAuthState(): Promise<AgentAuthState>;\n    listSessions(options: AgentSessionListOptions): Promise<readonly AgentSession[]>;\n    nativeLaunchCommand?(nativeId: string): Promise<readonly string[]>;\n    readTranscript(request: AgentTranscriptRequest): Promise<AgentTranscript>;\n    readNativeTasks(request: AgentNativeTasksRequest): Promise<AgentNativeTasks>;\n    listModels(): Promise<readonly AgentModel[]>;\n    readCapabilities(request: AgentCapabilityReadRequest): Promise<AgentCapabilityInventory>;\n    resolveMcpServer(request: AgentMcpServerResolveRequest): Promise<AgentMcpServerConfig | undefined>;\n    startRun(request: AgentRunRequest): AgentRun;\n    login(request: AgentLoginRequest): Promise<AgentAuthOperationResult>;\n    logout(): Promise<AgentAuthOperationResult>;\n}',
+  },
+  {
+    name: 'AgentAuthOperationResult',
+    declaration: 'export interface AgentAuthOperationResult {\n    readonly ok: boolean;\n    readonly action: \'login\' | \'logout\';\n    readonly state: AgentAuthState;\n    readonly instructions?: string;\n    readonly output?: string;\n}',
+  },
+  {
+    name: 'AgentAuthSource',
+    declaration: 'export type AgentAuthSource = \'env\' | \'file\' | \'keyring\' | \'cli-probe\' | \'none\';',
+  },
+  {
+    name: 'AgentAuthState',
+    declaration: 'export interface AgentAuthState {\n    readonly status: AgentAuthStatus;\n    readonly source: AgentAuthSource;\n    readonly method?: string;\n    readonly detail?: string;\n    readonly expiresAt?: string;\n}',
+  },
+  {
+    name: 'AgentAuthStatus',
+    declaration: 'export type AgentAuthStatus = \'authenticated\' | \'unauthenticated\' | \'expired\' | \'misconfigured\' | \'unknown\';',
+  },
+  {
     name: 'AgentCancelCause',
     declaration: 'export type AgentCancelCause = {\n    readonly kind: \'user\';\n} | {\n    readonly kind: \'parent\';\n} | {\n    readonly kind: \'hook\';\n    readonly reason: string;\n} | {\n    readonly kind: \'disposed\';\n};',
+  },
+  {
+    name: 'AgentCapabilities',
+    declaration: 'export interface AgentCapabilities {\n    readonly runModes: readonly AgentRunMode[];\n    readonly streaming: boolean;\n    readonly resume: boolean;\n    readonly interrupt: boolean;\n    readonly listSessions: boolean;\n    readonly readTranscript: boolean;\n    readonly nativeTodos: boolean;\n    readonly nativePlan: boolean;\n    readonly listModels: boolean;\n    readonly sandboxProfiles: readonly string[];\n    readonly approvalModes: readonly string[];\n    readonly credentials: {\n        readonly status: boolean;\n        readonly login: readonly AgentLoginFlow[];\n        readonly logout: boolean;\n    };\n}',
+  },
+  {
+    name: 'AgentCapabilityInventory',
+    declaration: 'export interface AgentCapabilityInventory {\n    readonly agentId: AgentId;\n    readonly tools: readonly AgentToolInfo[];\n    readonly skills: readonly AgentSkillInfo[];\n    readonly mcpServers: readonly AgentMcpServerInfo[];\n    readonly commands: readonly AgentCommandInfo[];\n    readonly contextFiles: readonly string[];\n    readonly sources: readonly AgentCapabilitySourceFile[];\n    readonly notes: readonly AgentCapabilityNote[];\n    readonly observedAt: string;\n}',
+  },
+  {
+    name: 'AgentCapabilityNote',
+    declaration: 'export interface AgentCapabilityNote {\n    readonly field: string;\n    readonly reason: string;\n}',
+  },
+  {
+    name: 'AgentCapabilityReadRequest',
+    declaration: 'export interface AgentCapabilityReadRequest {\n    readonly cwd?: string;\n    readonly signal?: AbortSignal;\n}',
+  },
+  {
+    name: 'AgentCapabilitySource',
+    declaration: 'export type AgentCapabilitySource = \'builtin\' | \'config\' | \'project\' | \'user\' | \'extension\' | \'mcp\' | \'plugin\' | \'bundled\';',
+  },
+  {
+    name: 'AgentCapabilitySourceFile',
+    declaration: 'export interface AgentCapabilitySourceFile {\n    readonly path: string;\n    readonly present: boolean;\n    readonly note?: string;\n}',
+  },
+  {
+    name: 'AgentCommandInfo',
+    declaration: 'export interface AgentCommandInfo {\n    readonly name: string;\n    readonly description?: string;\n    readonly source: AgentCapabilitySource;\n    readonly path?: string;\n}',
+  },
+  {
+    name: 'AgentDescriptor',
+    declaration: 'export interface AgentDescriptor {\n    readonly id: AgentId;\n    readonly displayName: string;\n    readonly summary: string;\n    readonly capabilities: AgentCapabilities;\n    readonly detection: AgentDetection;\n    readonly transports: readonly AgentTransport[];\n    readonly sessionRoot?: string;\n    readonly credentialPath?: string;\n    readonly environmentKeys: readonly string[];\n}',
+  },
+  {
+    name: 'AgentDetection',
+    declaration: 'export interface AgentDetection {\n    readonly installed: boolean;\n    readonly binaryPath?: string;\n    readonly source: AgentDetectionSource;\n    readonly version?: string;\n    readonly reason?: string;\n}',
+  },
+  {
+    name: 'AgentDetectionSource',
+    declaration: 'export type AgentDetectionSource = \'config\' | \'path\' | \'well-known\' | \'none\';',
+  },
+  {
+    name: 'AgentDiagnostic',
+    declaration: 'export interface AgentDiagnostic {\n    readonly id: AgentId;\n    readonly displayName?: string;\n    readonly detection?: AgentDetection;\n    readonly capabilities?: AgentCapabilities;\n    readonly sessionRoot?: string;\n    readonly credentialPath?: string;\n    readonly warnings: readonly string[];\n}',
   },
   {
     name: 'AgentFactory',
@@ -4726,8 +5246,68 @@ export const TYPE_API: readonly TypeApiEntry[] = [
     declaration: 'export interface AgentHandle {\n    agent: Agent;\n    dispose(): Promise<void>;\n}',
   },
   {
+    name: 'AgentId',
+    declaration: 'export type AgentId = Branded<\'AgentId\'>;',
+  },
+  {
+    name: 'AgentLoginFlow',
+    declaration: 'export type AgentLoginFlow = \'oauth-loopback\' | \'device-code\' | \'api-key\' | \'interactive\';',
+  },
+  {
+    name: 'AgentLoginRequest',
+    declaration: 'export interface AgentLoginRequest {\n    readonly flow: AgentLoginFlow;\n    readonly secret?: string;\n}',
+  },
+  {
+    name: 'AgentMcpServerConfig',
+    declaration: 'export type AgentMcpServerConfig = {\n    readonly name: string;\n    readonly source: Extract<AgentCapabilitySource, \'user\' | \'project\' | \'config\'>;\n    readonly transport: \'stdio\';\n    readonly command: string;\n    readonly args: readonly string[];\n    readonly env: Readonly<Record<string, string>>;\n    readonly cwd: string;\n    readonly toolCallTimeoutMs?: number;\n} | {\n    readonly name: string;\n    readonly source: Extract<AgentCapabilitySource, \'user\' | \'project\' | \'config\'>;\n    readonly transport: \'streamable-http\';\n    readonly url: string;\n    readonly headers: Readonly<Record<string, string>>;\n    readonly toolCallTimeoutMs?: number;\n};',
+  },
+  {
+    name: 'AgentMcpServerInfo',
+    declaration: 'export interface AgentMcpServerInfo {\n    readonly name: string;\n    readonly transport: \'stdio\' | \'http\' | \'sse\' | \'unknown\';\n    readonly command?: string;\n    readonly url?: string;\n    readonly enabled: boolean;\n    readonly source: AgentCapabilitySource;\n}',
+  },
+  {
+    name: 'AgentMcpServerResolveRequest',
+    declaration: 'export interface AgentMcpServerResolveRequest {\n    readonly serverName: string;\n    readonly cwd: string;\n    readonly signal?: AbortSignal;\n}',
+  },
+  {
+    name: 'AgentMeshBindingChange',
+    declaration: 'export interface AgentMeshBindingChange {\n    readonly sessionId: SessionId;\n    readonly agentId?: AgentId;\n}',
+  },
+  {
+    name: 'AgentMeshDiagnostics',
+    declaration: 'export interface AgentMeshDiagnostics {\n    readonly agents: readonly AgentDiagnostic[];\n    readonly bindingsReady: boolean;\n}',
+  },
+  {
+    name: 'AgentMessage',
+    declaration: 'export interface AgentMessage {\n    readonly index: number;\n    readonly role: AgentMessageRole;\n    readonly kind: AgentMessageKind;\n    readonly text?: string;\n    readonly toolName?: string;\n    readonly toolInput?: string;\n    readonly toolOutput?: string;\n    readonly failed?: boolean;\n    readonly timestamp?: string;\n    readonly nativeType?: string;\n    readonly truncated?: boolean;\n    readonly paths?: readonly string[];\n}',
+  },
+  {
+    name: 'AgentMessageKind',
+    declaration: 'export type AgentMessageKind = \'user\' | \'assistant\' | \'reasoning\' | \'tool-call\' | \'tool-result\' | \'plan\' | \'summary\' | \'error\' | \'unknown\';',
+  },
+  {
+    name: 'AgentMessageRole',
+    declaration: 'export type AgentMessageRole = \'user\' | \'assistant\' | \'system\' | \'tool\' | \'unknown\';',
+  },
+  {
+    name: 'AgentModel',
+    declaration: 'export interface AgentModel {\n    readonly id: string;\n    readonly displayName?: string;\n    readonly provider?: string;\n}',
+  },
+  {
+    name: 'AgentNativeTasks',
+    declaration: 'export interface AgentNativeTasks {\n    readonly available: boolean;\n    readonly todos: readonly AgentTodo[];\n    readonly plan?: AgentPlan;\n    readonly notes: readonly string[];\n}',
+  },
+  {
+    name: 'AgentNativeTasksRequest',
+    declaration: 'export interface AgentNativeTasksRequest {\n    readonly session: AgentSession;\n}',
+  },
+  {
     name: 'AgentOptions',
     declaration: 'export interface AgentOptions {\n    provider?: string;\n    model?: string;\n    reasoningEffort?: ReasoningEffortId;\n    maxTokens?: number;\n}',
+  },
+  {
+    name: 'AgentPlan',
+    declaration: 'export interface AgentPlan {\n    readonly active: boolean;\n    readonly items: readonly string[];\n}',
   },
   {
     name: 'AgentPresetComposition',
@@ -4758,6 +5338,82 @@ export const TYPE_API: readonly TypeApiEntry[] = [
     declaration: 'export type AgentResolver = (sessionId: SessionId) => Promise<Agent>;',
   },
   {
+    name: 'AgentRun',
+    declaration: 'export interface AgentRun extends AsyncIterable<AgentRunEvent> {\n    readonly id: AgentRunId;\n    readonly result: Promise<AgentRunResult>;\n    cancel(reason?: string): void;\n}',
+  },
+  {
+    name: 'AgentRunApprovalOutcome',
+    declaration: 'export type AgentRunApprovalOutcome = \'allowed-once\' | \'rejected\' | \'cancelled\' | \'unavailable\';',
+  },
+  {
+    name: 'AgentRunApprovalRequest',
+    declaration: 'export interface AgentRunApprovalRequest {\n    readonly kind: \'command\' | \'file-change\' | \'interaction\';\n    readonly title: string;\n    readonly detail: string;\n    readonly signal: AbortSignal;\n}',
+  },
+  {
+    name: 'AgentRunApprovalRequester',
+    declaration: 'export type AgentRunApprovalRequester = (request: AgentRunApprovalRequest) => Promise<AgentRunApprovalOutcome>;',
+  },
+  {
+    name: 'AgentRunEvent',
+    declaration: 'export type AgentRunEvent = {\n    readonly kind: \'run.started\';\n    readonly runId: AgentRunId;\n    readonly agentId: AgentId;\n    readonly at: string;\n} | {\n    readonly kind: \'session.bound\';\n    readonly runId: AgentRunId;\n    readonly at: string;\n    readonly nativeSessionId: string;\n} | {\n    readonly kind: \'message.delta\';\n    readonly runId: AgentRunId;\n    readonly at: string;\n    readonly text: string;\n} | {\n    readonly kind: \'message.completed\';\n    readonly runId: AgentRunId;\n    readonly at: string;\n    readonly text: string;\n} | {\n    readonly kind: \'reasoning.delta\';\n    readonly runId: AgentRunId;\n    readonly at: string;\n    readonly text: string;\n} | {\n    readonly kind: \'tool.started\';\n    readonly runId: AgentRunId;\n    readonly at: string;\n    readonly callId?: string;\n    readonly toolName: string;\n    readonly input?: string;\n} | {\n    readonly kind: \'tool.completed\';\n    readonly runId: AgentRunId;\n    readonly at: string;\n    readonly callId?: string;\n    readonly toolName: string;\n    readonly output?: string;\n    readonly failed?: boolean;\n} | {\n    readonly kind: \'todos.updated\';\n    readonly runId: AgentRunId;\n    readonly at: string;\n    readonly todos: readonly {\n        readonly content: string;\n        readonly status: AgentTodoStatus;\n    }[];\n} | {\n    readonly kind: \'files.changed\';\n    readonly runId: AgentRunId;\n    readonly at: string;\n    readonly paths: readonly string[];\n} | {\n    readonly kind: \'usage.updated\';\n    readonly runId: Ag /* …truncated — full shape in source */',
+  },
+  {
+    name: 'AgentRunId',
+    declaration: 'export type AgentRunId = Branded<\'AgentRunId\'>;',
+  },
+  {
+    name: 'AgentRunMode',
+    declaration: 'export type AgentRunMode = \'headless-exec\' | \'duplex-protocol\';',
+  },
+  {
+    name: 'AgentRunRequest',
+    declaration: 'export interface AgentRunRequest {\n    readonly prompt: string;\n    readonly cwd: string;\n    readonly model?: string;\n    readonly sandbox?: string;\n    readonly approval?: string;\n    readonly resumeNativeId?: string;\n    readonly timeoutMs?: number;\n    readonly env?: Readonly<Record<string, string>>;\n    readonly requestApproval?: AgentRunApprovalRequester;\n}',
+  },
+  {
+    name: 'AgentRunResult',
+    declaration: 'export interface AgentRunResult {\n    readonly runId: AgentRunId;\n    readonly agentId: AgentId;\n    readonly status: AgentRunStatus;\n    readonly startedAt: string;\n    readonly finishedAt: string;\n    readonly durationMs: number;\n    readonly cwd: string;\n    readonly exitCode?: number;\n    readonly signal?: string;\n    readonly finalText?: string;\n    readonly usage?: AgentUsage;\n    readonly nativeSessionKey?: AgentSessionKey;\n    readonly error?: {\n        readonly code: string;\n        readonly message: string;\n        readonly remediation?: string;\n        readonly output?: string;\n    };\n    readonly notes: readonly string[];\n}',
+  },
+  {
+    name: 'AgentRunStatus',
+    declaration: 'export type AgentRunStatus = \'running\' | \'succeeded\' | \'failed\' | \'cancelled\' | \'timeout\';',
+  },
+  {
+    name: 'AgentSession',
+    declaration: 'export interface AgentSession {\n    readonly key: AgentSessionKey;\n    readonly agentId: AgentId;\n    readonly nativeId: string;\n    readonly nativePath?: string;\n    readonly title?: string;\n    readonly titleIsNative?: boolean;\n    readonly cwd?: string;\n    readonly branch?: string;\n    readonly repoRoot?: string;\n    readonly model?: string;\n    readonly createdAt: string;\n    readonly updatedAt: string;\n    readonly status: AgentSessionStatus;\n    readonly messageCount?: number;\n    readonly parentNativeId?: string;\n    readonly source?: string;\n    readonly notes: readonly string[];\n}',
+  },
+  {
+    name: 'AgentSessionCatalog',
+    declaration: 'export interface AgentSessionCatalog {\n    readonly items: readonly AgentSession[];\n    readonly failures: readonly AgentSessionListFailure[];\n}',
+  },
+  {
+    name: 'AgentSessionDisposition',
+    declaration: 'export type AgentSessionDisposition = \'pinned\' | \'archived\';',
+  },
+  {
+    name: 'AgentSessionKey',
+    declaration: 'export type AgentSessionKey = Branded<\'AgentSessionKey\'>;',
+  },
+  {
+    name: 'AgentSessionListOptions',
+    declaration: 'export interface AgentSessionListOptions {\n    readonly cwd?: string;\n    readonly limit?: number;\n    readonly signal?: AbortSignal;\n}',
+  },
+  {
+    name: 'AgentSessionMark',
+    declaration: 'export interface AgentSessionMark extends AgentSessionReference {\n    readonly key: AgentSessionKey;\n    readonly disposition: AgentSessionDisposition;\n    readonly updatedAt: string;\n}',
+  },
+  {
+    name: 'AgentSessionReference',
+    declaration: 'export interface AgentSessionReference {\n    readonly agentId: AgentId;\n    readonly nativeId: string;\n}',
+  },
+  {
+    name: 'AgentSessionStatus',
+    declaration: 'export type AgentSessionStatus = \'idle\' | \'running\' | \'unreadable\';',
+  },
+  {
+    name: 'AgentSessionSummary',
+    declaration: 'export interface AgentSessionSummary {\n    readonly source: \'agent-mesh\';\n    readonly agentId: AgentId;\n    readonly key: AgentSessionKey;\n    readonly nativeId: string;\n    readonly title?: string;\n    readonly cwd?: string;\n    readonly model?: string;\n    readonly createdAt: string;\n    readonly updatedAt: string;\n    readonly status: AgentSessionStatus;\n    readonly pinned: boolean;\n    readonly archived: boolean;\n    readonly messageCount?: number;\n    readonly parentNativeId?: string;\n    readonly notes: readonly string[];\n}',
+  },
+  {
     name: 'AgentSetup',
     declaration: 'export type AgentSetup = (agentCtx: Context, agent: Agent) => AgentSetupCommit | Promise<AgentSetupCommit | void> | void;',
   },
@@ -4766,8 +5422,40 @@ export const TYPE_API: readonly TypeApiEntry[] = [
     declaration: 'export interface AgentSetupCommit {\n    commit(): void;\n}',
   },
   {
+    name: 'AgentSkillInfo',
+    declaration: 'export interface AgentSkillInfo {\n    readonly name: string;\n    readonly description?: string;\n    readonly source: AgentCapabilitySource;\n    readonly path?: string;\n    readonly userInvocable?: boolean;\n}',
+  },
+  {
     name: 'AgentStatus',
     declaration: 'export type AgentStatus = \'idle\' | \'running\';',
+  },
+  {
+    name: 'AgentTodo',
+    declaration: 'export interface AgentTodo {\n    readonly id: string;\n    readonly content: string;\n    readonly status: AgentTodoStatus;\n    readonly owner: string;\n    readonly blockedBy: readonly string[];\n    readonly updatedAt: string;\n    readonly nativeKey?: string;\n    readonly observedIn?: string;\n}',
+  },
+  {
+    name: 'AgentTodoStatus',
+    declaration: 'export type AgentTodoStatus = \'pending\' | \'in_progress\' | \'completed\' | \'blocked\' | \'cancelled\';',
+  },
+  {
+    name: 'AgentToolInfo',
+    declaration: 'export interface AgentToolInfo {\n    readonly name: string;\n    readonly description?: string;\n    readonly source: AgentCapabilitySource;\n    readonly approval?: string;\n    readonly discoverable?: boolean;\n    readonly path?: string;\n}',
+  },
+  {
+    name: 'AgentTranscript',
+    declaration: 'export interface AgentTranscript {\n    readonly key: AgentSessionKey;\n    readonly messages: readonly AgentMessage[];\n    readonly totalMessages?: number;\n    readonly hasMore: boolean;\n    readonly notes: readonly string[];\n}',
+  },
+  {
+    name: 'AgentTranscriptRequest',
+    declaration: 'export interface AgentTranscriptRequest {\n    readonly session: AgentSession;\n    readonly maxMessages?: number;\n    readonly maxBytes?: number;\n}',
+  },
+  {
+    name: 'AgentTransport',
+    declaration: 'export interface AgentTransport {\n    readonly mode: AgentRunMode;\n    readonly mechanism: string;\n    readonly available: boolean;\n}',
+  },
+  {
+    name: 'AgentUsage',
+    declaration: 'export interface AgentUsage {\n    readonly inputTokens?: number;\n    readonly outputTokens?: number;\n    readonly cachedInputTokens?: number;\n    readonly reasoningTokens?: number;\n    readonly totalTokens?: number;\n    readonly costUsd?: number;\n}',
   },
   {
     name: 'AnonymousTranslationProvider',
@@ -4998,6 +5686,22 @@ export const TYPE_API: readonly TypeApiEntry[] = [
     declaration: 'export interface ClientArtifactBaseline {\n    readonly path: string;\n    readonly mtimeMs: number;\n    readonly ctimeMs: number;\n    readonly size: number;\n}',
   },
   {
+    name: 'CollaborationId',
+    declaration: 'export type CollaborationId = Branded<\'CollaborationId\'>;',
+  },
+  {
+    name: 'CollaborationRecord',
+    declaration: 'export type CollaborationRecord = z.infer<typeof collaborationRecord>;',
+  },
+  {
+    name: 'CollaborationTaskRecord',
+    declaration: 'export type CollaborationTaskRecord = z.infer<typeof collaborationTaskRecord>;',
+  },
+  {
+    name: 'CollaborationView',
+    declaration: 'export interface CollaborationView {\n    readonly id: CollaborationId;\n    readonly record: CollaborationRecord;\n    readonly plan: PlanRecord;\n    readonly board: TodoBoardRecord;\n    readonly tasks: readonly CollaborationTaskRecord[];\n    readonly worktrees: readonly WorktreeRecord[];\n}',
+  },
+  {
     name: 'CollectedOutput',
     declaration: 'export interface CollectedOutput {\n    text: string;\n    truncated: boolean;\n    spillPath?: string;\n}',
   },
@@ -5094,6 +5798,22 @@ export const TYPE_API: readonly TypeApiEntry[] = [
     declaration: 'export type ConfinedSandboxMode = Exclude<SandboxMode, \'danger-full-access\'>;',
   },
   {
+    name: 'ConflictFinding',
+    declaration: 'export interface ConflictFinding {\n    readonly kind: ConflictKind;\n    readonly severity: ConflictSeverity;\n    readonly left: string;\n    readonly right: string;\n    readonly paths: readonly string[];\n    readonly detail: string;\n}',
+  },
+  {
+    name: 'ConflictKind',
+    declaration: 'export type ConflictKind = \'same-file\' | \'same-hunk\' | \'feature-boundary\' | \'base-drift\';',
+  },
+  {
+    name: 'ConflictReport',
+    declaration: 'export interface ConflictReport {\n    readonly repoRoot: string;\n    readonly at: string;\n    readonly worktrees: readonly string[];\n    readonly findings: readonly ConflictFinding[];\n    readonly suggestedOrder?: readonly string[];\n    readonly notes: readonly string[];\n}',
+  },
+  {
+    name: 'ConflictSeverity',
+    declaration: 'export type ConflictSeverity = \'info\' | \'warning\' | \'blocking\';',
+  },
+  {
     name: 'ConnectionAdmission',
     declaration: 'export type ConnectionAdmission = {\n    readonly peer: PeerScope;\n    readonly release: () => Promise<void>;\n} | {\n    readonly rejection: 401 | 403 | 409;\n};',
   },
@@ -5160,6 +5880,10 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   {
     name: 'ContentBlockType',
     declaration: 'export type ContentBlockType = keyof ContentBlockMap;',
+  },
+  {
+    name: 'ContextPreview',
+    declaration: 'export interface ContextPreview {\n    readonly collaborationId: string;\n    readonly agentId: string;\n    readonly text: string;\n    readonly hash: string;\n}',
   },
   {
     name: 'ContinuableCreateRequest',
@@ -5270,10 +5994,6 @@ export const TYPE_API: readonly TypeApiEntry[] = [
     declaration: 'export interface CreateTeamTaskRequest {\n    readonly subject: string;\n    readonly description: string;\n    readonly blockedBy?: readonly TeamTaskId[];\n    readonly writeScopes?: readonly string[];\n}',
   },
   {
-    name: 'CreateWorktreeRequest',
-    declaration: 'export interface CreateWorktreeRequest {\n    name?: string;\n    from?: string;\n}',
-  },
-  {
     name: 'CredentialInfo',
     declaration: 'export interface CredentialInfo {\n    configured: boolean;\n    source?: string;\n    writable: boolean;\n}',
   },
@@ -5372,6 +6092,10 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   {
     name: 'DirectoryRegistrationHandle',
     declaration: 'export interface DirectoryRegistrationHandle {\n    (): void;\n    replace(entries: readonly LlmConfigurableProvider[]): void;\n}',
+  },
+  {
+    name: 'DispatchOptions',
+    declaration: 'export interface DispatchOptions {\n    readonly baseRef?: string;\n    readonly timeoutMs?: number;\n}',
   },
   {
     name: 'Domain',
@@ -5754,6 +6478,10 @@ export const TYPE_API: readonly TypeApiEntry[] = [
     declaration: 'export interface InvokeRemoteRequest {\n    readonly namespace: string;\n    readonly method: string;\n    readonly args: Readonly<Record<string, unknown>>;\n    readonly uplink?: AsyncIterable<unknown>;\n    readonly uplinkWindow?: RemoteUplinkWindow | undefined;\n    readonly peer: PeerScope;\n    readonly signal?: AbortSignal;\n}',
   },
   {
+    name: 'IsolationMode',
+    declaration: 'export type IsolationMode = z.infer<typeof isolationMode>;',
+  },
+  {
     name: 'JobAppendOptions',
     declaration: 'export interface JobAppendOptions {\n    channel?: JobChannel;\n    gapBefore?: true;\n}',
   },
@@ -6122,6 +6850,194 @@ export const TYPE_API: readonly TypeApiEntry[] = [
     declaration: 'export type McpResourceRequest = {\n    method: \'resources/list\' | \'resources/templates/list\';\n    cursor?: string;\n} | {\n    method: \'resources/read\';\n    uri: string;\n};',
   },
   {
+    name: 'MeshAgentRow',
+    declaration: 'export interface MeshAgentRow {\n    readonly agentId: string;\n    readonly displayName: string;\n    readonly installed: boolean;\n    readonly version?: string;\n    readonly binaryPath?: string;\n    readonly detectionReason?: string;\n    readonly sessionRoot?: string;\n    readonly credentialPath?: string;\n    readonly warnings: readonly string[];\n}',
+  },
+  {
+    name: 'MeshBindingRow',
+    declaration: 'export interface MeshBindingRow {\n    readonly sessionId: string;\n    readonly agentId: string;\n    readonly boundAt: string;\n}',
+  },
+  {
+    name: 'MeshCapabilityRequest',
+    declaration: 'export interface MeshCapabilityRequest {\n    readonly agentId: string;\n    readonly cwd?: string;\n}',
+  },
+  {
+    name: 'MeshCapabilityResponse',
+    declaration: 'export type MeshCapabilityResponse = AgentCapabilityInventory;',
+  },
+  {
+    name: 'MeshCollaborationRequest',
+    declaration: 'export interface MeshCollaborationRequest {\n    readonly collaborationId: string;\n}',
+  },
+  {
+    name: 'MeshCollaborationRow',
+    declaration: 'export interface MeshCollaborationRow {\n    readonly id: string;\n    readonly title: string;\n    readonly repoRoot: string;\n    readonly createdAt: string;\n    readonly updatedAt: string;\n    readonly objective: string;\n    readonly mode: string;\n    readonly activePhaseId: string;\n    readonly phases: readonly MeshPlanPhaseRow[];\n    readonly decisions: readonly string[];\n    readonly todoRevision: number;\n    readonly todoCount: number;\n    readonly tasks: readonly MeshTaskRow[];\n    readonly worktrees: readonly MeshCollaborationWorktreeRow[];\n}',
+  },
+  {
+    name: 'MeshCollaborationStartRequest',
+    declaration: 'export interface MeshCollaborationStartRequest {\n    readonly title: string;\n    readonly objective: string;\n    readonly repoRoot: string;\n    readonly tasks?: readonly MeshTaskSeedRow[];\n}',
+  },
+  {
+    name: 'MeshCollaborationWorktreeRow',
+    declaration: 'export interface MeshCollaborationWorktreeRow {\n    readonly id: string;\n    readonly path: string;\n    readonly branch: string;\n    readonly state: string;\n    readonly runId: string;\n    readonly taskId: string;\n}',
+  },
+  {
+    name: 'MeshConflictFindingRow',
+    declaration: 'export interface MeshConflictFindingRow {\n    readonly kind: ConflictKind;\n    readonly severity: ConflictSeverity;\n    readonly left: string;\n    readonly right: string;\n    readonly paths: readonly string[];\n    readonly detail: string;\n}',
+  },
+  {
+    name: 'MeshConflictReportRow',
+    declaration: 'export interface MeshConflictReportRow {\n    readonly repoRoot: string;\n    readonly at: string;\n    readonly worktrees: readonly string[];\n    readonly findings: readonly MeshConflictFindingRow[];\n    readonly suggestedOrder: readonly string[];\n    readonly notes: readonly string[];\n}',
+  },
+  {
+    name: 'MeshContextPreviewRequest',
+    declaration: 'export interface MeshContextPreviewRequest {\n    readonly collaborationId: string;\n    readonly agentId: string;\n}',
+  },
+  {
+    name: 'MeshContextPreviewRow',
+    declaration: 'export interface MeshContextPreviewRow {\n    readonly available: boolean;\n    readonly text: string;\n    readonly hash: string;\n}',
+  },
+  {
+    name: 'MeshCredentialRow',
+    declaration: 'export interface MeshCredentialRow {\n    readonly agentId: string;\n    readonly displayName: string;\n    readonly state: AgentAuthState;\n    readonly loginFlows: readonly AgentLoginFlow[];\n    readonly canLogout: boolean;\n}',
+  },
+  {
+    name: 'MeshFileChangeRow',
+    declaration: 'export interface MeshFileChangeRow {\n    readonly path: string;\n    readonly status: string;\n}',
+  },
+  {
+    name: 'MeshLaunchCommand',
+    declaration: 'export interface MeshLaunchCommand {\n    readonly argv: readonly string[];\n    readonly shell: MeshLaunchShell;\n}',
+  },
+  {
+    name: 'MeshLaunchShell',
+    declaration: 'export type MeshLaunchShell = \'posix\' | \'powershell\';',
+  },
+  {
+    name: 'MeshLoginRequest',
+    declaration: 'export interface MeshLoginRequest {\n    readonly agentId: string;\n    readonly flow: AgentLoginFlow;\n    readonly secret?: string;\n}',
+  },
+  {
+    name: 'MeshPlanAdvanceRequest',
+    declaration: 'export interface MeshPlanAdvanceRequest {\n    readonly collaborationId: string;\n    readonly phaseId: string;\n}',
+  },
+  {
+    name: 'MeshPlanPhaseRow',
+    declaration: 'export interface MeshPlanPhaseRow {\n    readonly id: string;\n    readonly title: string;\n    readonly status: string;\n    readonly exitCriteria: string;\n}',
+  },
+  {
+    name: 'MeshPlanSetRequest',
+    declaration: 'export interface MeshPlanSetRequest {\n    readonly collaborationId: string;\n    readonly objective: string;\n    readonly phases?: readonly MeshPlanPhaseRow[];\n    readonly activePhaseId?: string;\n    readonly decisions?: readonly string[];\n    readonly mode?: string;\n}',
+  },
+  {
+    name: 'MeshRunHandle',
+    declaration: 'export interface MeshRunHandle {\n    readonly runId: AgentRunId;\n    readonly result: Promise<AgentRunResult>;\n}',
+  },
+  {
+    name: 'MeshRunRow',
+    declaration: 'export interface MeshRunRow {\n    readonly runId: string;\n    readonly agentId: string;\n    readonly cwd: string;\n    readonly prompt: string;\n    readonly status: AgentRunStatus;\n    readonly startedAt: string;\n    readonly finishedAt?: string;\n    readonly finalText?: string;\n    readonly error?: {\n        readonly code: string;\n        readonly message: string;\n        readonly remediation?: string;\n        readonly output?: string;\n    };\n    readonly notes: readonly string[];\n    readonly events: readonly AgentRunEvent[];\n    readonly eventCount: number;\n}',
+  },
+  {
+    name: 'MeshRunSnapshot',
+    declaration: 'export interface MeshRunSnapshot {\n    readonly runId: string;\n    readonly agentId: string;\n    readonly cwd: string;\n    readonly prompt: string;\n    readonly status: AgentRunStatus;\n    readonly startedAt: string;\n    readonly finishedAt?: string;\n    readonly finalText?: string;\n    readonly error?: {\n        readonly code: string;\n        readonly message: string;\n        readonly remediation?: string;\n        readonly output?: string;\n    };\n    readonly notes: readonly string[];\n    readonly events: readonly AgentRunEvent[];\n    readonly eventCount: number;\n    readonly nativeSessionKey?: string;\n}',
+  },
+  {
+    name: 'MeshRunStartRequest',
+    declaration: 'export interface MeshRunStartRequest {\n    readonly agentId: string;\n    readonly prompt: string;\n    readonly cwd: string;\n    readonly model?: string;\n    readonly approval?: string;\n    readonly resumeNativeId?: string;\n    readonly timeoutMs?: number;\n}',
+  },
+  {
+    name: 'MeshSessionDispositionRequest',
+    declaration: 'export type MeshSessionDispositionRequest = MeshSessionRequest;',
+  },
+  {
+    name: 'MeshSessionListRequest',
+    declaration: 'export interface MeshSessionListRequest {\n    readonly agentId: string;\n    readonly cwd?: string;\n    readonly limit?: number;\n}',
+  },
+  {
+    name: 'MeshSessionRequest',
+    declaration: 'export interface MeshSessionRequest {\n    readonly agentId: string;\n    readonly sessionId: string;\n}',
+  },
+  {
+    name: 'MeshSessionRow',
+    declaration: 'export interface MeshSessionRow {\n    readonly key: string;\n    readonly agentId: string;\n    readonly nativeId: string;\n    readonly title: string;\n    readonly cwd?: string;\n    readonly model?: string;\n    readonly createdAt: string;\n    readonly updatedAt: string;\n    readonly status: string;\n    readonly pinned: boolean;\n    readonly archived: boolean;\n    readonly messageCount?: number;\n    readonly notes: readonly string[];\n}',
+  },
+  {
+    name: 'MeshTaskDispatchRequest',
+    declaration: 'export interface MeshTaskDispatchRequest {\n    readonly collaborationId: string;\n    readonly taskId: string;\n    readonly baseRef?: string;\n    readonly timeoutMs?: number;\n}',
+  },
+  {
+    name: 'MeshTaskDispatchResponse',
+    declaration: 'export interface MeshTaskDispatchResponse {\n    readonly runId: string;\n    readonly taskId: string;\n    readonly cwd: string;\n    readonly status: string;\n    readonly contextHash: string;\n}',
+  },
+  {
+    name: 'MeshTaskRow',
+    declaration: 'export interface MeshTaskRow {\n    readonly id: string;\n    readonly collaborationId: string;\n    readonly title: string;\n    readonly instruction: string;\n    readonly assignee: string;\n    readonly status: string;\n    readonly isolation: string;\n    readonly dependsOn: readonly string[];\n    readonly runId: string;\n    readonly worktreeId: string;\n    readonly note: string;\n    readonly createdAt: string;\n    readonly updatedAt: string;\n}',
+  },
+  {
+    name: 'MeshTaskSeedRow',
+    declaration: 'export interface MeshTaskSeedRow {\n    readonly title: string;\n    readonly instruction: string;\n    readonly assignee: string;\n    readonly dependsOn?: readonly string[];\n    readonly isolation?: string;\n}',
+  },
+  {
+    name: 'MeshTodoBoardRow',
+    declaration: 'export interface MeshTodoBoardRow {\n    readonly collaborationId: string;\n    readonly revision: number;\n    readonly updatedAt: string;\n    readonly todos: readonly MeshTodoRow[];\n}',
+  },
+  {
+    name: 'MeshTodoInputRow',
+    declaration: 'export interface MeshTodoInputRow {\n    readonly id: string;\n    readonly content: string;\n    readonly status: string;\n    readonly owner?: string;\n    readonly blockedBy?: readonly string[];\n}',
+  },
+  {
+    name: 'MeshTodoRow',
+    declaration: 'export interface MeshTodoRow {\n    readonly id: string;\n    readonly content: string;\n    readonly status: string;\n    readonly owner: string;\n    readonly blockedBy: readonly string[];\n    readonly updatedAt: string;\n    readonly nativeKey: string;\n    readonly observedIn: string;\n}',
+  },
+  {
+    name: 'MeshTodosObserveRequest',
+    declaration: 'export interface MeshTodosObserveRequest {\n    readonly collaborationId: string;\n    readonly agentId: string;\n    readonly sessionId?: string;\n}',
+  },
+  {
+    name: 'MeshTodosObserveResponse',
+    declaration: 'export interface MeshTodosObserveResponse {\n    readonly observed: number;\n    readonly board: MeshTodoBoardRow;\n    readonly notes: readonly string[];\n}',
+  },
+  {
+    name: 'MeshTodosSetRequest',
+    declaration: 'export interface MeshTodosSetRequest {\n    readonly collaborationId: string;\n    readonly todos: readonly MeshTodoInputRow[];\n    readonly expectedRevision?: number;\n}',
+  },
+  {
+    name: 'MeshTranscriptRequest',
+    declaration: 'export interface MeshTranscriptRequest extends MeshSessionRequest {\n    readonly maxMessages?: number;\n}',
+  },
+  {
+    name: 'MeshTranscriptResponse',
+    declaration: 'export interface MeshTranscriptResponse {\n    readonly key: string;\n    readonly messages: readonly AgentMessage[];\n    readonly totalMessages?: number;\n    readonly hasMore: boolean;\n    readonly notes: readonly string[];\n}',
+  },
+  {
+    name: 'MeshWorktreeConflictsRequest',
+    declaration: 'export interface MeshWorktreeConflictsRequest {\n    readonly repoRoot: string;\n}',
+  },
+  {
+    name: 'MeshWorktreeCreateRequest',
+    declaration: 'export interface MeshWorktreeCreateRequest {\n    readonly agentId: string;\n    readonly repoRoot: string;\n    readonly baseRef?: string;\n    readonly label?: string;\n    readonly collaborationId?: string;\n    readonly reuse?: boolean;\n}',
+  },
+  {
+    name: 'MeshWorktreeIntegratedRequest',
+    declaration: 'export interface MeshWorktreeIntegratedRequest {\n    readonly worktreeId: string;\n    readonly merged?: boolean;\n}',
+  },
+  {
+    name: 'MeshWorktreeListRequest',
+    declaration: 'export interface MeshWorktreeListRequest {\n    readonly repoRoot?: string;\n}',
+  },
+  {
+    name: 'MeshWorktreeRemoveRequest',
+    declaration: 'export interface MeshWorktreeRemoveRequest {\n    readonly worktreeId: string;\n    readonly force?: boolean;\n}',
+  },
+  {
+    name: 'MeshWorktreeRemoveResponse',
+    declaration: 'export interface MeshWorktreeRemoveResponse {\n    readonly worktreeId: string;\n    readonly state: string;\n    readonly forced: boolean;\n}',
+  },
+  {
+    name: 'MeshWorktreeRow',
+    declaration: 'export interface MeshWorktreeRow {\n    readonly id: string;\n    readonly path: string;\n    readonly repoRoot: string;\n    readonly branch: string;\n    readonly baseCommit: string;\n    readonly baseRef: string;\n    readonly agentId: string;\n    readonly state: string;\n    readonly reusable: boolean;\n    readonly collaborationId: string;\n    readonly taskId: string;\n    readonly runId: string;\n    readonly changedFiles: number;\n    readonly dirty: boolean;\n    readonly ahead: number;\n    readonly files: readonly MeshFileChangeRow[];\n    readonly notes: readonly string[];\n    readonly sampledAt: string;\n}',
+  },
+  {
     name: 'Message',
     declaration: 'export type Message = MessageRoleMap[keyof MessageRoleMap];',
   },
@@ -6290,6 +7206,10 @@ export const TYPE_API: readonly TypeApiEntry[] = [
     declaration: 'export type ObjectJsonSchema = JsonSchemaNode & {\n    type: \'object\';\n};',
   },
   {
+    name: 'ObserveOutcome',
+    declaration: 'export interface ObserveOutcome {\n    readonly board: TodoBoardRecord;\n    readonly observed: number;\n    readonly notes: readonly string[];\n}',
+  },
+  {
     name: 'OfficeExtension',
     declaration: 'export type OfficeExtension = \'doc\' | \'docx\' | \'xls\' | \'xlsx\' | \'ppt\' | \'pptx\';',
   },
@@ -6376,6 +7296,22 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   {
     name: 'PermissionCatalog',
     declaration: 'export interface PermissionCatalog {\n    options: PresetOption[];\n    defaultOptions: PresetOption[];\n    defaultPreset: string;\n}',
+  },
+  {
+    name: 'PlanMode',
+    declaration: 'export type PlanMode = z.infer<typeof planMode>;',
+  },
+  {
+    name: 'PlanPatch',
+    declaration: 'export interface PlanPatch {\n    readonly objective?: string;\n    readonly phases?: readonly PlanPhase[];\n    readonly activePhaseId?: string;\n    readonly decisions?: readonly string[];\n    readonly mode?: PlanMode;\n}',
+  },
+  {
+    name: 'PlanPhase',
+    declaration: 'export type PlanPhase = z.infer<typeof planPhase>;',
+  },
+  {
+    name: 'PlanRecord',
+    declaration: 'export type PlanRecord = z.infer<typeof planRecord>;',
   },
   {
     name: 'PlatformSession',
@@ -6752,6 +7688,10 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   {
     name: 'RemoteUplinkWindow',
     declaration: 'export interface RemoteUplinkWindow {\n    readonly maxBytes: number;\n    readonly frameOverheadBytes: number;\n}',
+  },
+  {
+    name: 'RemoveWorktreeOptions',
+    declaration: 'export interface RemoveWorktreeOptions {\n    readonly force?: boolean;\n}',
   },
   {
     name: 'RenderedDocumentBytes',
@@ -7235,7 +8175,7 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   },
   {
     name: 'SessionListValue',
-    declaration: 'export interface SessionListValue {\n    readonly items: readonly SessionSummary[];\n}',
+    declaration: 'export interface SessionListValue {\n    readonly items: readonly SessionSummary[];\n    readonly agentSessions: readonly AgentSessionSummary[];\n    readonly agentSessionFailures: readonly AgentSessionListFailure[];\n}',
   },
   {
     name: 'SessionLogOffset',
@@ -7586,6 +8526,10 @@ export const TYPE_API: readonly TypeApiEntry[] = [
     declaration: 'export interface SettingsSecretView {\n    path: string[];\n    set: boolean;\n}',
   },
   {
+    name: 'SetTodosOptions',
+    declaration: 'export interface SetTodosOptions {\n    readonly expectedRevision?: number;\n}',
+  },
+  {
     name: 'ShellExecRequest',
     declaration: 'export interface ShellExecRequest {\n    command: string;\n    workdir?: string | undefined;\n    timeoutMs?: number | undefined;\n    onExpiry?: ShellExpiryPolicy | undefined;\n    stdoutMaxBytes?: number | undefined;\n    signal?: AbortSignal | undefined;\n    stdin?: string | undefined;\n    env?: Record<string, string> | undefined;\n    dshEnv?: DshEnvironment | undefined;\n    sandboxPolicy?: SandboxExecutionPolicy | undefined;\n}',
   },
@@ -7800,6 +8744,10 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   {
     name: 'SshStreamEndpoint',
     declaration: 'export type SshStreamEndpoint = z.infer<typeof streamEndpointSchema>;',
+  },
+  {
+    name: 'StartCollaborationRequest',
+    declaration: 'export interface StartCollaborationRequest {\n    readonly title: string;\n    readonly objective: string;\n    readonly repoRoot: string;\n    readonly tasks?: readonly TaskSeed[];\n}',
   },
   {
     name: 'StorageBackend',
@@ -8022,6 +8970,14 @@ export const TYPE_API: readonly TypeApiEntry[] = [
     declaration: 'export type TableValueOf<S extends DomainSpec, N extends keyof S[\'tables\']> = S[\'tables\'][N] extends DomainTableSpec<string, infer V> ? V : never;',
   },
   {
+    name: 'TaskDispatchResult',
+    declaration: 'export interface TaskDispatchResult {\n    readonly task: CollaborationTaskRecord;\n    readonly runId: string;\n    readonly cwd: string;\n    readonly context: ContextPreview | undefined;\n}',
+  },
+  {
+    name: 'TaskSeed',
+    declaration: 'export interface TaskSeed {\n    readonly title: string;\n    readonly instruction: string;\n    readonly assignee: string;\n    readonly dependsOn?: readonly string[];\n    readonly isolation?: IsolationMode;\n}',
+  },
+  {
     name: 'TeamId',
     declaration: 'export type TeamId = Branded<\'TeamId\'>;',
   },
@@ -8172,6 +9128,18 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   {
     name: 'ToastOptions',
     declaration: 'export interface ToastOptions {\n    timeoutMs?: number;\n}',
+  },
+  {
+    name: 'TodoBoardRecord',
+    declaration: 'export type TodoBoardRecord = z.infer<typeof todoBoardRecord>;',
+  },
+  {
+    name: 'TodoInput',
+    declaration: 'export interface TodoInput {\n    readonly id: string;\n    readonly content: string;\n    readonly status: TodoStatus;\n    readonly owner?: string;\n    readonly blockedBy?: readonly string[];\n    readonly nativeKey?: string;\n    readonly observedIn?: string;\n}',
+  },
+  {
+    name: 'TodoStatus',
+    declaration: 'export type TodoStatus = z.infer<typeof todoStatus>;',
   },
   {
     name: 'TokenMeasurement',
@@ -8868,6 +9836,18 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   {
     name: 'WorkspaceView',
     declaration: 'export interface WorkspaceView {\n    readonly workspaceId: WorkspaceId;\n    readonly path: string;\n    readonly title: string;\n    readonly sessionIds: readonly SessionId[];\n    readonly createdAt: string;\n    readonly updatedAt: string;\n}',
+  },
+  {
+    name: 'WorktreeProgress',
+    declaration: 'export type WorktreeProgress = z.infer<typeof worktreeProgress>;',
+  },
+  {
+    name: 'WorktreeRecord',
+    declaration: 'export type WorktreeRecord = z.infer<typeof worktreeRecord>;',
+  },
+  {
+    name: 'WorktreeView',
+    declaration: 'export interface WorktreeView extends WorktreeRecord {\n    readonly progress?: WorktreeProgress;\n}',
   },
 ]
 

@@ -56,6 +56,12 @@ function event(inventory: PersistenceSchemaInventory, name = 'test/record'): str
 }
 
 describe('persistent source type extraction', () => {
+  it('ignores temporary Oxlint contract probes in package source trees', () => {
+    const root = fixture('export interface Payload { value: string }')
+    put(root, 'packages/core/session/src/oxlint-contract-probe.ts', 'export const =')
+    expect(() => extractPersistenceSchema(root)).not.toThrow()
+  })
+
   it('keeps authored names and anonymous declaration locations without synthesized traversal names', () => {
     const root = fixture('interface Section { text: string }\nexport interface Payload { inserted: { source: { kind: "hooks-codex"; sections: Section[] } }[] }')
     const inventory = extractPersistenceSchema(root)
@@ -316,8 +322,10 @@ interface SessionEventMap {
     expect(() => extractPersistenceSchema(fixture(source))).toThrow(error)
   })
 
-  // Repository-wide TypeScript extraction and reachable-node hashing use the Windows coverage test budget.
-  it('includes every real repository event and fingerprints every reachable node', { timeout: 90_000 }, () => {
+  // Repository-wide TypeScript extraction and reachable-node hashing need extra time under coverage.
+  it('includes every real repository event and fingerprints every reachable node', {
+    timeout: Math.max(180_000, Number(process.env.DSH_COVERAGE_TEST_TIMEOUT_MS ?? 0)),
+  }, () => {
     const root = resolve(import.meta.dirname, '..')
     const model = extractPersistenceSchema(root)
     expect(model.roots.filter(root => root.kind === 'event').map(root => root.event).sort())

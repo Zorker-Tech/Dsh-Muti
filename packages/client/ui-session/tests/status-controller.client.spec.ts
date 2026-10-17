@@ -2,6 +2,7 @@
 import { expect, vi } from 'vitest'
 import { ok } from '@deepseek-ai/dsh-remote-mock'
 import { createClientTest, webApp } from '@deepseek-ai/dsh-client-test-runtime/src/assembly/index.ts'
+import { sessionListSuccess } from '@deepseek-ai/dsh-client-test-runtime'
 import { SESSION_FORMAT_VERSION, type SessionId } from '@deepseek-ai/dsh-session/types'
 import type { SessionFollowFrame } from '@deepseek-ai/dsh-api-session-controller/types'
 
@@ -10,7 +11,7 @@ const parentId = 'status-parent' as SessionId
 const childId = 'status-child' as SessionId
 
 it('preserves unlisted child status through metadata updates and main view acknowledgement', async ({ mock, start }) => {
-  mock.remote.session.list.mockResolvedValue(ok({ items: [{
+  mock.remote.session.list.mockResolvedValue(sessionListSuccess({ items: [{
     sessionId: parentId, updatedAt: 1, running: false, blank: false, agentAvailable: true,
   }] }))
   mock.remote.session.projections.mockResolvedValue(ok({

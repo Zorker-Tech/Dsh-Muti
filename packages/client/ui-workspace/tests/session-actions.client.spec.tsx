@@ -60,7 +60,8 @@ const one: SessionSummary = {
   id: ROW.sessionId, displayTitle: ROW.displayTitle, running: false, blank: false, updatedAt: 1, retainedBy: {},
 }
 const sessions: SessionListState = {
-  ids: [one.id], byId: { [one.id]: one }, phase: 'ready', projectionsBySession: {},
+  ids: [one.id], byId: { [one.id]: one }, agentSessions: [], agentSessionFailures: [],
+  phase: 'ready', projectionsBySession: {},
 }
 // The Workspace snapshot lists no pins or archives: an action's membership
 // arrives through its injected Set hooks, never through this seat.

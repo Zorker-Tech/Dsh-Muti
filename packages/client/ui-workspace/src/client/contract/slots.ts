@@ -50,6 +50,7 @@ import type { SessionSearchResultItem } from '@deepseek-ai/dsh-api-session-contr
 import type { RemoteHostFacts } from '@deepseek-ai/dsh-api-remotes/client'
 import type { SessionActivity, WorkspaceId, WorkspaceView } from '@deepseek-ai/dsh-api-workspace-controller/client'
 import type { SessionId } from '@deepseek-ai/dsh-session/types'
+import type { AgentMeshSessionReference } from '@deepseek-ai/dsh-client-ui-agent-mesh/client'
 import type { ShortcutCatalogEntry } from '@deepseek-ai/dsh-client-shortcuts/client'
 import type { WorkspaceShortcutState } from '../shortcuts.ts'
 import type { StartSessionOptions } from '../navigation.ts'
@@ -245,6 +246,12 @@ export type WorkspaceBrowserInjected = {
   startSession: (workspaceId?: WorkspaceId, options?: StartSessionOptions) => void
   /** Open a real Session. */
   open: (sessionId: SessionId) => void
+  /** Open a session owned by an external agent in the Agent Mesh panel. */
+  openAgentSession: (reference: AgentMeshSessionReference) => void
+  /** Change the Harness pin state for one agent-owned session. */
+  setAgentSessionPinned: (reference: AgentMeshSessionReference, pinned: boolean) => Promise<void>
+  /** Change the Harness archive state for one agent-owned session. */
+  setAgentSessionArchived: (reference: AgentMeshSessionReference, archived: boolean) => Promise<void>
   /**
    * Search current visible conversation messages. The Host fixes the result
    * bound; `hasMore` means the query needs narrowing.

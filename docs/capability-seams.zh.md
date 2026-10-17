@@ -194,6 +194,19 @@ flowchart LR
   svc_agentLoop["ctx.agentLoop<br/>Concrete loop driver"]
   pkg_base["base"]
   pkg_sdk_minimal["sdk-minimal"]
+  pkg_agent_mesh["agent-mesh"]
+  svc_agentMesh["ctx.agentMesh<br/>External coding-agent registry and session bindings"]
+  pkg_agent_codex["agent-codex"]
+  pkg_agent_grok["agent-grok"]
+  pkg_agent_omp["agent-omp"]
+  pkg_agent_pi["agent-pi"]
+  pkg_agent_mesh_collaboration["agent-mesh-collaboration"]
+  pkg_agent_mesh_controller["agent-mesh-controller"]
+  pkg_agent_mesh_tools["agent-mesh-tools"]
+  svc_agentMeshController["ctx.agentMeshController<br/>Agent mesh Remote API"]
+  pkg_api_remotes["api-remotes"]
+  svc_meshCollaboration["ctx.meshCollaboration<br/>Cross-agent collaboration service"]
+  svc_meshCollaborationController["ctx.meshCollaborationController<br/>Collaboration Remote API"]
   pkg_schedule["schedule"]
   svc_schedule["ctx.schedule<br/>Host scheduled messages"]
   pkg_goal["goal"]
@@ -296,8 +309,16 @@ flowchart LR
   svc_dynamicCordisRunner["ctx.dynamicCordisRunner<br/>Dynamic Cordis package host runner"]
   svc_cordisInspect["ctx.cordisInspect<br/>Dynamic Cordis inspect registry"]
   pkg_agent --> svc_agents
+  pkg_agent_codex --> svc_agentMesh
   pkg_agent_default_model --> svc_agentDefaultModel
+  pkg_agent_grok --> svc_agentMesh
   pkg_agent_loop --> svc_agentLoop
+  pkg_agent_mesh --> svc_agentMesh
+  pkg_agent_mesh_collaboration --> svc_meshCollaboration
+  pkg_agent_mesh_collaboration --> svc_meshCollaborationController
+  pkg_agent_mesh_controller --> svc_agentMeshController
+  pkg_agent_omp --> svc_agentMesh
+  pkg_agent_pi --> svc_agentMesh
   pkg_agent_preset_registry --> svc_agentPresets
   pkg_api_gateway --> svc_typertGateway
   pkg_api_job_controller --> svc_jobController
@@ -455,6 +476,10 @@ flowchart LR
   svc_agentDefaultModel --> pkg_headless
   svc_agentLoop --> pkg_base
   svc_agentLoop --> pkg_sdk_minimal
+  svc_agentMesh --> pkg_agent_mesh_collaboration
+  svc_agentMesh --> pkg_agent_mesh_controller
+  svc_agentMesh --> pkg_agent_mesh_tools
+  svc_agentMeshController --> pkg_api_remotes
   svc_agentTeams --> pkg_experimental_tool_agent_team
   svc_agents --> pkg_acp
   svc_agents --> pkg_agent_loop
@@ -500,6 +525,7 @@ flowchart LR
   svc_llm --> pkg_compaction_basic
   svc_lsp --> pkg_tool_lsp
   svc_mcpResources --> pkg_mcp_resources
+  svc_meshCollaborationController --> pkg_api_remotes
   svc_officeToPdf --> pkg_client_ui_sidebar_documentpreview
   svc_otel --> pkg_host_product_telemetry_otel
   svc_otel --> pkg_session_telemetry_otel
@@ -679,6 +705,10 @@ flowchart LR
 | `ctx.agents` | `core` | [`agent`](../packages/core/agent) | - | [`agent-loop`](../packages/core/agent-loop), [`acp`](../packages/acp/acp), [`subagent`](../packages/subagent/subagent) | - | 拥有实时 Agent 句柄、创建／恢复工厂 seam，以及进程本地的发起方传播。 |
 | `ctx.agentDefaultModel` | `core` | [`agent-default-model`](../packages/core/agent-default-model) | - | [`api-session-controller`](../packages/api/session-controller), [`headless`](../packages/bundle/headless) | - | Reads the default ModelSelection from volatile Config and saves selections through the profile editor. |
 | `ctx.agentLoop` | `bundle` | [`agent-loop`](../packages/core/agent-loop) | - | [`base`](../packages/bundle/base), [`sdk-minimal`](../packages/bundle/sdk-minimal) | - | 唯一的具体循环插件；扩展包依赖 dsh-agent 的事件和服务，而不依赖此包。 |
+| `ctx.agentMesh` | `seam` | [`agent-mesh`](../packages/agent-mesh/mesh) | [`agent-codex`](../packages/agent-mesh/agent-codex), [`agent-grok`](../packages/agent-mesh/agent-grok), [`agent-omp`](../packages/agent-mesh/agent-omp), [`agent-pi`](../packages/agent-mesh/agent-pi) | [`agent-mesh-collaboration`](../packages/agent-mesh/collaboration), [`agent-mesh-controller`](../packages/agent-mesh/controller), [`agent-mesh-tools`](../packages/agent-mesh/tools) |  拥有规范的 adapter 注册表、持久化的会话到智能体绑定与 run 跟踪；adapter 包提供集成，tools、collaboration 与 Remote API 通过同一服务读取。  | Owns the canonical adapter registry, durable session-to-agent bindings, and run tracking; adapter packages provide integrations, while tools, collaboration, and the Remote API read through the same service. |
+| `ctx.agentMeshController` | `core` | [`agent-mesh-controller`](../packages/agent-mesh/controller) | - | [`api-remotes`](../packages/api/remotes) |  将 agent mesh 服务投影到 Web Client 使用的 `remote.agentMesh` 命名空间。  | Projects the agent mesh service onto the `remote.agentMesh` namespace used by the Web Client. |
+| `ctx.meshCollaboration` | `core` | [`agent-mesh-collaboration`](../packages/agent-mesh/collaboration) | - | - |  在同一包中拥有一份 collaboration plan 与 todo 看板、任务派发、采样 worktree、冲突报告，以及 collaboration tools 和 Remote controller。  | Owns one collaboration plan and todo board, task dispatch, sampled worktrees, conflict reports, and the collaboration tools and Remote controller in the same package. |
+| `ctx.meshCollaborationController` | `core` | [`agent-mesh-collaboration`](../packages/agent-mesh/collaboration) | - | [`api-remotes`](../packages/api/remotes) |  将 collaboration 服务投影到 Web Client 使用的生成式 Remote 命名空间。  | Projects the collaboration service onto the generated Remote namespace used by the Web Client. |
 | `ctx.schedule` | `core` | [`schedule`](../packages/schedule/schedule) | - | - | - | 独立于 Session 的加载状态存储任务，并将到期消息排入原 Session。 |
 | `ctx.goals` | `core` | [`goal`](../packages/goal/goal) | - | - | - | 从会话日志折叠带修订版本的目标状态，并将实时延续激活保留在进程本地。 |
 | `ctx.ssh` | `core` | [`ssh`](../packages/ssh/ssh) | - | [`fs-ssh`](../packages/ssh/fs-ssh), [`subprocess-ssh`](../packages/ssh/subprocess-ssh), [`sandbox-ssh`](../packages/ssh/sandbox-ssh) | - | 负责一条经过认证的 OpenSSH 连接、已安装辅助程序身份、独立程序流，以及配套远端提供方的断连清理。 |

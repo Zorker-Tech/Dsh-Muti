@@ -53,7 +53,7 @@ function createSessionsBench(ctx: Context): SessionsBench {
     ids: [],
     byId: {},
     phase: 'ready',
-    projectionsBySession: {},
+    agentSessions: [], agentSessionFailures: [], projectionsBySession: {},
   })
   const bindings = new Map<SessionId, SessionBinding>()
   const scopes = new Map<SessionId, Context>()

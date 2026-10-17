@@ -1,0 +1,25 @@
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write packages/agent-mesh/README.md
+/:
+  en: ffbbeb8607292940
+  zh: 2fe9d6bc32929ee0
+/agent-mesh-external-coding-agent-integration-family:
+  en: e2ac04f57ab20e4a
+  zh: 1132e392cfa6869a
+/agent-mesh-external-coding-agent-integration-family/summary:
+  en: 11199fff426b509a
+  zh: 6d89ce967a9ced2f
+/agent-mesh-external-coding-agent-integration-family/table-of-contents:
+  en: 1eb35b015a6c423f
+  zh: 1eb35b015a6c423f
+/agent-mesh-external-coding-agent-integration-family/packages:
+  en: bd03a55fc00520d5
+  zh: da74841ff75bb862
+/agent-mesh-external-coding-agent-integration-family/related-documentation:
+  en: 51c795c7a391e495
+  zh: 453e3be3b3058b66
+/agent-mesh-external-coding-agent-integration-family/dev-note:
+  en: 14f43ac97236838f
+  zh: 3cd09e8253b9c8c3

@@ -82,6 +82,8 @@ function sessionState(
   return {
     ids: summaries.map(item => item.id),
     byId: Object.fromEntries(summaries.map(item => [item.id, item])),
+    agentSessions: [],
+    agentSessionFailures: [],
     phase,
     projectionsBySession: {},
   }

@@ -1,0 +1,1310 @@
+{
+  "initial": [
+    {
+      "name": "bash",
+      "description": "Execute a bash command (`bash -c`) and return its stdout/stderr. Each call runs in a fresh shell; pass `workdir` instead of using `cd`. Managed `$DSH_*` variables expose current harness environment facts. Long output is truncated to its tail; the full output is saved to a file whose path is reported when available. Provide `description` before `command` in the arguments. Before any delete or move, verify that the resolved absolute target path is the intended one; never run it against a computed path you have not checked. An unset variable expands to an empty string, so guard variables in such paths with `${VAR:?}`. Commands may run under a file sandbox; a blocked file operation is reported as `[sandbox: file access denied under <mode> mode]`, a policy denial: do not retry another way.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "description": {
+            "type": "string",
+            "description": "Clear, concise description of what this command does in active voice, 5-10 words (shown in the UI). Examples: \"ls\" → \"List files in current directory\"; \"git status\" → \"Show working tree status\"; \"npm install\" → \"Install package dependencies\"."
+          },
+          "command": {
+            "type": "string",
+            "description": "The bash command to execute."
+          },
+          "timeoutMs": {
+            "type": "number",
+            "description": "Timeout in milliseconds. The executor applies its configured default and cap; on expiry the command moves to the background as a job instead of being killed."
+          },
+          "workdir": {
+            "type": "string",
+            "description": "Working directory for this command. Defaults to the session workspace; a relative path is resolved against it."
+          },
+          "run_in_background": {
+            "type": "boolean",
+            "description": "Run in the background and return a job id immediately (collect with job_output, stop with job_kill). No timeout applies."
+          },
+          "sandbox_permissions": {
+            "type": "string",
+            "description": "The narrowest wider sandbox mode for a one-shot retry of the exact command the sandbox just denied; the retry asks the user for approval.",
+            "enum": [
+              "workspace-write",
+              "danger-full-access"
+            ]
+          },
+          "justification": {
+            "type": "string",
+            "description": "Required with sandbox_permissions: one sentence for the user explaining why this exact command needs the wider access. Use the language of the user’s current request."
+          }
+        },
+        "required": [
+          "description",
+          "command"
+        ]
+      }
+    },
+    {
+      "name": "create_goal",
+      "description": "Create a persisted goal that keeps this session working across automatic continuation rounds. Use it when the direct human request is a long-running objective, even if the user did not say \"goal\"; not for single-turn work.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "objective": {
+            "type": "string",
+            "description": "The concrete completion objective inferred from the direct human request."
+          },
+          "max_goal_rounds": {
+            "type": "number",
+            "description": "Optional positive safe-integer limit on automatic continuation rounds."
+          }
+        },
+        "required": [
+          "objective"
+        ]
+      }
+    },
+    {
+      "name": "edit",
+      "description": "Edit an existing UTF-8 text file by replacing literal text.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "file_path": {
+            "type": "string",
+            "description": "Path to edit, resolved by the filesystem backend. Provide `file_path` before `old_string` and `new_string` in the arguments."
+          },
+          "old_string": {
+            "type": "string",
+            "description": "Literal text to replace."
+          },
+          "new_string": {
+            "type": "string",
+            "description": "Literal replacement text. Use an empty string to delete the match."
+          },
+          "replace_all": {
+            "type": "boolean",
+            "description": "Replace all matches. Defaults to false; when false, old_string must appear exactly once."
+          },
+          "sandbox_permissions": {
+            "type": "string",
+            "description": "The narrowest wider sandbox mode for a one-shot retry of the exact operation the sandbox just denied; the retry asks the user for approval.",
+            "enum": [
+              "workspace-write",
+              "danger-full-access"
+            ]
+          },
+          "justification": {
+            "type": "string",
+            "description": "Required with sandbox_permissions: one sentence for the user explaining why this exact file operation needs the wider access. Use the language of the user’s current request."
+          }
+        },
+        "required": [
+          "file_path",
+          "old_string",
+          "new_string"
+        ]
+      }
+    },
+    {
+      "name": "exit_plan_mode",
+      "description": "Use only in plan mode. Present your plan for the user's review and, on approval, leave plan mode. The user may approve (carry out the plan from your next step) or keep planning — their feedback comes back in the tool result; revise and present again.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "plan": {
+            "type": "string",
+            "description": "The complete plan, as markdown, starting with a # heading that names it."
+          }
+        },
+        "required": [
+          "plan"
+        ]
+      }
+    },
+    {
+      "name": "get_goal",
+      "description": "Read the current session goal, including the id and revision that update_goal requires.",
+      "parameters": {
+        "type": "object",
+        "properties": {}
+      }
+    },
+    {
+      "name": "glob",
+      "description": "Find files, not directories, whose paths match a glob pattern, including hidden and ignored files. Returns up to 100 paths in modification-time order; a larger result keeps the first paths and reports where the complete list was saved.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "pattern": {
+            "type": "string",
+            "description": "Glob pattern to match file paths against (e.g. \"**/*.ts\", \"src/**/*.test.js\"). A pattern with no \"/\" matches the basename at any depth, so \"*\" and \"*.ts\" both search the whole tree; include a separator to anchor the depth."
+          },
+          "path": {
+            "type": "string",
+            "description": "Directory to search in. Defaults to the session workspace; a relative path resolves against it."
+          }
+        },
+        "required": [
+          "pattern"
+        ]
+      }
+    },
+    {
+      "name": "grep",
+      "description": "Search file contents with a ripgrep regular expression. Returns matching lines with line numbers, grouped by file. Returns up to 250 matches; a larger result reports where the complete match list was saved.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "pattern": {
+            "type": "string",
+            "description": "Regular expression to search for (ripgrep syntax)."
+          },
+          "path": {
+            "type": "string",
+            "description": "File or directory to search. Defaults to the session workspace; a relative path resolves against it."
+          },
+          "include": {
+            "type": "string",
+            "description": "One glob filter for which files to search (e.g. \"*.ts\", \"*.{js,jsx}\"). Not a list; negation is not supported."
+          }
+        },
+        "required": [
+          "pattern"
+        ]
+      }
+    },
+    {
+      "name": "interrupt_agent",
+      "description": "Ask a subagent to stop its current work. This call returns without waiting for it to stop. You can continue a local direct child's conversation later with send_message. External executions stop permanently and cannot receive follow-ups. Subagents it started will keep running.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "agent_id": {
+            "type": "string",
+            "description": "The id of an agent created under you: your direct child or a deeper descendant."
+          }
+        },
+        "required": [
+          "agent_id"
+        ]
+      }
+    },
+    {
+      "name": "job_kill",
+      "description": "Request cancellation of a running background job.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "job_id": {
+            "type": "string",
+            "description": "Job id returned by the tool that started the background work."
+          },
+          "reason": {
+            "type": "string",
+            "description": "Optional short reason, recorded in the log and forwarded to the job."
+          }
+        },
+        "required": [
+          "job_id"
+        ]
+      }
+    },
+    {
+      "name": "job_list",
+      "description": "List your background jobs (running and finished) with their ids, kinds, and statuses.",
+      "parameters": {
+        "type": "object",
+        "properties": {}
+      }
+    },
+    {
+      "name": "job_output",
+      "description": "Read a background job: output since the previous read for stream jobs, or the result of a finished final-output job.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "job_id": {
+            "type": "string",
+            "description": "Job id returned by the tool that started the background work."
+          },
+          "wait": {
+            "type": "boolean",
+            "description": "Block until the job finishes or the timeout expires; a timed-out wait leaves the job running. Defaults to false."
+          },
+          "timeout_ms": {
+            "type": "number",
+            "description": "Max wait in milliseconds with wait: true. Defaults to and is capped by configuration."
+          }
+        },
+        "required": [
+          "job_id"
+        ]
+      }
+    },
+    {
+      "name": "list_agents",
+      "description": "List subagents you started, with their ids, labels, and status. running means it is working; inactive means it is not currently working. You will be notified when a subagent finishes; there is no need to keep checking its status. Use send_message to continue the conversation.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "scope": {
+            "type": "string",
+            "description": "children (default) lists direct children, which accept send_message in any status. descendants lists the whole tree below you with each entry's parent session id and depth; entries deeper than 1 accept only interrupt_agent.",
+            "enum": [
+              "children",
+              "descendants"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "name": "mesh_agent_tool_snapshot-n_read_file_3c3c81bcb2",
+      "description": "Delegate a free-text task to snapshot-native-context's native tool \"read_file\". The external agent receives a request to use this tool; its native JSON arguments are not exposed. Requires DSH approval.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "task": {
+            "type": "string",
+            "description": "Task to delegate to the external agent."
+          }
+        },
+        "required": [
+          "task"
+        ]
+      }
+    },
+    {
+      "name": "mesh_agents",
+      "description": "List the external coding agents the mesh can read (Codex, Grok Build, Pi, OMP), with their detection state and declared capabilities.",
+      "parameters": {
+        "type": "object",
+        "properties": {}
+      }
+    },
+    {
+      "name": "mesh_capabilities",
+      "description": "Read one external agent's declared tools, skills, MCP servers, commands and context files from its own configuration.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "agentId": {
+            "type": "string",
+            "description": "Agent id, as reported by mesh_agents."
+          },
+          "cwd": {
+            "type": "string",
+            "description": "Working directory whose project-level configuration applies."
+          }
+        },
+        "required": [
+          "agentId"
+        ]
+      }
+    },
+    {
+      "name": "mesh_capability_read",
+      "description": "Read one skill, command template, or context file currently declared by an external agent, through DSH's filesystem policy.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "agentId": {
+            "type": "string",
+            "description": "Agent id, as reported by mesh_agents."
+          },
+          "path": {
+            "type": "string",
+            "description": "Exact skill, context-file, or command-template path reported by mesh_capabilities."
+          },
+          "cwd": {
+            "type": "string",
+            "description": "Working directory whose project-level declarations apply."
+          }
+        },
+        "required": [
+          "agentId",
+          "path"
+        ]
+      }
+    },
+    {
+      "name": "mesh_collaboration_start",
+      "description": "Create a collaboration: one authoritative plan, one shared todo board, and optional tasks assigned to agents. A worktree-isolated task gets its own git worktree when it is dispatched.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "Short human title."
+          },
+          "objective": {
+            "type": "string",
+            "description": "What the collaboration as a whole must achieve."
+          },
+          "repoRoot": {
+            "type": "string",
+            "description": "Absolute path of the repository the tasks work in."
+          },
+          "tasks": {
+            "type": "array",
+            "description": "Initial tasks. A seed may name a sibling by position (\"task-1\") or by id in dependsOn.",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "title": {
+                  "type": "string"
+                },
+                "instruction": {
+                  "type": "string"
+                },
+                "assignee": {
+                  "type": "string"
+                },
+                "dependsOn": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "isolation": {
+                  "type": "string",
+                  "enum": [
+                    "worktree",
+                    "shared-cwd"
+                  ]
+                }
+              },
+              "required": [
+                "title",
+                "instruction",
+                "assignee"
+              ]
+            }
+          }
+        },
+        "required": [
+          "title",
+          "objective",
+          "repoRoot"
+        ]
+      }
+    },
+    {
+      "name": "mesh_collaborations",
+      "description": "List collaborations with their plan, board counts, tasks and worktrees, or read one collaboration by id.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "collaborationId": {
+            "type": "string",
+            "description": "Read one collaboration instead of listing every one."
+          }
+        }
+      }
+    },
+    {
+      "name": "mesh_mcp_connect",
+      "description": "After DSH approval, start one native MCP server declared by an external agent and expose its tools only to the calling DSH Agent.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "agentId": {
+            "type": "string",
+            "description": "Agent id whose native MCP configuration declares the server."
+          },
+          "serverName": {
+            "type": "string",
+            "description": "Exact server name from mesh_capabilities."
+          },
+          "cwd": {
+            "type": "string",
+            "description": "Absolute project working directory used to resolve native project configuration."
+          }
+        },
+        "required": [
+          "agentId",
+          "serverName",
+          "cwd"
+        ]
+      }
+    },
+    {
+      "name": "mesh_mcp_disconnect",
+      "description": "Disconnect one MCP server previously approved for the calling DSH Agent and remove its tools from that Agent.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "agentId": {
+            "type": "string",
+            "description": "External agent id used when connecting the server."
+          },
+          "serverName": {
+            "type": "string",
+            "description": "Exact server name used when connecting."
+          }
+        },
+        "required": [
+          "agentId",
+          "serverName"
+        ]
+      }
+    },
+    {
+      "name": "mesh_plan_advance",
+      "description": "Move the plan to a phase, marking every earlier phase done. Refused while an earlier phase is still open.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "collaborationId": {
+            "type": "string",
+            "description": "Collaboration to change."
+          },
+          "phaseId": {
+            "type": "string",
+            "description": "Phase to activate."
+          }
+        },
+        "required": [
+          "collaborationId",
+          "phaseId"
+        ]
+      }
+    },
+    {
+      "name": "mesh_plan_set",
+      "description": "Replace a collaboration's plan fields. The plan is the authoritative input every dispatched run receives.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "collaborationId": {
+            "type": "string",
+            "description": "Collaboration to change."
+          },
+          "objective": {
+            "type": "string",
+            "description": "The objective; it replaces the current one."
+          },
+          "phases": {
+            "type": "array",
+            "description": "The complete new phase list, in order.",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "title": {
+                  "type": "string"
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "todo",
+                    "active",
+                    "done"
+                  ]
+                },
+                "exitCriteria": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "id",
+                "title",
+                "status"
+              ]
+            }
+          },
+          "activePhaseId": {
+            "type": "string",
+            "description": "Phase to mark active; it must exist in the resulting list."
+          },
+          "decisions": {
+            "type": "array",
+            "description": "The complete decisions log.",
+            "items": {
+              "type": "string"
+            }
+          },
+          "mode": {
+            "type": "string",
+            "description": "Whether the plan is injected into dispatched prompts or only observed.",
+            "enum": [
+              "inject",
+              "observe"
+            ]
+          }
+        },
+        "required": [
+          "collaborationId",
+          "objective"
+        ]
+      }
+    },
+    {
+      "name": "mesh_run",
+      "description": "Dispatch a task to an external coding agent in a working directory and return its terminal result. Adapters that expose native approval requests route them through DSH approval.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "agentId": {
+            "type": "string",
+            "description": "Agent id, as reported by mesh_agents."
+          },
+          "prompt": {
+            "type": "string",
+            "description": "The task to hand the agent."
+          },
+          "cwd": {
+            "type": "string",
+            "description": "Absolute working directory the agent runs in."
+          },
+          "commandName": {
+            "type": "string",
+            "description": "Optional exact file-backed command name from mesh_capabilities; its prompt body is prepended to this task."
+          },
+          "model": {
+            "type": "string",
+            "description": "Model in the agent's own naming."
+          },
+          "approval": {
+            "type": "string",
+            "description": "Approval mode in the agent's own vocabulary."
+          },
+          "resumeNativeId": {
+            "type": "string",
+            "description": "Native session id to continue."
+          },
+          "timeoutMs": {
+            "type": "integer",
+            "description": "Wall-clock budget in milliseconds."
+          }
+        },
+        "required": [
+          "agentId",
+          "prompt",
+          "cwd"
+        ]
+      }
+    },
+    {
+      "name": "mesh_run_cancel",
+      "description": "Cancel a dispatched run. Cancellation terminates the agent process group; it is not a resumable pause.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "runId": {
+            "type": "string",
+            "description": "Run to cancel."
+          },
+          "reason": {
+            "type": "string",
+            "description": "Reason recorded with the cancellation."
+          }
+        },
+        "required": [
+          "runId"
+        ]
+      }
+    },
+    {
+      "name": "mesh_runs",
+      "description": "Read dispatched runs: their status, final answer, classified failure, and recent events.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "runId": {
+            "type": "string",
+            "description": "One run to read; omit for every tracked run."
+          },
+          "wait": {
+            "type": "boolean",
+            "description": "With runId, wait for that run to reach a terminal status before answering."
+          }
+        }
+      }
+    },
+    {
+      "name": "mesh_sessions",
+      "description": "List one external agent's own sessions (as that agent's CLI stored them), newest first.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "agentId": {
+            "type": "string",
+            "description": "Agent id, as reported by mesh_agents."
+          },
+          "cwd": {
+            "type": "string",
+            "description": "Only sessions whose recorded working directory resolves to this path."
+          },
+          "limit": {
+            "type": "integer",
+            "description": "Maximum number of sessions to return."
+          }
+        },
+        "required": [
+          "agentId"
+        ]
+      }
+    },
+    {
+      "name": "mesh_task_dispatch",
+      "description": "Dispatch one collaboration task: create or reuse its worktree, hand the agent the plan and board context plus the instruction, and record the run on the task. Refused when the task is already running or succeeded, or when a dependency is unfinished.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "collaborationId": {
+            "type": "string",
+            "description": "Collaboration owning the task."
+          },
+          "taskId": {
+            "type": "string",
+            "description": "Task to dispatch, as reported by mesh_collaborations."
+          },
+          "baseRef": {
+            "type": "string",
+            "description": "Commit-ish a newly created worktree branches from."
+          },
+          "timeoutMs": {
+            "type": "integer",
+            "description": "Wall-clock budget handed to the agent."
+          }
+        },
+        "required": [
+          "collaborationId",
+          "taskId"
+        ]
+      }
+    },
+    {
+      "name": "mesh_tasks",
+      "description": "Read one external agent's own todo list and plan for a session, when that agent records them.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "agentId": {
+            "type": "string",
+            "description": "Agent id, as reported by mesh_agents."
+          },
+          "sessionId": {
+            "type": "string",
+            "description": "Native session id, as reported by mesh_sessions."
+          }
+        },
+        "required": [
+          "agentId",
+          "sessionId"
+        ]
+      }
+    },
+    {
+      "name": "mesh_todos_get",
+      "description": "Read a collaboration's shared todo board with its revision.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "collaborationId": {
+            "type": "string",
+            "description": "Collaboration to read."
+          }
+        },
+        "required": [
+          "collaborationId"
+        ]
+      }
+    },
+    {
+      "name": "mesh_todos_observe",
+      "description": "Read one agent's own todo list for a session and fold it into the shared board. Authored items are never overwritten, and an item the board considers done is never reopened.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "collaborationId": {
+            "type": "string",
+            "description": "Collaboration whose board is folded into."
+          },
+          "agentId": {
+            "type": "string",
+            "description": "Agent whose own store is read, as reported by mesh_agents."
+          },
+          "sessionId": {
+            "type": "string",
+            "description": "The agent's native session id; the newest session is read when omitted."
+          }
+        },
+        "required": [
+          "collaborationId",
+          "agentId"
+        ]
+      }
+    },
+    {
+      "name": "mesh_todos_set",
+      "description": "Replace a collaboration's shared todo board. Pass expectedRevision from a previous read to be refused instead of clobbering another writer's change.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "collaborationId": {
+            "type": "string",
+            "description": "Collaboration whose board is replaced."
+          },
+          "todos": {
+            "type": "array",
+            "description": "The complete new board.",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "content": {
+                  "type": "string"
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "pending",
+                    "in_progress",
+                    "completed",
+                    "blocked",
+                    "cancelled"
+                  ]
+                },
+                "owner": {
+                  "type": "string"
+                },
+                "blockedBy": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              },
+              "required": [
+                "id",
+                "content",
+                "status"
+              ]
+            }
+          },
+          "expectedRevision": {
+            "type": "integer",
+            "description": "Revision the caller read; the write is refused when the board moved on."
+          }
+        },
+        "required": [
+          "collaborationId",
+          "todos"
+        ]
+      }
+    },
+    {
+      "name": "mesh_transcript",
+      "description": "Read a window of one external agent's session transcript, projected onto a common message shape.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "agentId": {
+            "type": "string",
+            "description": "Agent id, as reported by mesh_agents."
+          },
+          "sessionId": {
+            "type": "string",
+            "description": "Native session id, as reported by mesh_sessions."
+          },
+          "maxMessages": {
+            "type": "integer",
+            "description": "Maximum number of trailing messages to return."
+          }
+        },
+        "required": [
+          "agentId",
+          "sessionId"
+        ]
+      }
+    },
+    {
+      "name": "mesh_worktree_conflicts",
+      "description": "Compare live worktrees for same-file and same-hunk edits, shared configured feature areas, and differing base commits. Findings are heuristic and advisory; this report does not prevent a separate dispatch.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "repoRoot": {
+            "type": "string",
+            "description": "Repository to analyse."
+          }
+        },
+        "required": [
+          "repoRoot"
+        ]
+      }
+    },
+    {
+      "name": "mesh_worktree_create",
+      "description": "Create a git worktree on a new branch inside the mesh-owned directory of a repository, or reuse a clean idle one already reserved for that agent.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "agentId": {
+            "type": "string",
+            "description": "Agent the worktree is reserved for."
+          },
+          "repoRoot": {
+            "type": "string",
+            "description": "Absolute path inside the repository."
+          },
+          "baseRef": {
+            "type": "string",
+            "description": "Commit-ish to branch from; the repository HEAD when omitted."
+          },
+          "label": {
+            "type": "string",
+            "description": "Label used in the branch name and the worktree directory."
+          },
+          "collaborationId": {
+            "type": "string",
+            "description": "Collaboration the worktree serves."
+          },
+          "reuse": {
+            "type": "boolean",
+            "description": "Reuse a clean idle worktree reserved for the same agent."
+          }
+        },
+        "required": [
+          "agentId",
+          "repoRoot"
+        ]
+      }
+    },
+    {
+      "name": "mesh_worktree_integrated",
+      "description": "Mark a worktree integrated so it stops appearing as outstanding work, or outstanding again with merged=false.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "worktreeId": {
+            "type": "string",
+            "description": "Worktree to mark."
+          },
+          "merged": {
+            "type": "boolean",
+            "description": "false marks it outstanding again; defaults to true."
+          }
+        },
+        "required": [
+          "worktreeId"
+        ]
+      }
+    },
+    {
+      "name": "mesh_worktree_remove",
+      "description": "Remove a mesh-owned git worktree. DANGEROUS: a worktree with uncommitted changes or unmerged commits is refused unless force is true, and a forced removal discards that work permanently.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "worktreeId": {
+            "type": "string",
+            "description": "Worktree to remove."
+          },
+          "force": {
+            "type": "boolean",
+            "description": "Discard uncommitted and unmerged work. Only pass this after a human approved the loss."
+          }
+        },
+        "required": [
+          "worktreeId"
+        ]
+      }
+    },
+    {
+      "name": "mesh_worktrees",
+      "description": "List mesh-owned git worktrees with a live progress sample: changed files, HEAD, and whether the tree is dirty.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "repoRoot": {
+            "type": "string",
+            "description": "Restrict to worktrees of one repository."
+          }
+        }
+      }
+    },
+    {
+      "name": "read",
+      "description": "Read a UTF-8 text file and return line-numbered content.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "file_path": {
+            "type": "string",
+            "description": "Path to read, resolved by the filesystem backend."
+          },
+          "offset": {
+            "type": "number",
+            "description": "1-based first line to return. Defaults to 1."
+          },
+          "limit": {
+            "type": "number",
+            "description": "Maximum number of lines to return. Defaults to 2000."
+          }
+        },
+        "required": [
+          "file_path"
+        ]
+      }
+    },
+    {
+      "name": "read_image",
+      "description": "Read a PNG/JPEG/WebP/GIF file and return the image itself. Large images are downscaled automatically; do not install image libraries or create thumbnails to inspect an image.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "file_path": {
+            "type": "string",
+            "description": "Path to the image file, resolved by the filesystem backend."
+          }
+        },
+        "required": [
+          "file_path"
+        ]
+      }
+    },
+    {
+      "name": "send_message",
+      "description": "Send a message to an agent. A working agent receives it at its next step; an idle agent starts a new turn with it. Returns delivery confirmation, not the agent's answer.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "agent_id": {
+            "type": "string",
+            "description": "The agent id of your direct continuable child, or your direct parent when you are a resident continuable child."
+          },
+          "message": {
+            "type": "string",
+            "description": "The message to deliver to the agent."
+          }
+        },
+        "required": [
+          "agent_id",
+          "message"
+        ]
+      }
+    },
+    {
+      "name": "skill",
+      "description": "Load the full instructions for a skill. Call it before acting on a task that names or clearly matches a skill in the session skill catalog.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "The exact skill name from the available skills list."
+          }
+        },
+        "required": [
+          "name"
+        ]
+      }
+    },
+    {
+      "name": "subagent",
+      "description": "Delegate a self-contained task to a subagent (a separate agent that works in its own context) to offload focused, independent work — research, a scoped implementation, an analysis — so it does not consume this conversation's context. The subagent returns its result, not its intermediate steps. This tool starts an independently managed subagent and immediately returns its id. The runtime notifies you when it finishes. The child reports results with `send_message`; use `send_message` to steer it while running or continue its conversation after it finishes.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "cwd": {
+            "type": "string",
+            "description": "Initial child working directory. Relative paths use your current directory; omitted inherits it. Later directory changes in either agent are independent."
+          },
+          "description": {
+            "type": "string",
+            "description": "A short (3-5 word) description of the delegated task, for display."
+          },
+          "prompt": {
+            "type": "string",
+            "description": "The complete, self-contained task for the subagent. It does not share this conversation's context, so include everything it needs."
+          }
+        },
+        "required": [
+          "description",
+          "prompt"
+        ]
+      }
+    },
+    {
+      "name": "subagent_fork",
+      "description": "Delegate a task to a subagent that inherits this conversation: a child agent seeded with all completed turns so far (it does not see the current in-flight turn). Use this when the subtask builds on this conversation's context — a follow-up analysis, a review, a continuation — without consuming this conversation's context for the work itself. You receive its result, not its intermediate steps. This tool starts an independently managed subagent and immediately returns its id. The runtime notifies you when it finishes. The child reports results with `send_message`; use `send_message` to steer it while running or continue its conversation after it finishes.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "cwd": {
+            "type": "string",
+            "description": "Initial child working directory. Relative paths use your current directory; omitted inherits it. Later directory changes in either agent are independent."
+          },
+          "description": {
+            "type": "string",
+            "description": "A short (3-5 word) description of the delegated task, for display."
+          },
+          "prompt": {
+            "type": "string",
+            "description": "The task for the subagent. It already sees this conversation's completed turns, so build on them freely and state only what is new."
+          }
+        },
+        "required": [
+          "description",
+          "prompt"
+        ]
+      }
+    },
+    {
+      "name": "todo_write",
+      "description": "Record and update a task list to plan multi-step work and show progress; skip it for trivial single-step tasks. Add one todo per concrete step before you start. While work remains, keep the todos being worked on `in_progress`, several only when work runs in parallel. Mark each todo `completed` as soon as it is done.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "todos": {
+            "type": "array",
+            "description": "The COMPLETE task list, replacing any previous list.",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "content": {
+                  "type": "string",
+                  "description": "What the task is — a short imperative line."
+                },
+                "status": {
+                  "type": "string",
+                  "description": "pending (not started) | in_progress (now) | completed (done).",
+                  "enum": [
+                    "pending",
+                    "in_progress",
+                    "completed"
+                  ]
+                }
+              },
+              "required": [
+                "content",
+                "status"
+              ]
+            }
+          }
+        },
+        "required": [
+          "todos"
+        ]
+      }
+    },
+    {
+      "name": "update_goal",
+      "description": "Update the current goal.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "goal_id": {
+            "type": "string",
+            "description": "Exact id returned by get_goal."
+          },
+          "revision": {
+            "type": "number",
+            "description": "Exact positive revision returned by get_goal."
+          },
+          "action": {
+            "type": "string",
+            "description": "edit, pause, and resume require a direct top-level human request. complete and blocked are also allowed during an automatic continuation of this goal; blocked is rejected before the configured minimum round count.",
+            "enum": [
+              "edit",
+              "pause",
+              "resume",
+              "complete",
+              "blocked"
+            ]
+          },
+          "objective": {
+            "type": "string",
+            "description": "Replacement objective; valid only with action edit."
+          },
+          "max_goal_rounds": {
+            "type": "number",
+            "description": "Replacement cap; valid only with action edit."
+          },
+          "blocked_reason": {
+            "type": "string",
+            "description": "Required only with action blocked: the concrete condition that persisted across rounds and blocks progress."
+          }
+        },
+        "required": [
+          "goal_id",
+          "revision",
+          "action"
+        ]
+      }
+    },
+    {
+      "name": "web_fetch",
+      "description": "Fetch the content of a specific HTTP(S) URL and return it decoded to text.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "description": "The HTTP(S) URL to fetch."
+          }
+        },
+        "required": [
+          "url"
+        ]
+      }
+    },
+    {
+      "name": "web_search",
+      "description": "Search the web for current information. Returns an optional summary answer and a list of source URLs.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "queries": {
+            "type": "array",
+            "description": "1–4 search queries; their results are merged.",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "queries"
+        ]
+      }
+    },
+    {
+      "name": "workflow",
+      "description": "Run a JavaScript workflow script that orchestrates subagents at scale. Use this for work that fans out across many independent pieces — an audit over many files, a migration, multi-angle research, adversarial verification of findings — where you write the orchestration as a script instead of delegating turn by turn.\n\nScript-body hooks:\n- `agent(prompt, opts?): Promise<any>` — run one subagent to completion. Without `opts.schema` it resolves to the child's final text; with `opts.schema` (an object-rooted JSON Schema using ONLY type/properties/required/additionalProperties/items/enum/const/oneOf) it resolves to the validated object. Resolves `null` when the child fails (filter with `.filter(Boolean)`). Other opts: `label` (display), `phase` (progress group), and independent `provider`/`model` LLM target overrides.\n- `pipeline(items, ...stages): Promise<any[]>` — run each item through the stages independently with NO barrier between stages (prefer this for multi-stage work). Each stage receives `(prev, item, index)`. A stage throw drops that ITEM to `null` and skips its remaining stages.\n- `parallel(thunks): Promise<any[]>` — run zero-argument functions concurrently and await ALL of them (a barrier; use only when a stage genuinely needs every prior result together). A throwing thunk resolves to `null`.\n- `phase(title)` — start a progress phase; `log(message)` — narrate progress; `args` — the tool call's `args` input, verbatim.\n\nMisused hooks (bad arguments, unknown options, unsupported schemas, tripped caps) end the whole script instead of producing `null`. The script has no filesystem, network, timer, or Node.js APIs; the agents do the work.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "script": {
+            "type": "string",
+            "description": "The plain JavaScript body, not TypeScript and without an `export const meta` statement; top-level await is allowed. End with `return <value>`; the JSON-serializable value is this tool's result."
+          },
+          "meta": {
+            "type": "object",
+            "description": "The workflow identity as plain JSON, not code.",
+            "additionalProperties": true,
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "Short kebab-case workflow name."
+              },
+              "description": {
+                "type": "string",
+                "description": "One-line description of what the workflow does."
+              },
+              "whenToUse": {
+                "type": "string",
+                "description": "Optional guidance on when this workflow applies."
+              },
+              "phases": {
+                "type": "array",
+                "description": "Optional phase declarations matched by phase() calls.",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "properties": {
+                    "title": {
+                      "type": "string",
+                      "description": "The phase title phase() calls match by exact string."
+                    },
+                    "detail": {
+                      "type": "string",
+                      "description": "Optional one-line description of the phase."
+                    },
+                    "provider": {
+                      "type": "string",
+                      "description": "Optional provider override this phase is expected to use."
+                    },
+                    "model": {
+                      "type": "string",
+                      "description": "Optional model override this phase is expected to use."
+                    }
+                  },
+                  "required": [
+                    "title"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "name",
+              "description"
+            ]
+          },
+          "args": {
+            "type": "object",
+            "description": "Optional JSON input exposed to the script as the `args` global (wrap a bare list as a field, e.g. {\"files\": [...]}).",
+            "additionalProperties": true
+          },
+          "run_in_background": {
+            "type": "boolean",
+            "description": "Run as a background job: return a job id immediately instead of waiting; the return value arrives with the completion notice."
+          }
+        },
+        "required": [
+          "script",
+          "meta"
+        ]
+      }
+    },
+    {
+      "name": "working_directory",
+      "description": "Read the current working directory, or change it with cd. Relative paths use the current directory. Existing shells and running processes keep their own directories.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "cd": {
+            "type": "string",
+            "description": "Existing directory to enter. Omit to read the current directory."
+          }
+        }
+      }
+    },
+    {
+      "name": "write",
+      "description": "Create or fully replace a UTF-8 text file.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "file_path": {
+            "type": "string",
+            "description": "Path to write, resolved by the filesystem backend. Provide `file_path` before `content` in the arguments."
+          },
+          "content": {
+            "type": "string",
+            "description": "Full UTF-8 text content to write."
+          },
+          "sandbox_permissions": {
+            "type": "string",
+            "description": "The narrowest wider sandbox mode for a one-shot retry of the exact operation the sandbox just denied; the retry asks the user for approval.",
+            "enum": [
+              "workspace-write",
+              "danger-full-access"
+            ]
+          },
+          "justification": {
+            "type": "string",
+            "description": "Required with sandbox_permissions: one sentence for the user explaining why this exact file operation needs the wider access. Use the language of the user’s current request."
+          }
+        },
+        "required": [
+          "file_path",
+          "content"
+        ]
+      }
+    }
+  ],
+  "changes": []
+}

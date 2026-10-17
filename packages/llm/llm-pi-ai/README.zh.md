@@ -33,6 +33,10 @@ kind: "package-reference"
 
 当同一组合服务多个提供方、某条路由需要 pi-ai 目录默认值并修正少数字段、或必须通过自有端点与协议到达手工声明网关时，选择本适配器。当部署不需要其他提供方时，选择 `dsh-llm-deepseek` 直连 DeepSeek 路由。两个适配器可以同时挂载，因为它们的路由名不冲突；注册其他适配器已拥有的路由会导致插件加载失败。
 
+### 投影 CLI 自有模型目录
+
+agent 包可以使用导出的 `NativeProviderLlmAdapter`，将 CLI 已配置的 provider 提供给 `ctx.llm`，而无需把 CLI 配置迁入本插件。每个 agent 注册一个稳定的 Harness provider id；模型 id 保留原生 provider/model 组合，每次请求都会从智能体自己的文件解析路由与凭据。`nativeProviderAuth()` 提供 pi-ai 所需的 ambient auth 接口，同时让 Harness 凭据存储保持为空并拒绝写入，因此原生凭据不会复制到 Harness 凭据 domain。各 agent 包负责决定路由可以读取哪些 ambient 环境变量或原生密钥文件。
+
 ### 配置提供方路由
 
 每个 profile 都可以设置 `retryPolicy`；省略时使用 normal mode、最多重试五次。`apiKeyEnv` 是按请求经 harness 凭据 seam 解析的凭据引用，因此配置文件绝不包含密钥；解析为空的引用会让请求以 `MISSING_CREDENTIAL` 失败。省略它会让路由保持已配置但无密钥（configured-but-keyless）状态，对已安装目录路由而言即交由 pi-ai 提供方原生的环境发现。
@@ -151,6 +155,7 @@ Config 更新严格验证发生变化的 provider。初始加载将已存储的�
 | [`src/catalog.ts`](src/catalog.ts) | 已安装目录集成与漂移门禁 |
 | [`src/provider-data.ts`](src/provider-data.ts) | 配置界面使用的认证与端点生成数据 |
 | [`src/models.ts`](src/models.ts) | 基于 pi-ai 窄入口的 model collection、静态 provider 与 reasoning level |
+| [`src/native-adapter.ts`](src/native-adapter.ts) | 面向 CLI 自有路由的动态 `ctx.llm` 投影与只读 pi-ai auth 注入 |
 | [`src/provider.ts`](src/provider.ts) | 受支持协议表与提供方构建 |
 | [`src/context.ts`](src/context.ts) | Harness 到 pi-ai 的上下文转换、图片处理、回放恢复 |
 | [`src/stream.ts`](src/stream.ts) | 把 pi-ai 事件转换为 harness `StreamChunk` 值 |

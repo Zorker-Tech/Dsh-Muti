@@ -15,6 +15,7 @@ import { ok, type RemoteMock } from '@deepseek-ai/dsh-remote-mock'
 import {
   createClientTest, type ClientTestFixtures, webApp,
 } from '@deepseek-ai/dsh-client-test-runtime/src/assembly/index.ts'
+import { sessionListSuccess } from '@deepseek-ai/dsh-client-test-runtime'
 import { ProjectionValueStore } from '../src/client/sessions/projection-store.ts'
 import { SessionManager } from '../src/client/sessions/manager.ts'
 import type { SessionRemotes } from '../src/client/sessions/remotes.ts'
@@ -241,7 +242,7 @@ describe('manager frame routing', () => {
 
   it('preserves a newer title when the control baseline omits it', async ({ mock, remote }) => {
     const manager = makeManager(mock, remote)
-    remote.session.list.mockResolvedValue(ok({
+    remote.session.list.mockResolvedValue(sessionListSuccess({
       items: [{ agentAvailable: true, sessionId: sid('s1'), updatedAt: 1, running: false, blank: false }],
     }))
     await manager.refreshList()
@@ -262,7 +263,7 @@ describe('manager frame routing', () => {
 
   it('routes a cached list block below every sequenced write: a Session baseline at any cut replaces it and a list refresh cannot restore it', async ({ mock, remote }) => {
     const manager = makeManager(mock, remote)
-    remote.session.list.mockResolvedValue(ok({
+    remote.session.list.mockResolvedValue(sessionListSuccess({
       items: [{ agentAvailable: false,
         sessionId: sid('s1'), updatedAt: 1, running: false, blank: false,
         // A cold row viewed from a stale record whose own watermark outruns
@@ -294,7 +295,7 @@ describe('manager frame routing', () => {
 
   it('merges a sequenced list block under higher-seq-wins: a lower-cut baseline neither overwrites nor clears it', async ({ mock, remote }) => {
     const manager = makeManager(mock, remote)
-    remote.session.list.mockResolvedValue(ok({
+    remote.session.list.mockResolvedValue(sessionListSuccess({
       items: [{ agentAvailable: true,
         sessionId: sid('s1'), updatedAt: 1, running: false, blank: false,
         // The Host's live registry served the block: its watermark shares the connection's seq space.
@@ -326,7 +327,7 @@ describe('manager frame routing', () => {
 
   it('projects every retained value into list rows with stable snapshot identity', async ({ mock, remote }) => {
     const manager = makeManager(mock, remote)
-    remote.session.list.mockResolvedValue(ok({
+    remote.session.list.mockResolvedValue(sessionListSuccess({
       items: [{ agentAvailable: true,
         sessionId: sid('s1'), updatedAt: 1, running: false, blank: false,
         projections: {
@@ -353,7 +354,7 @@ describe('manager frame routing', () => {
 
   it.for([undefined, []])('drops the removed ordinary Session store with catalog %s', async (catalog, { mock, remote }) => {
     const manager = makeManager(mock, remote)
-    remote.session.list.mockResolvedValue(ok({
+    remote.session.list.mockResolvedValue(sessionListSuccess({
       items: [{ agentAvailable: true, sessionId: sid('s1'), updatedAt: 1, running: false, blank: false }],
     }))
     await manager.refreshList()

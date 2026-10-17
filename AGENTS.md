@@ -19,6 +19,7 @@ vendor/      Vendored Cordis (vendor/README.md)
 packages/    @deepseek-ai/dsh-<pkg> workspaces at packages/<group>/<pkg>/
   core/                 agent/session API
   api/                  remote BFF
+  agent-mesh/           native integrations for external coding agents
   typert/               type graphs
   llm/                  model providers
   shell/                command execution

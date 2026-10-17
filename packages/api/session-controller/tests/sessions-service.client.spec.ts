@@ -9,6 +9,7 @@ import { RemoteStreamCarrierError } from '@deepseek-ai/dsh-api-gateway/client'
 import { SESSION_FORMAT_VERSION, SessionSeq } from '@deepseek-ai/dsh-session/types'
 import { ok, streamHandle, type RemoteMock } from '@deepseek-ai/dsh-remote-mock'
 import { createClientTest, webApp } from '@deepseek-ai/dsh-client-test-runtime/src/assembly/index.ts'
+import { sessionListSuccess } from '@deepseek-ai/dsh-client-test-runtime'
 import { ClientSessions, SessionCreateError, SessionForkError } from '../src/client/sessions/service.ts'
 import { scopeOf } from '../src/client/scope.ts'
 import type {
@@ -63,7 +64,7 @@ type FeedRow = {
 }
 
 async function feedList(b: Bench, rows: FeedRow[]): Promise<void> {
-  b.mock.remote.session.list.mockResolvedValue(ok({
+  b.mock.remote.session.list.mockResolvedValue(sessionListSuccess({
     items: rows.map(r => ({ agentAvailable: true,
       sessionId: sid(r.id), updatedAt: 1, running: r.running ?? false, blank: r.blank ?? false,
       ...(r.cwd !== undefined ? { cwd: r.cwd } : {}),
@@ -85,19 +86,19 @@ describe('list store projection', () => {
       sessionId: sid('s1'), updatedAt: 1, running: false, blank: false, agentAvailable: false,
       formatStatus: 'migration-required' as const,
     }
-    b.mock.remote.session.list.mockResolvedValue(ok({ items: [historical] }))
+    b.mock.remote.session.list.mockResolvedValue(sessionListSuccess({ items: [historical] }))
     await b.svc.refresh()
     await Promise.resolve()
     expect(b.svc.list.getSnapshot().byId[sid('s1')]?.formatStatus).toBe('migration-required')
 
     const pending = Promise.withResolvers<Awaited<ReturnType<typeof b.mock.remote.session.list>>>()
-    b.unblock.push(() => { pending.resolve(ok({ items: [historical] })) })
+    b.unblock.push(() => { pending.resolve(sessionListSuccess({ items: [historical] })) })
     b.mock.remote.session.list.mockReturnValueOnce(pending.promise)
     const refreshing = b.svc.refresh()
     b.svc.handleSessionAdded({ ...historical, formatStatus: 'current' })
     await Promise.resolve()
     expect(b.svc.list.getSnapshot().byId[sid('s1')]?.formatStatus).toBe('current')
-    pending.resolve(ok({ items: [historical] }))
+    pending.resolve(sessionListSuccess({ items: [historical] }))
     await refreshing
     await Promise.resolve()
     expect(b.svc.list.getSnapshot().byId[sid('s1')]?.formatStatus).toBe('current')

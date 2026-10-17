@@ -42,7 +42,7 @@ import type { SessionEvent } from '@deepseek-ai/dsh-session/types'
 function openProps(controller = new PresentedOpenController(), summaries = new ChangesSummaryStore()) {
   controller.host.set({ name: 'desktop', available: true, fileManager: 'finder' })
   const diffs = new ChangesDiffStore()
-  const sessions: SessionListState = { ids: [], byId: {}, phase: 'ready', projectionsBySession: {} }
+  const sessions: SessionListState = { ids: [], byId: {}, phase: 'ready', agentSessions: [], agentSessionFailures: [], projectionsBySession: {} }
   return {
     SessionProvider: ({ children }: { children?: import('react').ReactNode }) => <>{children}</>,
     renderSlot: renderFileActions,

@@ -51,6 +51,8 @@ const sessionState = (
   const state: SessionListState = {
     ids: items.map(item => item.id),
     byId: Object.fromEntries(items.map(item => [item.id, item])),
+    agentSessions: [],
+    agentSessionFailures: [],
     phase: 'ready',
     projectionsBySession: {},
     ...stateOverrides,
@@ -127,6 +129,9 @@ function mount(overrides: Partial<WorkspaceBrowserProps> = {}) {
     actions: store.actions,
     startSession: vi.fn(),
     open: vi.fn(),
+    openAgentSession: vi.fn(),
+    setAgentSessionPinned: vi.fn(async () => {}),
+    setAgentSessionArchived: vi.fn(async () => {}),
     searchSessions: vi.fn(async () => ({ items: [], hasMore: false })),
     searchResultLimit: 20,
     notifyArchivedNotOpenable: vi.fn(),
